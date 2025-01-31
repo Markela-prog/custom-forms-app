@@ -41,7 +41,7 @@ passport.use(
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL:
         "https://custom-forms-app-r0hw.onrender.com/api/auth/github/callback",
-      scope: ["user:email"], // Ensures we get the email
+      scope: ["user:email"],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
