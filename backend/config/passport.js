@@ -2,8 +2,9 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import prisma from "../prisma/prismaClient.js";
+import dotenv from "dotenv";
 
-dotenv.config(); // Load environment variables
+dotenv.config();
 
 passport.use(
   new GoogleStrategy(
@@ -36,23 +37,25 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: `${process.env.BASE_URL}/api/auth/google/callback`,
+      callbackURL: `${process.env.BASE_URL}/api/auth/github/callback`,
+      scope: ["user:email"],
     },
     async (accessToken, refreshToken, profile, done) => {
-      let user = await prisma.user.findUnique({
-        where: { email: profile.username + "@github.com" },
-      });
+      try {
+        const email = profile.emails?.[0]?.value || `${profile.username}@github.com`;
 
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            email: profile.username + "@github.com",
-            authProvider: "GITHUB",
-          },
-        });
+        let user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+          user = await prisma.user.create({
+            data: { email, authProvider: "GITHUB" },
+          });
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error, null);
       }
-
-      return done(null, user);
     }
   )
 );
