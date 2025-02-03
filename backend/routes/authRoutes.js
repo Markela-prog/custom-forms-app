@@ -4,6 +4,7 @@ import {
   registerUser,
   loginUser,
   socialLogin,
+  setPassword,
 } from "../controllers/authController.js";
 import { generateToken } from "../utils/tokenUtils.js";
 import { protect } from "../middleware/authMiddleware.js";
