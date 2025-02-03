@@ -11,9 +11,7 @@ router.get("/google", passport.authenticate("google", { scope: ["profile", "emai
 router.get("/google/callback", passport.authenticate("google"), socialLogin);
 
 router.get("/github", passport.authenticate("github"));
-router.get(
-    "/github/callback",
-    passport.authenticate("github", { failureRedirect: "/api/auth/failure" }),
+router.get("/github/callback", passport.authenticate("github", { failureRedirect: "/api/auth/failure" }),
     (req, res) => {
       // Send user data as JSON instead of redirecting
       /*res.json({
