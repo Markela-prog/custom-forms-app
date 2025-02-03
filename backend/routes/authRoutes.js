@@ -5,6 +5,7 @@ import {
   loginUser,
   socialLogin,
 } from "../controllers/authController.js";
+import { generateToken } from "../utils/tokenUtils.js";
 
 const router = express.Router();
 
