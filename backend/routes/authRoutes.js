@@ -11,18 +11,10 @@ router.get("/google", passport.authenticate("google", { scope: ["profile", "emai
 router.get("/google/callback", passport.authenticate("google"), socialLogin);
 
 router.get("/github", passport.authenticate("github"));
-router.get("/github/callback", passport.authenticate("github", { failureRedirect: "/api/auth/failure" }),
-    (req, res) => {
-      // Send user data as JSON instead of redirecting
-      /*res.json({
-        success: true,
-        message: "GitHub authentication successful",
-        user: req.user,
-        */
-       res.send('hello');
-      
-    }
-  );
-  
+router.get("/github/callback", (req, res) => {
+    console.log("GitHub callback triggered:", req.originalUrl);
+    res.send("GitHub callback received.");
+});
+
 
 export default router;
