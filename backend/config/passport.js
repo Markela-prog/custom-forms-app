@@ -37,9 +37,9 @@ passport.use(
 passport.use(
   new GitHubStrategy(
     {
-      clientID: 'Ov23liwuwN4daqoiwKnC',
-      clientSecret: 'b9f754d662e12a76af7f503659443bb023bd0479',
-      callbackURL: 'https://custom-forms-app-r0hw.onrender.com/api/auth/github/callback',
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: `${process.env.BASE_URL}/api/auth/github/callback`,
       scope: ["user:email"],
     },
     async (accessToken, refreshToken, profile, done) => {
