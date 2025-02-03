@@ -11,6 +11,8 @@ const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/set-password", protect, setPassword);
+
 
 //router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 //router.get("/google/callback", passport.authenticate("google"), socialLogin);
