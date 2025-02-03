@@ -19,8 +19,23 @@ router.get(
   "/github/callback",
   passport.authenticate("github", { session: false }),
   (req, res) => {
-    if (!req.user) return handleError(res, "Authentication failed", 400);
-    res.status(200).json({ user: req.user, token: generateToken(req.user) });
+    try {
+      if (!req.user) {
+        console.error("❌ GitHub Callback Error: No User Found");
+        return handleError(res, "Authentication failed", 400);
+      }
+
+      console.log("✅ GitHub Callback Success:", req.user);
+
+      // 🔹 Generate JWT Token
+      const token = generateToken(req.user);
+
+      // 🔹 Send JSON response
+      return res.status(200).json({ user: req.user, token });
+    } catch (error) {
+      console.error("❌ GitHub Callback Processing Error:", error);
+      handleError(res, "Server error");
+    }
   }
 );
 
