@@ -18,6 +18,8 @@ model User {
   email     String  @unique
   password  String?
   authProvider String[] @default([])
+  resetToken       String?
+  resetTokenExpiry DateTime?
   role      Role    @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

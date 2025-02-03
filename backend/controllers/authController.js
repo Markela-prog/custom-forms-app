@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import prisma from "../prisma/prismaClient.js";
 import { generateToken } from "../utils/tokenUtils.js";
 import { handleError } from "../utils/errorHandler.js";
+import { sendResetEmail } from "../utils/emailUtils.js";
+import crypto from "crypto";
 
 export const registerUser = async (req, res) => {
   const { email, password } = req.body;
@@ -10,20 +12,7 @@ export const registerUser = async (req, res) => {
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (user) {
-      // ✅ If user exists but was created with OAuth, allow them to set a password
-      if (!user.password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        user = await prisma.user.update({
-          where: { email },
-          data: {
-            password: hashedPassword,
-            authProvider: { push: "CREDENTIALS" },
-          },
-        });
-
-        return res.status(200).json({ user, token: generateToken(user) });
-      }
-
+      if (!user.password) return handleError(res, "Set a password via OAuth.", 400);
       return handleError(res, "User already exists", 400);
     }
 
@@ -44,21 +33,9 @@ export const loginUser = async (req, res) => {
 
   try {
     let user = await prisma.user.findUnique({ where: { email } });
-
     if (!user) return handleError(res, "Invalid credentials", 400);
+    if (!user.password) return handleError(res, "Set a password via OAuth.", 400);
 
-    // ❌ If user registered via OAuth (GitHub/Google) and has no password
-    if (!user.password) {
-      return handleError(
-        res,
-        `This account was registered using OAuth (${user.authProvider.join(
-          ", "
-        )}). Please set a password first.`,
-        400
-      );
-    }
-
-    // ✅ Check password if exists
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return handleError(res, "Invalid credentials", 400);
 
@@ -68,34 +45,50 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const setPassword = async (req, res) => {
-  const { password } = req.body;
-  const userId = req.user.id;
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
 
   try {
-    let user = await prisma.user.findUnique({ where: { id: userId } });
-
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return handleError(res, "User not found", 404);
 
-    if (user.password) return handleError(res, "Password is already set", 400);
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = await bcrypt.hash(resetToken, 10);
+    const expiry = new Date(Date.now() + 3600000); // 1 hour expiration
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user = await prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword, authProvider: { push: "CREDENTIALS" } },
+    await prisma.user.update({
+      where: { email },
+      data: { resetToken: hashedToken, resetTokenExpiry: expiry },
     });
 
-    res.status(200).json({ message: "Password set successfully", user });
+    await sendResetEmail(email, resetToken);
+
+    res.status(200).json({ message: "Password reset email sent." });
   } catch (error) {
     handleError(res, "Server error");
   }
 };
 
-export const socialLogin = async (req, res) => {
-  try {
-    if (!req.user) return handleError(res, "Authentication failed", 400);
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
 
-    res.status(200).json({ user: req.user, token: generateToken(req.user) });
+  try {
+    const user = await prisma.user.findFirst({
+      where: { resetTokenExpiry: { gte: new Date() } },
+    });
+
+    if (!user || !(await bcrypt.compare(token, user.resetToken))) {
+      return handleError(res, "Invalid or expired token", 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null },
+    });
+
+    res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
     handleError(res, "Server error");
   }
