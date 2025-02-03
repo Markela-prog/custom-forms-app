@@ -16,13 +16,22 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        let user = await prisma.user.findUnique({
-          where: { email: profile.emails[0].value },
-        });
+        const email = profile.emails[0].value;
 
-        if (!user) {
+        let user = await prisma.user.findUnique({ where: { email } });
+
+        if (user) {
+          // ✅ If user exists, update authProvider (if needed)
+          if (user.authProvider !== "GOOGLE") {
+            user = await prisma.user.update({
+              where: { email },
+              data: { authProvider: "GOOGLE" },
+            });
+          }
+        } else {
+          // ✅ If no user exists, create a new one
           user = await prisma.user.create({
-            data: { email: profile.emails[0].value, authProvider: "GOOGLE" },
+            data: { email, authProvider: "GOOGLE" },
           });
         }
 
@@ -49,7 +58,16 @@ passport.use(
 
         let user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user) {
+        if (user) {
+          // ✅ If user exists, update authProvider (if needed)
+          if (user.authProvider !== "GITHUB") {
+            user = await prisma.user.update({
+              where: { email },
+              data: { authProvider: "GITHUB" },
+            });
+          }
+        } else {
+          // ✅ If no user exists, create a new one
           user = await prisma.user.create({
             data: { email, authProvider: "GITHUB" },
           });

@@ -16,8 +16,8 @@ datasource db {
 model User {
   id        String  @id @default(uuid())
   email     String  @unique
-  password  String
-  authProvider AuthProvider @default(CREDENTIALS)
+  password  String?
+  authProvider String[] @default([])
   role      Role    @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -29,12 +29,6 @@ model User {
   likes     Like[]
   templateAccess TemplateAccess[]
   auditLogs AuditLog[]
-}
-
-enum AuthProvider {
-  CREDENTIALS
-  GOOGLE
-  GITHUB
 }
 
 enum Role {
