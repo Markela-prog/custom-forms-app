@@ -16,11 +16,13 @@ router.get(
     passport.authenticate("github", { failureRedirect: "/api/auth/failure" }),
     (req, res) => {
       // Send user data as JSON instead of redirecting
-      res.json({
+      /*res.json({
         success: true,
         message: "GitHub authentication successful",
         user: req.user,
-      });
+        */
+       res.send('hello');
+      
     }
   );
   
