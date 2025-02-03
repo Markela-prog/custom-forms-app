@@ -14,6 +14,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/set-password", protect, setPassword);
 
 router.get("/github", passport.authenticate("github"));
 router.get(

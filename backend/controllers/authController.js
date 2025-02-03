@@ -93,3 +93,29 @@ export const resetPassword = async (req, res) => {
     handleError(res, "Server error");
   }
 };
+
+export const setPassword = async (req, res) => {
+    const { password } = req.body;
+    const userId = req.user.id;
+  
+    try {
+      let user = await prisma.user.findUnique({ where: { id: userId } });
+  
+      if (!user) return handleError(res, "User not found", 404);
+  
+      // ❌ Prevent overriding an existing password
+      if (user.password) return handleError(res, "Password is already set", 400);
+  
+      // ✅ Hash and save password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword, authProvider: { push: "CREDENTIALS" } },
+      });
+  
+      res.status(200).json({ message: "Password set successfully", user });
+    } catch (error) {
+      handleError(res, "Server error");
+    }
+  };
+  
