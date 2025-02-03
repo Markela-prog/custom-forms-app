@@ -59,17 +59,17 @@ passport.use(
         let user = await prisma.user.findUnique({ where: { email } });
 
         if (user) {
-          // ✅ If user exists, update authProvider (if needed)
-          if (user.authProvider !== "GITHUB") {
+          // ✅ If user exists, add GitHub to authProvider array (if not already present)
+          if (!user.authProvider.includes("GITHUB")) {
             user = await prisma.user.update({
               where: { email },
-              data: { authProvider: "GITHUB" },
+              data: { authProvider: { push: "GITHUB" } },
             });
           }
         } else {
           // ✅ If no user exists, create a new one
           user = await prisma.user.create({
-            data: { email, authProvider: "GITHUB" },
+            data: { email, authProvider: ["GITHUB"] },
           });
         }
 
