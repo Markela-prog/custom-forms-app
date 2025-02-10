@@ -84,10 +84,8 @@ export const resetPassword = async (token, newPassword) => {
     throw new Error("Invalid or expired token - Token mismatch.");
   }
 
-  // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  // Update user with new password
   await updateUser(user.email, {
     password: hashedPassword,
     resetToken: null,
