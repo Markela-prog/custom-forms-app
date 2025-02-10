@@ -104,9 +104,14 @@ export const oauthCallback = async (req, res) => {
     if (!req.user)
       return res.status(400).json({ message: "Authentication failed" });
 
+    // Ensure authProvider exists and is an array
+    const provider = Array.isArray(req.user.authProvider) && req.user.authProvider.length > 0
+      ? req.user.authProvider[0]
+      : "UNKNOWN";
+
     const { refreshToken, accessToken } = await handleOAuthLogin(
       req.user.email,
-      req.user.authProvider[0]
+      provider
     );
 
     res.cookie("refreshToken", refreshToken, {
@@ -119,6 +124,7 @@ export const oauthCallback = async (req, res) => {
       `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
     );
   } catch (error) {
+    console.error("OAuth Callback Error:", error);
     handleError(res, error.message);
   }
 };

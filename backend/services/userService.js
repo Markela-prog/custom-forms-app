@@ -73,22 +73,15 @@ export const resetPassword = async (token, newPassword) => {
     throw new Error("Invalid or expired token - No matching user found.");
   }
 
-  console.log("User found:", user);
-
-  // Check if resetToken exists
   if (!user.resetToken) {
-    console.error("Reset Token is missing in the database:", user);
     throw new Error("Reset token not set.");
   }
 
-  // Validate token using bcrypt
   const isValidToken = await bcrypt.compare(token, user.resetToken);
 
   if (!isValidToken) {
     throw new Error("Invalid or expired token - Token mismatch.");
   }
-
-  console.log("Token matched successfully!");
 
   // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -99,8 +92,6 @@ export const resetPassword = async (token, newPassword) => {
     resetToken: null,
     resetTokenExpiry: null,
   });
-
-  console.log("Password reset successful for:", user.email);
 };
 
 export const setPassword = async (userId, password) => {
@@ -143,8 +134,13 @@ export const handleOAuthLogin = async (email, provider) => {
 
   if (!user) {
     user = await createUser({ email, authProvider: [provider] });
-  } else if (!user.authProvider.includes(provider)) {
-    await updateUser(email, { authProvider: { push: provider } });
+  } else {
+    // Ensure authProvider is always an array
+    const updatedAuthProviders = Array.isArray(user.authProvider)
+      ? [...new Set([...user.authProvider, provider])] // Avoid duplicate entries
+      : [provider];
+
+    await updateUser(email, { authProvider: updatedAuthProviders });
   }
 
   const accessToken = generateAccessToken(user);
