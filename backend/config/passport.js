@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { handleOAuthLogin } from "../services/userService.js";
 import dotenv from "dotenv";
+import fetch from "node-fetch"; // Ensure fetch is available
 
 dotenv.config();
 
@@ -12,8 +13,7 @@ const commonOAuthStrategyHandler =
       console.log(`OAuth ${provider} Profile:`, profile);
 
       let email =
-        profile.emails?.[0]?.value ||
-        (provider === "GITHUB" ? null : `${profile.username}@example.com`);
+        profile.emails?.[0]?.value || (provider === "GITHUB" ? null : `${profile.username}@example.com`);
 
       // If GitHub does not return an email, fetch it manually
       if (!email && provider === "GITHUB") {
@@ -23,20 +23,15 @@ const commonOAuthStrategyHandler =
         });
 
         if (!response.ok) {
-          throw new Error(
-            `GitHub API email fetch failed: ${response.statusText}`
-          );
+          throw new Error(`GitHub API email fetch failed: ${response.statusText}`);
         }
 
         const emails = await response.json();
-        email = emails.find((e) => e.primary)?.email;
+        email = emails.find((e) => e.primary && e.verified)?.email;
       }
 
       if (!email) {
-        console.error(
-          `OAuth Error: No email found for ${provider} profile`,
-          profile
-        );
+        console.error(`OAuth Error: No email found for ${provider} profile`, profile);
         return done(new Error(`No email found from ${provider}`), null);
       }
 
@@ -73,6 +68,7 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => done(null, user.id));
+
 passport.deserializeUser(async (id, done) => {
   done(null, id);
 });

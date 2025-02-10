@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import prisma from "../prisma/prismaClient.js";
 import {
   findUserByEmail,
   findUserById,
@@ -130,24 +131,24 @@ export const handleOAuthTokens = async (user) => {
 };
 
 export const handleOAuthLogin = async (email, provider) => {
-  if (!email) {
-    throw new Error("OAuth login failed: Email is undefined.");
-  }
+  if (!email) throw new Error("OAuth login failed: Email is undefined.");
 
-  let user = await findUserByEmail(email);
+  let user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    user = await createUser({ email, authProvider: [provider] });
-  } else {
-    const updatedAuthProviders = Array.isArray(user.authProvider)
-      ? [...new Set([...user.authProvider, provider])]
-      : [provider];
-
-    await updateUser(email, { authProvider: updatedAuthProviders });
+    user = await prisma.user.create({
+      data: { email, authProvider: [provider] },
+    });
+  } else if (!user.authProvider.includes(provider)) {
+    await prisma.user.update({
+      where: { email },
+      data: { authProvider: { push: provider } },
+    });
   }
 
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  return { user, accessToken, refreshToken };
+  return {
+    user,
+    accessToken: generateAccessToken(user),
+    refreshToken: generateRefreshToken(user),
+  };
 };
