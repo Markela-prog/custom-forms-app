@@ -123,9 +123,16 @@ export const oauthCallback = async (req, res) => {
       sameSite: "Strict",
     });
 
-    res.redirect(
-      `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
-    );
+    return res.status(200).json({
+      message: "OAuth login successful",
+      user,
+      accessToken,
+      refreshToken,
+    });
+
+    // res.redirect(
+    //   `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
+    // );
   } catch (error) {
     console.error("OAuth Callback Error:", error);
     res.status(500).json({ message: error.message });
