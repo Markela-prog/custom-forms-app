@@ -38,9 +38,15 @@ const commonOAuthStrategyHandler =
         return done(new Error(`No email found from ${provider}`), null);
       }
 
-      // Pass the email & provider to login logic
+      // Proceed with OAuth login
       const user = await handleOAuthLogin(email, provider);
-      return done(null, user);
+
+      // ✅ Ensure `done()` passes a user object with all needed fields
+      return done(null, {
+        id: user.user.id,
+        email: user.user.email,
+        authProvider: user.user.authProvider,
+      });
     } catch (error) {
       console.error(`OAuth Error (${provider}):`, error);
       return done(error, null);

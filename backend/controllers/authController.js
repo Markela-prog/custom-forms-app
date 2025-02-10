@@ -101,12 +101,14 @@ export const refreshToken = async (req, res) => {
 
 export const oauthCallback = async (req, res) => {
   try {
+    console.log("OAuth Callback User:", req.user);
+
     if (!req.user || !req.user.email) {
       console.error("OAuth Error: User or email is undefined", req.user);
       return res.status(400).json({ message: "Authentication failed" });
     }
 
-    // Ensure `authProvider` is set
+    // Use the correct auth provider
     const authProvider =
       req.user.authProvider?.length > 0 ? req.user.authProvider[0] : "GITHUB";
 
