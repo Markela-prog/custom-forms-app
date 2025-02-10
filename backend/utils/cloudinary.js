@@ -9,24 +9,25 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadImage = async (fileBuffer, fileType) => {
-  try {
-    const result = await cloudinary.v2.uploader.upload_stream(
+export const uploadImage = (fileBuffer, fileType) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.v2.uploader.upload_stream(
       {
         folder: "user-profile-pictures",
         resource_type: "image",
       },
       (error, result) => {
-        if (error) throw new Error("Image upload failed");
-        return result.secure_url;
+        if (error) {
+          console.error("❌ Cloudinary Upload Error:", error);
+          return reject("Image upload failed");
+        }
+        console.log("✅ Cloudinary Upload Success:", result);
+        resolve(result.secure_url);
       }
-    ).end(fileBuffer);
+    );
 
-    return result;
-  } catch (error) {
-    console.error("❌ Cloudinary Upload Error:", error);
-    throw new Error("Failed to upload image");
-  }
+    uploadStream.end(fileBuffer);
+  });
 };
 
 export const deleteImage = async (imageUrl) => {
@@ -36,7 +37,9 @@ export const deleteImage = async (imageUrl) => {
     const publicId = imageUrl.split("/").pop().split(".")[0]; // Extract public ID
     console.log(`🗑 Deleting old profile picture: ${publicId}`);
 
-    const result = await cloudinary.v2.uploader.destroy(`user-profile-pictures/${publicId}`);
+    const result = await cloudinary.v2.uploader.destroy(
+      `user-profile-pictures/${publicId}`
+    );
 
     if (result.result !== "ok") throw new Error("Failed to delete image");
 

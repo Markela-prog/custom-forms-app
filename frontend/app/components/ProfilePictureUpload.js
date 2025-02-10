@@ -17,6 +17,8 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
       const formData = new FormData();
       formData.append("profilePicture", file);
 
+      console.log("📡 Uploading Image:", file.name);
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
         {
@@ -24,17 +26,23 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          body: formData, // Send file directly
+          body: formData, // Send file as FormData
         }
       );
 
-      if (!response.ok) throw new Error("Profile update failed");
+      const responseText = await response.text();
+      console.log("🔍 Server Response:", responseText); // Debug response text
 
-      const data = await response.json();
+      if (!response.ok) {
+        console.error("❌ Profile update failed:", responseText);
+        throw new Error("Profile update failed");
+      }
+
+      const data = JSON.parse(responseText);
       onUploadSuccess(data.user.profilePicture);
     } catch (err) {
       setError("Failed to upload image");
-      console.error(err);
+      console.error("🚨 Upload Error:", err);
     } finally {
       setUploading(false);
     }
