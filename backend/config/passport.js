@@ -8,25 +8,39 @@ dotenv.config();
 
 const commonOAuthStrategyHandler =
   (provider) => async (accessToken, refreshToken, profile, done) => {
-    console.log(`OAuth ${provider} Profile:`, profile); // Debugging profile object
-
-    // Ensure email is retrieved correctly
-    const email =
-      profile.emails && profile.emails.length > 0
-        ? profile.emails[0].value
-        : profile.username
-        ? `${profile.username}@github.com`
-        : null;
-
-    if (!email) {
-      console.error(
-        `OAuth Error: No email found for ${provider} profile:`,
-        profile
-      );
-      return done(new Error("No email found from OAuth provider"), null);
-    }
-
     try {
+      console.log(`OAuth ${provider} Profile:`, profile);
+
+      let email =
+        profile.emails?.[0]?.value ||
+        (provider === "GITHUB" ? null : `${profile.username}@example.com`);
+
+      // If GitHub does not return an email, fetch it manually
+      if (!email && provider === "GITHUB") {
+        console.log("Fetching email from GitHub API...");
+        const response = await fetch("https://api.github.com/user/emails", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `GitHub API email fetch failed: ${response.statusText}`
+          );
+        }
+
+        const emails = await response.json();
+        email = emails.find((e) => e.primary)?.email;
+      }
+
+      if (!email) {
+        console.error(
+          `OAuth Error: No email found for ${provider} profile`,
+          profile
+        );
+        return done(new Error(`No email found from ${provider}`), null);
+      }
+
+      // Proceed with OAuth login handling
       const user = await handleOAuthLogin(email, provider);
       return done(null, user);
     } catch (error) {
