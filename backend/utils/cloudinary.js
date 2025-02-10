@@ -11,22 +11,23 @@ cloudinary.v2.config({
 
 export const uploadImage = (fileBuffer, fileType) => {
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.v2.uploader.upload_stream(
-      {
-        folder: "user-profile-pictures",
-        resource_type: "image",
-      },
-      (error, result) => {
-        if (error) {
-          console.error("❌ Cloudinary Upload Error:", error);
-          return reject("Image upload failed");
+    cloudinary.v2.uploader
+      .upload_stream(
+        {
+          folder: "user-profile-pictures",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) {
+            console.error("❌ Cloudinary Upload Error:", error);
+            reject("Image upload failed");
+          } else {
+            console.log("✅ Cloudinary Upload Success:", result);
+            resolve(result.secure_url); // ✅ Resolve with just the URL
+          }
         }
-        console.log("✅ Cloudinary Upload Success:", result);
-        resolve(result.secure_url);
-      }
-    );
-
-    uploadStream.end(fileBuffer);
+      )
+      .end(fileBuffer);
   });
 };
 
