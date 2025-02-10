@@ -5,16 +5,14 @@ import ProfilePictureUpload from "../components/ProfilePictureUpload";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("accessToken");
-    setToken(storedToken);
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.push("/login"); // Redirect if not authenticated
+      return;
+    }
 
     const fetchUserProfile = async () => {
       try {
@@ -32,6 +30,7 @@ const ProfilePage = () => {
         if (!response.ok) throw new Error("Failed to fetch profile");
 
         const data = await response.json();
+        console.log("👤 User Profile:", data);
         setUser(data);
       } catch (error) {
         console.error("Profile fetch error:", error);
@@ -40,24 +39,7 @@ const ProfilePage = () => {
     };
 
     fetchUserProfile();
-  }, [token]);
-
-  const handleProfileUpdate = async (profilePicture) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ profilePicture }),
-      });
-      setUser((prev) => ({ ...prev, profilePicture }));
-    } catch (error) {
-      console.error("Profile update failed:", error);
-    }
-  };
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -75,7 +57,7 @@ const ProfilePage = () => {
           </h2>
           <p className="text-gray-500">{user.email}</p>
 
-          <ProfilePictureUpload onUploadSuccess={handleProfileUpdate} />
+          <ProfilePictureUpload onUploadSuccess={() => {}} />
         </div>
       ) : (
         <p>Loading...</p>

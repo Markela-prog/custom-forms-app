@@ -27,12 +27,20 @@ const LoginPage = () => {
 
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      // Store token & debug
-      localStorage.setItem("accessToken", data.token);
-      console.log("Stored Token:", localStorage.getItem("accessToken"));
+      // 🔴 Fix: Store token correctly and ensure it is set before redirecting
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        console.log("Stored Token:", localStorage.getItem("accessToken"));
 
-      router.push("/profile");
+        // Delay redirect to ensure token is stored
+        setTimeout(() => {
+          router.push("/profile");
+        }, 100);
+      } else {
+        throw new Error("No access token received");
+      }
     } catch (error) {
+      console.error("Login Error:", error.message);
       setError(error.message);
     }
   };

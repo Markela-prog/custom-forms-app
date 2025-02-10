@@ -31,11 +31,17 @@ export const getPublicUserProfile = async (req, res) => {
   }
 };
 
+
+
 export const updateUserProfile = async (req, res) => {
   try {
     const updatedUser = await updateUserProfileService(req.user.id, req.body);
     res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
-    handleError(res, error.message, 400);
+    if (error.message === "Invalid update fields" || error.message === "No update data provided") {
+      handleError(res, error.message, 400);
+    } else {
+      handleError(res, "Internal Server Error", 500);
+    }
   }
 };

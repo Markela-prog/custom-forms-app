@@ -1,8 +1,7 @@
 import {
   findUserById,
-  updateUserProfile,
+  updateUserProfile as updateUserProfileRepo,
 } from "../repositories/userRepository.js";
-import { handleError } from "../utils/errorHandler.js";
 
 export const getUserProfileService = async (userId) => {
   const user = await findUserById(userId);
@@ -17,12 +16,15 @@ export const updateUserProfileService = async (userId, updateData) => {
   const updatePayload = {};
 
   validFields.forEach((field) => {
-    if (updateData[field]) updatePayload[field] = updateData[field];
+    if (updateData[field] && updateData[field].trim() !== "") {
+      updatePayload[field] = updateData[field];
+    }
   });
 
   if (Object.keys(updatePayload).length === 0) {
     throw new Error("Invalid update fields");
   }
 
-  return updateUserProfile(userId, updatePayload);
+  return updateUserProfileRepo(userId, updatePayload);
 };
+
