@@ -20,11 +20,13 @@ export const updateUserById = async (id, updateData) => {
     return prisma.user.update({ where: {id}, data: updateData});
 }
 
+
+
 export const findUserByResetToken = async (resetToken) => {
     return prisma.user.findFirst({
         where: {
             resetToken,
-            resetTokenExpiry: { gte: new Date() },
+            resetTokenExpiry: { gte: new Date().toISOString() },
         },
     });
 };
