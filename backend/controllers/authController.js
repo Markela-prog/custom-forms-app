@@ -8,7 +8,7 @@ import {
   logoutUser,
   refreshToken as refreshTokenService,
   handleOAuthLogin,
-} from "../services/userService.js";
+} from "../services/authService.js";
 import {
   generateAccessToken,
   generateRefreshToken,
