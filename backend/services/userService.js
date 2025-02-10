@@ -7,6 +7,7 @@ import {
   createUser,
   updateUser,
   updateUserById,
+  findUserByResetToken,
 } from "../repositories/userRepository.js";
 import { sendResetEmail } from "../utils/emailUtils.js";
 import {
@@ -62,15 +63,14 @@ export const forgotPassword = async (email) => {
 };
 
 export const resetPassword = async (token, newPassword) => {
-  const user = await prisma.user.findFirst({
-    where: { resetTokenExpiry: { gte: new Date() } },
-  });
+  const user = await findUserByResetToken(token);
 
   if (!user || !(await bcrypt.compare(token, user.resetToken))) {
     throw new Error("Invalid or expired token");
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
+
   await updateUser(user.email, {
     password: hashedPassword,
     resetToken: null,
