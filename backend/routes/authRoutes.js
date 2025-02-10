@@ -6,17 +6,20 @@ import {
   forgotPassword,
   resetPassword,
   setPassword,
+  refreshToken,
 } from "../controllers/authController.js";
-import { generateToken } from "../utils/tokenUtils.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/logout", protect, logoutUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/set-password", protect, setPassword);
+router.post("/refresh-token", refreshToken);
 
 router.get("/google", passport.authenticate("google"));
 router.get(
@@ -24,7 +27,16 @@ router.get(
   passport.authenticate("google", { session: false }),
   (req, res) => {
     if (!req.user) return handleError(res, "Authentication failed", 400);
-    res.status(200).json({ user: req.user, token: generateToken(req.user) });
+    const accessToken = generateAccessToken(req.user);
+    const refreshToken = generateRefreshToken(req.user);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    res.status(200).json({ user: req.user, accessToken });
   }
 );
 
@@ -34,7 +46,17 @@ router.get(
   passport.authenticate("github", { session: false }),
   (req, res) => {
     if (!req.user) return handleError(res, "Authentication failed", 400);
-    res.status(200).json({ user: req.user, token: generateToken(req.user) });
+
+    const accessToken = generateAccessToken(req.user);
+    const refreshToken = generateRefreshToken(req.user);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    res.status(200).json({ user: req.user, accessToken });
   }
 );
 

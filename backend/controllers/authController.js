@@ -1,121 +1,79 @@
-import bcrypt from "bcryptjs";
-import prisma from "../prisma/prismaClient.js";
-import { generateToken } from "../utils/tokenUtils.js";
 import { handleError } from "../utils/errorHandler.js";
-import { sendResetEmail } from "../utils/emailUtils.js";
-import crypto from "crypto";
+import {
+  registerUser,
+  loginUser,
+  generateAccessToken,
+  generateRefreshToken,
+  forgotPassword,
+  resetPassword,
+  setPassword,
+  logoutUser,
+  refreshToken,
+} from "../services/authService.js";
 
-export const registerUser = async (req, res) => {
-  const { email, password } = req.body;
-
+export const register = async (req, res) => {
   try {
-    let user = await prisma.user.findUnique({ where: { email } });
+    const user = await registerUser(req.body.email, req.body.password);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    if (user) {
-      if (!user.password) return handleError(res, "Set a password via OAuth.", 400);
-      return handleError(res, "User already exists", 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    user = await prisma.user.create({
-      data: { email, password: hashedPassword, authProvider: ["CREDENTIALS"] },
-    });
-
-    res.status(201).json({ user, token: generateToken(user) });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.status(201).json({ user, accessToken });
   } catch (error) {
-    handleError(res, "Server error");
+    handleError(res, error.message);
   }
 };
 
-export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
+export const login = async (req, res) => {
   try {
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return handleError(res, "Invalid credentials", 400);
-    if (!user.password) return handleError(res, "Set a password via OAuth.", 400);
+    const user = await loginUser(req.body.email, req.body.password);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return handleError(res, "Invalid credentials", 400);
-
-    res.status(200).json({ user, token: generateToken(user) });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.status(200).json({ user, accessToken });
   } catch (error) {
-    handleError(res, "Server error");
+    handleError(res, error.message);
   }
 };
 
-export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
-
+export const forgotPasswordController = async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return handleError(res, "User not found", 404);
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = await bcrypt.hash(resetToken, 10);
-    const expiry = new Date(Date.now() + 3600000); // 1 hour expiration
-
-    await prisma.user.update({
-      where: { email },
-      data: { resetToken: hashedToken, resetTokenExpiry: expiry },
-    });
-
-    await sendResetEmail(email, resetToken);
-
+    await forgotPassword(req.body.email);
     res.status(200).json({ message: "Password reset email sent." });
   } catch (error) {
-    handleError(res, "Server error");
+    handleError(res, error.message);
   }
 };
 
-export const resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
-
+export const resetPasswordController = async (req, res) => {
   try {
-    const user = await prisma.user.findFirst({
-      where: { resetTokenExpiry: { gte: new Date() } },
-    });
-
-    if (!user || !(await bcrypt.compare(token, user.resetToken))) {
-      return handleError(res, "Invalid or expired token", 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await prisma.user.update({
-      where: { email: user.email },
-      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null },
-    });
-
+    await resetPassword(req.body.token, req.body.newPassword);
     res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
-    handleError(res, "Server error");
+    handleError(res, error.message);
   }
 };
 
-export const setPassword = async (req, res) => {
-    const { password } = req.body;
-    const userId = req.user.id;
-  
-    try {
-      let user = await prisma.user.findUnique({ where: { id: userId } });
-  
-      if (!user) return handleError(res, "User not found", 404);
-  
-      // ❌ Prevent overriding an existing password
-      if (user.password) return handleError(res, "Password is already set", 400);
-  
-      // ✅ Hash and save password
-      const hashedPassword = await bcrypt.hash(password, 10);
-      user = await prisma.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword, authProvider: { push: "CREDENTIALS" } },
-      });
-  
-      res.status(200).json({ message: "Password set successfully", user });
-    } catch (error) {
-      handleError(res, "Server error");
-    }
-  };
-  
+export const setPasswordController = async (req, res) => {
+  try {
+    await setPassword(req.user.id, req.body.password);
+    res.status(200).json({ message: "Password set successfully" });
+  } catch (error) {
+    handleError(res, error.message);
+  }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+  res.status(200).json(logoutUser());
+};
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const accessToken = await refreshToken(req.cookies.refreshToken);
+    res.status(200).json({ accessToken });
+  } catch (error) {
+    handleError(res, error.message);
+  }
+};
