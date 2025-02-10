@@ -7,6 +7,7 @@ import {
   setPassword,
   logoutUser,
   refreshToken as refreshTokenService,
+  handleOAuthLogin,
 } from "../services/userService.js";
 import {
   generateAccessToken,
