@@ -53,7 +53,7 @@ export const forgotPassword = async (email) => {
 
   const resetToken = crypto.randomBytes(32).toString("hex");
   const hashedToken = await bcrypt.hash(resetToken, 10);
-  const expiry = new Date(Date.now() + 3600000*4);
+  const expiry = new Date(Date.now() + 3600000 * 4);
 
   await updateUser(email, {
     resetToken: hashedToken,
@@ -63,9 +63,15 @@ export const forgotPassword = async (email) => {
 };
 
 export const resetPassword = async (token, newPassword) => {
-  const user = await findUserByResetToken(token);
+  const user = await findUserByResetToken();
 
-  if (!user || !(await bcrypt.compare(token, user.resetToken))) {
+  if (!user) {
+    throw new Error("Invalid or expired token");
+  }
+
+  // Manually compare the token using bcrypt
+  const isValidToken = await bcrypt.compare(token, user.resetToken);
+  if (!isValidToken) {
     throw new Error("Invalid or expired token");
   }
 

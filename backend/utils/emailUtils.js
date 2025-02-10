@@ -14,7 +14,7 @@ export const sendResetEmail = async (email, token) => {
   });
 
   const mailOptions = {
-    from: `"Your App Name" <${process.env.EMAIL_USER}>`,
+    from: `"Custom Forms" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Password Reset Request",
     html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
