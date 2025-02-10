@@ -34,14 +34,21 @@ export const deleteImage = async (imageUrl) => {
   if (!imageUrl) return;
 
   try {
-    const publicId = imageUrl.split("/").pop().split(".")[0]; // Extract public ID
+    // Extract public ID correctly
+    const regex = /\/user-profile-pictures\/(.+?)\./; // Match inside folder
+    const match = imageUrl.match(regex);
+    if (!match || !match[1]) {
+      throw new Error("Invalid image URL format");
+    }
+    const publicId = `user-profile-pictures/${match[1]}`;
+
     console.log(`🗑 Deleting old profile picture: ${publicId}`);
 
-    const result = await cloudinary.v2.uploader.destroy(
-      `user-profile-pictures/${publicId}`
-    );
+    const result = await cloudinary.v2.uploader.destroy(publicId);
 
-    if (result.result !== "ok") throw new Error("Failed to delete image");
+    if (result.result !== "ok") {
+      throw new Error(`Failed to delete image: ${result.result}`);
+    }
 
     console.log("✅ Successfully deleted old image:", publicId);
   } catch (error) {

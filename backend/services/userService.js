@@ -28,7 +28,7 @@ export const updateUserProfileService = async (userId, updateData, fileBuffer, f
     });
   
     // 🗑 Delete old image if a new one is uploaded
-    if (user.profilePicture && fileBuffer) {
+    if (user?.profilePicture && fileBuffer) {
       await deleteImage(user.profilePicture);
     }
   
@@ -38,9 +38,12 @@ export const updateUserProfileService = async (userId, updateData, fileBuffer, f
       updatePayload.profilePicture = uploadedImage.secure_url;
     }
   
-    // ✅ Update user profile
-    return prisma.user.update({
+    // ✅ Update user profile in database
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updatePayload,
     });
+  
+    console.log("✅ Profile updated successfully:", updatedUser);
+    return updatedUser;
   };
