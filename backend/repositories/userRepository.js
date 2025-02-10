@@ -26,7 +26,7 @@ export const findUserByResetToken = async (resetToken) => {
     return prisma.user.findFirst({
         where: {
             resetToken,
-            resetTokenExpiry: { gte: new Date().toISOString() },
+            resetTokenExpiry: { gte: new Date() },
         },
     });
 };
