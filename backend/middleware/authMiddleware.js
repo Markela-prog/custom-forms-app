@@ -20,3 +20,10 @@ export const protect = async (req, res, next) => {
     handleError(res, "Not authorized", 401);
   }
 };
+
+export const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "ADMIN") {
+    return handleError(res, "Admin access required", 403);
+  }
+  next();
+};
