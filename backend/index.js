@@ -10,7 +10,14 @@ import passport from "./config/passport.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:3000", process.env.FRONTEND_URL], // Allow frontend requests
+    credentials: true, // Allow cookies & auth headers
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 app.use(passport.initialize());
 
