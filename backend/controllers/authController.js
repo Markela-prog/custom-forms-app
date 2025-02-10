@@ -2,14 +2,17 @@ import { handleError } from "../utils/errorHandler.js";
 import {
   registerUser,
   loginUser,
-  generateAccessToken,
-  generateRefreshToken,
   forgotPassword,
   resetPassword,
   setPassword,
   logoutUser,
-  refreshToken,
-} from "../services/authService.js";
+  refreshToken as refreshTokenService,
+} from "../services/userService.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../services/tokenService.js";
 
 export const register = async (req, res) => {
   try {
@@ -17,7 +20,11 @@ export const register = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
     res.status(201).json({ user, accessToken });
   } catch (error) {
     handleError(res, error.message);
@@ -26,11 +33,16 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const user = await loginUser(req.body.email, req.body.password);
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const { user, accessToken, refreshToken } = await loginUser(
+      req.body.email,
+      req.body.password
+    );
 
-    res.cookie("refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
     res.status(200).json({ user, accessToken });
   } catch (error) {
     handleError(res, error.message);
@@ -65,14 +77,39 @@ export const setPasswordController = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  });
   res.status(200).json(logoutUser());
 };
 
-export const refreshAccessToken = async (req, res) => {
+export const refreshToken = async (req, res) => {
   try {
-    const accessToken = await refreshToken(req.cookies.refreshToken);
-    res.status(200).json({ accessToken });
+    const newAccessToken = await refreshTokenService(req.cookies.refreshToken);
+    res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
+    handleError(res, error.message);
+  }
+};
+
+export const oauthCallback = async (req, res) => {
+  try {
+    if (!req.user)
+      return res.status(400).json({ message: "Authentication failed" });
+
+    const { refreshToken, accessToken } = await handleOAuthTokens(req.user);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
+    );
   } catch (error) {
     handleError(res, error.message);
   }

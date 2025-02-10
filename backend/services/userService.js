@@ -3,11 +3,17 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import {
   findUserByEmail,
+  findUserById,
   createUser,
   updateUser,
   updateUserById,
 } from "../repositories/userRepository.js";
 import { sendResetEmail } from "../utils/emailUtils.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../services/tokenService.js";
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -42,27 +48,16 @@ export const registerUser = async (email, password) => {
 export const loginUser = async (email, password) => {
   let user = await findUserByEmail(email);
   if (!user) throw new Error("Invalid credentials.");
-
   if (!user.password) throw new Error("Set a password via OAuth.");
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials.");
 
-  return user;
-};
-
-export const handleOAuthLogin = async (email, provider) => {
-  let user = await findUserByEmail(email);
-
-  if (!user) {
-    return createUser({ email, authProvider: [provider] });
-  }
-
-  if (!user.authProvider.includes(provider)) {
-    await updateUser(email, { authProvider: { push: provider } });
-  }
-
-  return user;
+  return {
+    user,
+    accessToken: generateAccessToken(user),
+    refreshToken: generateRefreshToken(user),
+  };
 };
 
 export const forgotPassword = async (email) => {
@@ -114,20 +109,32 @@ export const logoutUser = async () => {
 };
 
 export const refreshToken = async (refreshToken) => {
-  if (!refreshToken) throw new Error("No refresh token provided");
+  if (!refreshToken) throw new Error("No refresh token provided.");
 
-  return new Promise((resolve, reject) => {
-    jwt.verify(
-      refreshToken,
-      process.env.REFRESH_SECRET,
-      async (err, decoded) => {
-        if (err) return reject(new Error("Invalid refresh token"));
+  const decoded = verifyRefreshToken(refreshToken);
+  if (!decoded) throw new Error("Invalid refresh token.");
 
-        const user = await findUserById(decoded.id);
-        if (!user) return reject(new Error("User not found"));
+  const user = await findUserById(decoded.id);
+  if (!user) throw new Error("User not found.");
 
-        resolve(generateAccessToken(user));
-      }
-    );
-  });
+  return generateAccessToken(user);
+};
+
+export const handleOAuthTokens = async (user) => {
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  return { accessToken, refreshToken };
+};
+
+export const handleOAuthLogin = async (email, provider) => {
+  let user = await findUserByEmail(email);
+
+  if (!user) {
+    user = await createUser({ email, authProvider: [provider] });
+  } else if (!user.authProvider.includes(provider)) {
+    await updateUser(email, { authProvider: { push: provider } });
+  }
+
+  return user;
 };
