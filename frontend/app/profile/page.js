@@ -1,11 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ProfilePictureUpload from "../components/ProfilePictureUpload";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
+    const storedToken = localStorage.getItem("accessToken");
+    setToken(storedToken);
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
     const fetchUserProfile = async () => {
       try {
         const response = await fetch(
@@ -14,36 +24,33 @@ const ProfilePage = () => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              Authorization: `Bearer ${token}`,
             },
-            credentials: "include",
           }
         );
 
-        console.log("API Response:", response);
-
-        if (!response.ok) {
-          throw new Error(
-            `HTTP Error: ${response.status} - ${response.statusText}`
-          );
-        }
+        if (!response.ok) throw new Error("Failed to fetch profile");
 
         const data = await response.json();
-        console.log("Parsed JSON:", data);
         setUser(data);
       } catch (error) {
-        console.error("Failed to fetch user profile:", error);
+        console.error("Profile fetch error:", error);
+        router.push("/login");
       }
     };
 
     fetchUserProfile();
-  }, []);
+  }, [token]);
 
   const handleProfileUpdate = async (profilePicture) => {
     try {
-      await fetch("/api/users/me", {
+      const token = localStorage.getItem("accessToken");
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ profilePicture }),
       });
       setUser((prev) => ({ ...prev, profilePicture }));
