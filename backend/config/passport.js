@@ -8,8 +8,24 @@ dotenv.config();
 
 const commonOAuthStrategyHandler =
   (provider) => async (accessToken, refreshToken, profile, done) => {
+    console.log(`OAuth ${provider} Profile:`, profile); // Debugging profile object
+
+    // Ensure email is retrieved correctly
     const email =
-      profile.emails?.[0]?.value || `${profile.username}@github.com`;
+      profile.emails && profile.emails.length > 0
+        ? profile.emails[0].value
+        : profile.username
+        ? `${profile.username}@github.com`
+        : null;
+
+    if (!email) {
+      console.error(
+        `OAuth Error: No email found for ${provider} profile:`,
+        profile
+      );
+      return done(new Error("No email found from OAuth provider"), null);
+    }
+
     try {
       const user = await handleOAuthLogin(email, provider);
       return done(null, user);

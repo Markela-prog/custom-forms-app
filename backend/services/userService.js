@@ -130,14 +130,17 @@ export const handleOAuthTokens = async (user) => {
 };
 
 export const handleOAuthLogin = async (email, provider) => {
+  if (!email) {
+    throw new Error("OAuth login failed: Email is undefined.");
+  }
+
   let user = await findUserByEmail(email);
 
   if (!user) {
     user = await createUser({ email, authProvider: [provider] });
   } else {
-    // Ensure authProvider is always an array
     const updatedAuthProviders = Array.isArray(user.authProvider)
-      ? [...new Set([...user.authProvider, provider])] // Avoid duplicate entries
+      ? [...new Set([...user.authProvider, provider])]
       : [provider];
 
     await updateUser(email, { authProvider: updatedAuthProviders });
