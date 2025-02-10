@@ -29,6 +29,7 @@ export const updateUserProfileService = async (userId, updateData, fileBuffer, f
   
     // 🗑 Delete old image if a new one is uploaded
     if (user?.profilePicture && fileBuffer) {
+      console.log(`Deleting previous image: ${user.profilePicture}`);
       await deleteImage(user.profilePicture);
     }
   
@@ -47,3 +48,4 @@ export const updateUserProfileService = async (userId, updateData, fileBuffer, f
     console.log("✅ Profile updated successfully:", updatedUser);
     return updatedUser;
   };
+  
