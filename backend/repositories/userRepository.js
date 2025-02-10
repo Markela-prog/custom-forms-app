@@ -21,11 +21,9 @@ export const updateUserById = async (id, updateData) => {
 };
 
 export const findUserByResetToken = async () => {
-  const user = await prisma.user.findFirst({
+  return prisma.user.findFirst({
     where: {
-      resetTokenExpiry: { gte: new Date() }, // Find by expiry first
+      resetTokenExpiry: { gte: new Date() },
     },
   });
-  console.log("User found by expiry:", user);
-  return user;
 };

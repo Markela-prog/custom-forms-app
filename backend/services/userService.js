@@ -63,32 +63,45 @@ export const forgotPassword = async (email) => {
 };
 
 export const resetPassword = async (token, newPassword) => {
-    const user = await findUserByResetToken();
-    
-    if (!user) {
-        throw new Error("Invalid or expired token - No matching user found.");
-    }
+  if (!token) {
+    throw new Error("No reset token provided.");
+  }
 
-    if (!user.resetToken) {
-        console.error("Reset Token is missing in the database:", user);
-        throw new Error("Reset token not set.");
-    }
+  const user = await findUserByResetToken();
 
-    const isValidToken = await bcrypt.compare(token, user.resetToken);
-    
-    if (!isValidToken) {
-        throw new Error("Invalid or expired token - Token mismatch.");
-    }
+  if (!user) {
+    throw new Error("Invalid or expired token - No matching user found.");
+  }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+  console.log("User found:", user);
 
-    await updateUser(user.email, {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-    });
+  // Check if resetToken exists
+  if (!user.resetToken) {
+    console.error("Reset Token is missing in the database:", user);
+    throw new Error("Reset token not set.");
+  }
+
+  // Validate token using bcrypt
+  const isValidToken = await bcrypt.compare(token, user.resetToken);
+
+  if (!isValidToken) {
+    throw new Error("Invalid or expired token - Token mismatch.");
+  }
+
+  console.log("Token matched successfully!");
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update user with new password
+  await updateUser(user.email, {
+    password: hashedPassword,
+    resetToken: null,
+    resetTokenExpiry: null,
+  });
+
+  console.log("Password reset successful for:", user.email);
 };
-
 
 export const setPassword = async (userId, password) => {
   let user = await findUserById(userId);
