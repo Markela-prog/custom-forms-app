@@ -15,20 +15,6 @@ import {
   verifyRefreshToken,
 } from "../services/tokenService.js";
 
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "15m" }
-  );
-};
-
-const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
-};
-
 export const registerUser = async (email, password) => {
   let user = await findUserByEmail(email);
 
@@ -112,7 +98,7 @@ export const refreshToken = async (refreshToken) => {
   if (!refreshToken) throw new Error("No refresh token provided.");
 
   const decoded = verifyRefreshToken(refreshToken);
-  if (!decoded) throw new Error("Invalid refresh token.");
+  if (!decoded) throw new Error("Invalid or expired refresh token.");
 
   const user = await findUserById(decoded.id);
   if (!user) throw new Error("User not found.");
@@ -136,5 +122,8 @@ export const handleOAuthLogin = async (email, provider) => {
     await updateUser(email, { authProvider: { push: provider } });
   }
 
-  return user;
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  return { user, accessToken, refreshToken };
 };

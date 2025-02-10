@@ -76,13 +76,14 @@ export const setPasswordController = async (req, res) => {
   }
 };
 
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
+  await logoutUser();
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: true,
     sameSite: "Strict",
   });
-  res.status(200).json(logoutUser());
+  res.status(200).json({ message: "Logged out successfully" });
 };
 
 export const refreshToken = async (req, res) => {
@@ -90,6 +91,9 @@ export const refreshToken = async (req, res) => {
     const newAccessToken = await refreshTokenService(req.cookies.refreshToken);
     res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
+    if (error.message === "Invalid or expired refresh token.") {
+      return res.status(403).json({ message: error.message });
+    }
     handleError(res, error.message);
   }
 };
@@ -99,7 +103,10 @@ export const oauthCallback = async (req, res) => {
     if (!req.user)
       return res.status(400).json({ message: "Authentication failed" });
 
-    const { refreshToken, accessToken } = await handleOAuthTokens(req.user);
+    const { refreshToken, accessToken } = await handleOAuthLogin(
+      req.user.email,
+      req.user.authProvider[0]
+    );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
