@@ -101,13 +101,16 @@ export const refreshToken = async (req, res) => {
 
 export const oauthCallback = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user || !req.user.email) {
+      console.error("OAuth Error: User or email is undefined", req.user);
       return res.status(400).json({ message: "Authentication failed" });
     }
 
+    const authProvider = req.user.authProvider?.[0] || "GITHUB"; // Default to GitHub if missing
+
     const { user, accessToken, refreshToken } = await handleOAuthLogin(
       req.user.email,
-      req.user.authProvider[0]
+      authProvider
     );
 
     res.cookie("refreshToken", refreshToken, {
