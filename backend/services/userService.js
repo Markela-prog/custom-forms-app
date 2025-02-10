@@ -53,7 +53,8 @@ export const forgotPassword = async (email) => {
 
   const resetToken = crypto.randomBytes(32).toString("hex");
   const hashedToken = await bcrypt.hash(resetToken, 10);
-  const expiry = new Date(Date.now() + 3600000); // 1 hour
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+
 
   await updateUser(email, {
     resetToken: hashedToken,
