@@ -13,7 +13,6 @@ const commonOAuthStrategyHandler =
 
       let email = profile.emails?.[0]?.value || null;
 
-      // Fetch email manually if GitHub does not provide it
       if (!email && provider === "GITHUB") {
         console.log("Fetching email from GitHub API...");
         const response = await fetch("https://api.github.com/user/emails", {
@@ -38,10 +37,8 @@ const commonOAuthStrategyHandler =
         return done(new Error(`No email found from ${provider}`), null);
       }
 
-      // Proceed with OAuth login
       const user = await handleOAuthLogin(email, provider);
 
-      // ✅ Ensure `done()` passes a user object with all needed fields
       return done(null, {
         id: user.user.id,
         email: user.user.email,

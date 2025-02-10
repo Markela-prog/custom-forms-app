@@ -22,7 +22,7 @@ router.post("/reset-password", resetPasswordController);
 router.post("/set-password", protect, setPasswordController);
 router.post("/refresh-token", refreshToken);
 
-// OAuth routes (Google & GitHub)
+// OAuth routes
 router.get("/google", passport.authenticate("google"));
 router.get(
   "/google/callback",

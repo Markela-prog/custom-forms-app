@@ -108,7 +108,6 @@ export const oauthCallback = async (req, res) => {
       return res.status(400).json({ message: "Authentication failed" });
     }
 
-    // Use the correct auth provider
     const authProvider =
       req.user.authProvider?.length > 0 ? req.user.authProvider[0] : "GITHUB";
 
