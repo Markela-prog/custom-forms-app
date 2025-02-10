@@ -31,17 +31,20 @@ export const getPublicUserProfile = async (req, res) => {
   }
 };
 
-
-
 export const updateUserProfile = async (req, res) => {
   try {
-    const updatedUser = await updateUserProfileService(req.user.id, req.body);
+    const fileBuffer = req.file?.buffer;
+    const fileType = req.file?.mimetype;
+
+    const updatedUser = await updateUserProfileService(
+      req.user.id,
+      req.body,
+      fileBuffer,
+      fileType
+    );
+
     res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
-    if (error.message === "Invalid update fields" || error.message === "No update data provided") {
-      handleError(res, error.message, 400);
-    } else {
-      handleError(res, "Internal Server Error", 500);
-    }
+    handleError(res, error.message, 400);
   }
 };

@@ -2,6 +2,8 @@ import {
   findUserById,
   updateUserProfile as updateUserProfileRepo,
 } from "../repositories/userRepository.js";
+import prisma from "../prisma/prismaClient.js";
+import { uploadImage, deleteImage } from "../utils/cloudinary.js";
 
 export const getUserProfileService = async (userId) => {
   const user = await findUserById(userId);
@@ -9,22 +11,36 @@ export const getUserProfileService = async (userId) => {
   return user;
 };
 
-export const updateUserProfileService = async (userId, updateData) => {
-  if (!updateData) throw new Error("No update data provided");
-
-  const validFields = ["username", "profilePicture"];
-  const updatePayload = {};
-
-  validFields.forEach((field) => {
-    if (updateData[field] && updateData[field].trim() !== "") {
-      updatePayload[field] = updateData[field];
+export const updateUserProfileService = async (userId, updateData, fileBuffer, fileType) => {
+    if (!updateData && !fileBuffer) throw new Error("No update data provided");
+  
+    const validFields = ["username"];
+    const updatePayload = {};
+  
+    validFields.forEach((field) => {
+      if (updateData[field]) updatePayload[field] = updateData[field];
+    });
+  
+    // 🔍 Fetch user's current profile picture
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profilePicture: true },
+    });
+  
+    // 🗑 Delete old image if a new one is uploaded
+    if (user.profilePicture && fileBuffer) {
+      await deleteImage(user.profilePicture);
     }
-  });
-
-  if (Object.keys(updatePayload).length === 0) {
-    throw new Error("Invalid update fields");
-  }
-
-  return updateUserProfileRepo(userId, updatePayload);
-};
-
+  
+    // 📤 Upload new image if provided
+    if (fileBuffer) {
+      const uploadedImage = await uploadImage(fileBuffer, fileType);
+      updatePayload.profilePicture = uploadedImage.secure_url;
+    }
+  
+    // ✅ Update user profile
+    return prisma.user.update({
+      where: { id: userId },
+      data: updatePayload,
+    });
+  };

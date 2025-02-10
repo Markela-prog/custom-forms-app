@@ -13,20 +13,25 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
     setError(null);
 
     try {
-      const imageUrl = await uploadImage(file); // Get Cloudinary URL
-      console.log("📸 Uploaded Image URL:", imageUrl);
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("profilePicture", file);
 
-      // Send image URL to backend to update the user profile
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-        body: JSON.stringify({ profilePicture: imageUrl }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData, // Send file directly
+        }
+      );
 
-      onUploadSuccess(imageUrl); // Update UI with new profile picture
+      if (!response.ok) throw new Error("Profile update failed");
+
+      const data = await response.json();
+      onUploadSuccess(data.user.profilePicture);
     } catch (err) {
       setError("Failed to upload image");
       console.error(err);

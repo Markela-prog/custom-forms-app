@@ -5,17 +5,24 @@ import ProfilePictureUpload from "../components/ProfilePictureUpload";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      router.push("/login"); // Redirect if not authenticated
+    const storedToken = localStorage.getItem("accessToken");
+    if (!storedToken) {
+      router.push("/login"); // Redirect to login if not authenticated
       return;
     }
+    setToken(storedToken);
+  }, [router]);
+
+  useEffect(() => {
+    if (!token) return;
 
     const fetchUserProfile = async () => {
       try {
+        console.log(`📡 Fetching profile with token: ${token}`);
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
           {
@@ -30,16 +37,36 @@ const ProfilePage = () => {
         if (!response.ok) throw new Error("Failed to fetch profile");
 
         const data = await response.json();
-        console.log("👤 User Profile:", data);
         setUser(data);
       } catch (error) {
-        console.error("Profile fetch error:", error);
+        console.error("❌ Profile fetch error:", error);
         router.push("/login");
       }
     };
 
     fetchUserProfile();
-  }, []);
+  }, [token]);
+
+  // ✅ Function to update profile picture in state
+  const handleProfileUpdate = async (profilePicture) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      console.log(`🖼 Updating profile picture with token: ${token}`);
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ profilePicture }),
+      });
+
+      // ✅ Update local state without refreshing the page
+      setUser((prev) => ({ ...prev, profilePicture }));
+    } catch (error) {
+      console.error("❌ Profile update failed:", error);
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -47,6 +74,7 @@ const ProfilePage = () => {
 
       {user ? (
         <div className="flex flex-col items-center">
+          {/* ✅ Profile picture updates instantly */}
           <img
             src={user.profilePicture || "/default-avatar.png"}
             alt="Profile"
@@ -57,7 +85,8 @@ const ProfilePage = () => {
           </h2>
           <p className="text-gray-500">{user.email}</p>
 
-          <ProfilePictureUpload onUploadSuccess={() => {}} />
+          {/* ✅ Pass function to update profile picture instantly */}
+          <ProfilePictureUpload onUploadSuccess={handleProfileUpdate} />
         </div>
       ) : (
         <p>Loading...</p>
