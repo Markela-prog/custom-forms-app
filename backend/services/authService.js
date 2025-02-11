@@ -128,20 +128,49 @@ export const handleOAuthTokens = async (user) => {
   return { accessToken, refreshToken };
 };
 
-export const handleOAuthLogin = async (email, provider) => {
+export const handleOAuthLogin = async (email, provider, profile) => {
   if (!email) throw new Error("OAuth login failed: Email is undefined.");
 
   let user = await prisma.user.findUnique({ where: { email } });
 
+  // Extract profile picture URL from OAuth
+  const profilePictureUrl = profile.photos?.[0]?.value || null;
+  const username = profile.displayName || profile.username || null;
+
   if (!user) {
+    // Create a new user with OAuth profile picture URL
     user = await prisma.user.create({
-      data: { email, authProvider: [provider] },
+      data: {
+        email,
+        username,
+        profilePicture: profilePictureUrl, // Save the image URL directly
+        authProvider: [provider],
+      },
     });
-  } else if (!user.authProvider.includes(provider)) {
-    await prisma.user.update({
-      where: { email },
-      data: { authProvider: { push: provider } },
-    });
+  } else {
+    // Update missing username if empty
+    if (!user.username && username) {
+      await prisma.user.update({
+        where: { email },
+        data: { username },
+      });
+    }
+
+    // Update profile picture if missing
+    if (!user.profilePicture && profilePictureUrl) {
+      await prisma.user.update({
+        where: { email },
+        data: { profilePicture: profilePictureUrl },
+      });
+    }
+
+    // Ensure OAuth provider is stored
+    if (!user.authProvider.includes(provider)) {
+      await prisma.user.update({
+        where: { email },
+        data: { authProvider: { push: provider } },
+      });
+    }
   }
 
   return {

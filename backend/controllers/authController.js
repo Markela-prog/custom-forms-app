@@ -111,9 +111,10 @@ export const oauthCallback = async (req, res) => {
     const authProvider =
       req.user.authProvider?.length > 0 ? req.user.authProvider[0] : "GITHUB";
 
-    const { accessToken, refreshToken } = await handleOAuthLogin(
+    const { user, accessToken, refreshToken } = await handleOAuthLogin(
       req.user.email,
-      authProvider
+      authProvider,
+      req.user
     );
 
     res.cookie("refreshToken", refreshToken, {
