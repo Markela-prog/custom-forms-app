@@ -6,6 +6,7 @@ import {
   getFormsByUserController,
   deleteFormController,
   finalizeFormController,
+  updateFormController
 } from "../controllers/formController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -17,5 +18,6 @@ router.get("/template/:templateId", protect, getFormsByTemplateController);
 router.get("/user/:userId", protect, getFormsByUserController);
 router.delete("/:formId", protect, deleteFormController);
 router.put("/:formId/finalize", protect, finalizeFormController);
+router.put("/:formId", protect, updateFormController);
 
 export default router;
