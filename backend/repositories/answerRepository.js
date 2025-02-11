@@ -1,7 +1,7 @@
 import prisma from "../prisma/prismaClient.js";
 
 export const submitAnswers = async (formId, answers) => {
-  return prisma.answer.createMany({
+  return await prisma.answer.createMany({
     data: answers.map((answer) => ({
       formId,
       questionId: answer.questionId,
@@ -10,15 +10,13 @@ export const submitAnswers = async (formId, answers) => {
   });
 };
 
-export const getAnswersByFormId = async (formId) => {
-  return prisma.answer.findMany({
+export const getAnswersByForm = async (formId) => {
+  return await prisma.answer.findMany({
     where: { formId },
-    include: { question: true },
-  });
-};
-
-export const deleteAnswersByFormId = async (formId) => {
-  return prisma.answer.deleteMany({
-    where: { formId },
+    include: {
+      question: {
+        select: { title: true, type: true },
+      },
+    },
   });
 };
