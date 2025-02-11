@@ -43,11 +43,11 @@ export const reorderQuestions = async (orderedQuestions) => {
     const updatePromises = orderedQuestions.map((question, index) =>
       prisma.question.update({
         where: { id: question.id },
-        data: { order: index },
+        data: { order: index }, // Assigning new order index dynamically
       })
     );
 
-    return await Promise.all(updatePromises);
+    return await Promise.all(updatePromises); // Ensure it runs as a batch
   } catch (error) {
     throw new Error(`Failed to reorder questions: ${error.message}`);
   }
