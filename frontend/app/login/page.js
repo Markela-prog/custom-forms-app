@@ -27,7 +27,6 @@ const LoginPage = () => {
 
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      // 🔴 Fix: Store token correctly and ensure it is set before redirecting
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
         console.log("Stored Token:", localStorage.getItem("accessToken"));
@@ -43,6 +42,11 @@ const LoginPage = () => {
       console.error("Login Error:", error.message);
       setError(error.message);
     }
+  };
+
+  // 🔹 Handle OAuth Login Redirects
+  const handleOAuthLogin = (provider) => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
   };
 
   return (
@@ -74,6 +78,24 @@ const LoginPage = () => {
           Login
         </button>
       </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-gray-600">Or login with:</p>
+        <div className="flex justify-center gap-4 mt-2">
+          <button
+            onClick={() => handleOAuthLogin("google")}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Login with Google
+          </button>
+          <button
+            onClick={() => handleOAuthLogin("github")}
+            className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900"
+          >
+            Login with GitHub
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

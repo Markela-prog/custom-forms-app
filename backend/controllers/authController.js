@@ -111,7 +111,7 @@ export const oauthCallback = async (req, res) => {
     const authProvider =
       req.user.authProvider?.length > 0 ? req.user.authProvider[0] : "GITHUB";
 
-    const { user, accessToken, refreshToken } = await handleOAuthLogin(
+    const { accessToken, refreshToken } = await handleOAuthLogin(
       req.user.email,
       authProvider
     );
@@ -122,16 +122,9 @@ export const oauthCallback = async (req, res) => {
       sameSite: "Strict",
     });
 
-    return res.status(200).json({
-      message: "OAuth login successful",
-      user,
-      accessToken,
-      refreshToken,
-    });
-
-    // res.redirect(
-    //   `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
-    // );
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth-success?token=${accessToken}`
+    );
   } catch (error) {
     console.error("OAuth Callback Error:", error);
     res.status(500).json({ message: error.message });
