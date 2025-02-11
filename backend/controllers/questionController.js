@@ -50,9 +50,16 @@ export const deleteQuestionController = async (req, res) => {
 
 export const reorderQuestionsController = async (req, res) => {
   try {
-    await reorderQuestionsService(req.body.questions);
+    const { questions } = req.body;
+
+    if (!questions || !Array.isArray(questions)) {
+      return res.status(400).json({ message: "Invalid input format" });
+    }
+
+    await reorderQuestionsService(questions);
     res.json({ message: "Questions reordered successfully" });
   } catch (error) {
+    console.error("Error reordering questions:", error);
     res.status(400).json({ message: error.message });
   }
 };
