@@ -4,7 +4,6 @@ import {
   getFormsByTemplateService,
   getFormsByUserService,
   deleteFormService,
-  updateFormController,
   finalizeFormService,
 } from "../services/formService.js";
 
@@ -49,23 +48,6 @@ export const getFormsByUserController = async (req, res) => {
     res.json(forms);
   } catch (error) {
     res.status(404).json({ message: error.message });
-  }
-};
-
-export const updateFormController = async (req, res) => {
-  try {
-    const { formId } = req.params;
-    const { answers } = req.body;
-    const userId = req.user.id;
-
-    if (!answers || !Array.isArray(answers)) {
-      return res.status(400).json({ message: "Invalid answers format" });
-    }
-
-    const result = await updateFormService(formId, answers, userId);
-    res.json(result);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
   }
 };
 

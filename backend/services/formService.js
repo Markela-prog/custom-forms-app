@@ -28,17 +28,6 @@ export const getFormsByUserService = async (userId) => {
   return await getFormsByUser(userId);
 };
 
-export const updateFormService = async (formId, answers, userId) => {
-  const form = await getFormById(formId);
-  if (!form) throw new Error("Form not found");
-
-  if (form.userId !== userId && form.template.ownerId !== userId) {
-    throw new Error("Unauthorized to edit this form");
-  }
-
-  return await updateForm(formId, answers);
-};
-
 export const deleteFormService = async (formId, userId) => {
   const form = await getFormById(formId);
   if (!form) throw new Error("Form not found");

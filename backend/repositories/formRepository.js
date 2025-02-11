@@ -49,29 +49,6 @@ export const getFormsByUser = async (userId) => {
   });
 };
 
-export const updateForm = async (formId, answers) => {
-  return prisma.$transaction(async (tx) => {
-    const form = await tx.form.findUnique({
-      where: { id: formId },
-      include: { answers: true },
-    });
-
-    if (!form) throw new Error("Form not found");
-    if (form.isFinalized) throw new Error("Cannot edit a finalized form");
-
-    await tx.answer.deleteMany({ where: { formId } });
-    await tx.answer.createMany({
-      data: answers.map((answer) => ({
-        formId,
-        questionId: answer.questionId,
-        value: answer.value,
-      })),
-    });
-
-    return { message: "Form updated successfully" };
-  });
-};
-
 export const deleteForm = async (formId) => {
   return prisma.form.delete({
     where: { id: formId },
