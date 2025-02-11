@@ -8,6 +8,8 @@ import userRoutes from "./routes/userRoutes.js";
 import passport from "./config/passport.js";
 import templateRoutes from "./routes/templateRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
+import formRoutes from "./routes/formRoutes.js";
+import answerRoutes from "./routes/answerRoutes.js";
 
 dotenv.config();
 
@@ -29,6 +31,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/templates", templateRoutes);
 app.use("/api/questions", questionRoutes);
+app.use("/api/forms", formRoutes);
+app.use("/api/answers", answerRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
