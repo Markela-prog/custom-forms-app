@@ -37,7 +37,7 @@ const commonOAuthStrategyHandler =
         return done(new Error(`No email found from ${provider}`), null);
       }
 
-      const user = await handleOAuthLogin(email, provider);
+      const user = await handleOAuthLogin(email, provider, profile);
 
       return done(null, {
         id: user.user.id,
