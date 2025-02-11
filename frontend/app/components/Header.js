@@ -1,8 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const Header = () => {
+  const pathname = usePathname();
   const router = useRouter();
+
+  if (pathname === "/login" || pathname === "/register") return null;
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken"); // Remove token
@@ -11,7 +14,10 @@ const Header = () => {
 
   return (
     <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
-      <h1 className="text-xl cursor-pointer" onClick={() => router.push("/dashboard")}>
+      <h1
+        className="text-xl cursor-pointer"
+        onClick={() => router.push("/dashboard")}
+      >
         Custom Forms
       </h1>
       <nav className="flex gap-4">
