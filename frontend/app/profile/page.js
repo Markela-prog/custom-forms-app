@@ -1,17 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ProfilePictureUpload from "../components/ProfilePictureUpload";
+import ProfileEditForm from "../components/ProfileEditForm";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [editing, setEditing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("accessToken");
     if (!storedToken) {
-      router.push("/login"); // Redirect to login if not authenticated
+      router.push("/login");
       return;
     }
     setToken(storedToken);
@@ -47,34 +48,12 @@ const ProfilePage = () => {
     fetchUserProfile();
   }, [token]);
 
-  // ✅ Function to update profile picture in state
-  const handleProfileUpdate = async (profilePicture) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      console.log(`🖼 Updating profile picture with token: ${token}`);
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ profilePicture }),
-      });
-
-      // ✅ Update local state without refreshing the page
-      setUser((prev) => ({ ...prev, profilePicture }));
-    } catch (error) {
-      console.error("❌ Profile update failed:", error);
-    }
-  };
-
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 dark:bg-gray-800 rounded-lg">
       <h1 className="text-xl font-semibold text-center mb-4">Profile</h1>
 
       {user ? (
         <div className="flex flex-col items-center">
-          {/* ✅ Profile picture updates instantly */}
           <img
             src={user.profilePicture || "/default-avatar.png"}
             alt="Profile"
@@ -85,8 +64,15 @@ const ProfilePage = () => {
           </h2>
           <p className="text-gray-500">{user.email}</p>
 
-          {/* ✅ Pass function to update profile picture instantly */}
-          <ProfilePictureUpload onUploadSuccess={handleProfileUpdate} />
+          {/* ✅ Edit Profile Button */}
+          <button
+            onClick={() => setEditing(true)}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Edit Profile
+          </button>
+
+          {editing && <ProfileEditForm user={user} onClose={() => setEditing(false)} />}
         </div>
       ) : (
         <p>Loading...</p>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { uploadImage } from "../utils/cloudinary";
 
 const ProfilePictureUpload = ({ onUploadSuccess }) => {
   const [uploading, setUploading] = useState(false);

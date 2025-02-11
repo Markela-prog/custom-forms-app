@@ -1,3 +1,2 @@
-Oauth login 
 edit user profile
 Dashboard
