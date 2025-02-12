@@ -31,8 +31,10 @@ export const getAllTemplates = async (
     // ✅ Non-authenticated users: Only public templates
     whereClause = { isPublic: true };
   } else if (isAdmin) {
-    // ✅ Admin users: See all templates
-    whereClause = {}; // No filter, get all templates
+    // ✅ Admin users: Fetch ALL templates (including private ones)
+    whereClause = {
+      deletedAt: null, // Ensure we don't fetch soft-deleted templates
+    };
   } else {
     // ✅ Authenticated users: Public + Owned + Access-granted templates
     whereClause = {
@@ -51,7 +53,6 @@ export const getAllTemplates = async (
     include: { owner: true, tags: { include: { tag: true } } },
   });
 };
-
 
 export const updateTemplate = async (templateId, updateData) => {
   return prisma.template.update({
