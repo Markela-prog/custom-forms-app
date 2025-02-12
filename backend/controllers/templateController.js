@@ -18,8 +18,8 @@ export const createTemplateController = async (req, res) => {
 
 export const getTemplateByIdController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const template = await getTemplateByIdService(id);
+    const { templateId } = req.params;
+    const template = await getTemplateByIdService(templateId);
     res.json(template);
   } catch (error) {
     res.status(403).json({ message: error.message });
@@ -30,7 +30,11 @@ export const getAllTemplatesController = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const templates = await getAllTemplatesService(page, pageSize, req.user?.id);
+    const templates = await getAllTemplatesService(
+      page,
+      pageSize,
+      req.user?.id
+    );
     res.json(templates);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -39,7 +43,10 @@ export const getAllTemplatesController = async (req, res) => {
 
 export const updateTemplateController = async (req, res) => {
   try {
-    const updatedTemplate = await updateTemplateService(req.params.id, req.body);
+    const updatedTemplate = await updateTemplateService(
+      req.params.id,
+      req.body
+    );
     res.json(updatedTemplate);
   } catch (error) {
     res.status(400).json({ message: error.message });

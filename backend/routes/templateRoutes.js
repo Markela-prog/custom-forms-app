@@ -13,12 +13,12 @@ const router = express.Router();
 
 router.post("/", protect, createTemplateController);
 
-router.get("/:id", checkTemplateAccess, getTemplateByIdController);
+router.get("/:templateId", checkTemplateAccess, getTemplateByIdController);
 
 router.get("/", getAllTemplatesController);
 
-router.put("/:id", protect, checkOwnerOrAdmin, updateTemplateController);
+router.put("/:templateId", protect, checkOwnerOrAdmin, updateTemplateController);
 
-router.delete("/:id", protect, checkOwnerOrAdmin, deleteTemplateController);
+router.delete("/:templateId", protect, checkOwnerOrAdmin, deleteTemplateController);
 
 export default router;

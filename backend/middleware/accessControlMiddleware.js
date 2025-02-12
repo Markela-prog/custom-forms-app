@@ -1,5 +1,6 @@
 import prisma from "../prisma/prismaClient.js";
 
+
 export const checkTemplateAccess = async (req, res, next) => {
   try {
     const { templateId } = req.params;
@@ -30,9 +31,7 @@ export const checkTemplateAccess = async (req, res, next) => {
       : false;
 
     if (!hasAccess) {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized: No access to this template" });
+      return res.status(403).json({ message: "Unauthorized: No access to this template" });
     }
 
     next();
@@ -63,9 +62,7 @@ export const checkFormAccess = async (req, res, next) => {
 
     // Users can only manage their own forms
     if (form.userId !== userId) {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized: You can only manage your own forms" });
+      return res.status(403).json({ message: "Unauthorized: You can only manage your own forms" });
     }
 
     // Ensure user has access to the template the form belongs to
@@ -75,9 +72,7 @@ export const checkFormAccess = async (req, res, next) => {
       );
 
       if (!hasAccess) {
-        return res
-          .status(403)
-          .json({ message: "Unauthorized: No access to this template's form" });
+        return res.status(403).json({ message: "Unauthorized: No access to this template's form" });
       }
     }
 
@@ -103,11 +98,7 @@ export const checkOwnerOrAdmin = async (req, res, next) => {
     }
 
     if (template.ownerId !== userId && req.user.role !== "ADMIN") {
-      return res
-        .status(403)
-        .json({
-          message: "Unauthorized: Only OWNER or ADMIN can modify this template",
-        });
+      return res.status(403).json({ message: "Unauthorized: Only OWNER or ADMIN can modify this template" });
     }
 
     next();
@@ -127,9 +118,7 @@ export const preventDuplicateFormSubmission = async (req, res, next) => {
     });
 
     if (existingForm) {
-      return res
-        .status(400)
-        .json({ message: "You have already submitted this form" });
+      return res.status(400).json({ message: "You have already submitted this form" });
     }
 
     next();
