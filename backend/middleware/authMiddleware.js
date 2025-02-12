@@ -47,11 +47,11 @@ export const optionalAuth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
-    console.log("✅ Authenticated User:", req.user);
-
     if (!req.user) {
       console.log("❌ Token invalid, user not found.");
       req.user = null; // Treat as guest instead of blocking request
+    } else {
+      console.log("✅ Authenticated User:", req.user);
     }
   } catch (error) {
     console.error("❌ JWT Verification Failed:", error);
