@@ -52,6 +52,7 @@ export const getAllTemplates = async (
   });
 };
 
+
 export const updateTemplate = async (templateId, updateData) => {
   return prisma.template.update({
     where: { id: templateId },

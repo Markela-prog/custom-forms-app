@@ -6,7 +6,7 @@ import {
   updateTemplateController,
   deleteTemplateController,
 } from "../controllers/templateController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, optionalAuth } from "../middleware/authMiddleware.js";
 import { checkTemplateAccess, checkOwnerOrAdmin } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();
@@ -15,7 +15,7 @@ router.post("/", protect, createTemplateController);
 
 router.get("/:templateId", checkTemplateAccess, getTemplateByIdController);
 
-router.get("/", getAllTemplatesController);
+router.get("/", optionalAuth, getAllTemplatesController);
 
 router.put("/:templateId", protect, checkOwnerOrAdmin, updateTemplateController);
 

@@ -33,3 +33,30 @@ export const isAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const optionalAuth = async (req, res, next) => {
+  let token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    console.log("🔹 No token provided (User is unauthenticated)");
+    req.user = null; // Allow access as a guest
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
+
+    console.log("✅ Authenticated User:", req.user);
+
+    if (!req.user) {
+      console.log("❌ Token invalid, user not found.");
+      req.user = null; // Treat as guest instead of blocking request
+    }
+  } catch (error) {
+    console.error("❌ JWT Verification Failed:", error);
+    req.user = null; // Allow guest access if token is invalid
+  }
+
+  next();
+};

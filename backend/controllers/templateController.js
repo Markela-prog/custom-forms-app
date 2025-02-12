@@ -28,25 +28,26 @@ export const getTemplateByIdController = async (req, res) => {
 
 export const getAllTemplatesController = async (req, res) => {
   try {
+    console.log("🔹 User in Request:", req.user);
+
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
 
-    // Check if user is authenticated (optional token check)
     const userId = req.user?.id || null;
     const isAdmin = req.user?.role === "ADMIN";
 
-    const templates = await getAllTemplatesService(
-      page,
-      pageSize,
-      userId,
-      isAdmin
-    );
+    console.log("✅ Fetching Templates for User:", { userId, isAdmin });
+
+    const templates = await getAllTemplatesService(page, pageSize, userId, isAdmin);
+
+    console.log("✅ Templates Retrieved:", templates.length);
     res.json(templates);
   } catch (error) {
-    console.error("Error fetching templates:", error);
+    console.error("❌ Error fetching templates:", error);
     res.status(400).json({ message: error.message });
   }
 };
+
 
 export const updateTemplateController = async (req, res) => {
   try {
