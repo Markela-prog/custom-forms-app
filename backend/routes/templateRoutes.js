@@ -8,13 +8,16 @@ import {
   deleteTemplateController,
 } from "../controllers/templateController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { checkTemplateAccess, checkOwnerOrAdmin } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", protect, createTemplateController);
-router.get("/:id", getTemplateByIdController);
+
+router.get("/:id", checkTemplateAccess, getTemplateByIdController);
 router.get("/", getAllTemplatesController);
-router.put("/:id", protect, updateTemplateController);
-router.delete("/:id", protect, deleteTemplateController);
+
+router.put("/:id", protect, checkOwnerOrAdmin, updateTemplateController);
+router.delete("/:id", protect, checkOwnerOrAdmin, deleteTemplateController);
 
 export default router;

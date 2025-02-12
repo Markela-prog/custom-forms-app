@@ -30,9 +30,23 @@ export const getTemplateByIdService = async (templateId, userId, isAdmin) => {
   return template;
 };
 
-export const getAllTemplatesService = async (page, pageSize) => {
-  return await getAllTemplates(page, pageSize);
+export const getAllTemplatesService = async (page = 1, pageSize = 10, userId) => {
+  return prisma.template.findMany({
+    where: {
+      OR: [
+        { isPublic: true },
+        { ownerId: userId },
+        {
+          accessControl: { some: { userId } },
+        },
+      ],
+    },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    include: { owner: true, tags: { include: { tag: true } } },
+  });
 };
+
 
 export const updateTemplateService = async (templateId, updateData) => {
   return await updateTemplate(templateId, updateData);

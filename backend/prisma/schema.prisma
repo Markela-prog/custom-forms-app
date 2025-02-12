@@ -81,6 +81,8 @@ enum AccessRole {
   OWNER
   EDITOR
   RESPONDENT
+  AUTHENTICATED
+  NON_AUTHENTICATED
 }
 
 model TemplateStats {

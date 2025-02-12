@@ -8,14 +8,18 @@ import {
   finalizeFormController,
 } from "../controllers/formController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { checkTemplateAccess, checkOwnerOrAdmin, checkFormAccess, preventDuplicateFormSubmission } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();
 
-router.post("/:templateId", protect, createFormController);
-router.get("/:formId", protect, getFormByIdController);
-router.get("/template/:templateId", protect, getFormsByTemplateController);
+router.post("/:templateId", protect, checkTemplateAccess, preventDuplicateFormSubmission, createFormController);
+
+router.get("/template/:templateId", protect, checkOwnerOrAdmin, getFormsByTemplateController);
+
 router.get("/user/:userId", protect, getFormsByUserController);
-router.delete("/:formId", protect, deleteFormController);
-router.put("/:formId/finalize", protect, finalizeFormController);
+router.get("/:formId", protect, checkFormAccess, getFormByIdController);
+
+router.delete("/:formId", protect, checkOwnerOrAdmin, deleteFormController);
+router.put("/:formId/finalize", protect, checkFormAccess, finalizeFormController);
 
 export default router;
