@@ -35,10 +35,14 @@ export const getFormByIdController = async (req, res) => {
 
 export const getFormsByTemplateController = async (req, res) => {
   try {
-    const forms = await getFormsByTemplateService(req.params.templateId);
+    const forms = await getFormsByTemplateService(
+      req.params.templateId,
+      req.user.id,
+      req.user.role === "ADMIN"
+    );
     res.json(forms);
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    res.status(403).json({ message: error.message });
   }
 };
 

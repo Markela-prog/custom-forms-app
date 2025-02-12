@@ -49,6 +49,12 @@ export const getFormsByUser = async (userId) => {
   });
 };
 
+export const getFormsByUserAndTemplate = async (userId, templateId) => {
+    return prisma.form.findFirst({
+      where: { userId, templateId },
+    });
+  };
+
 export const deleteForm = async (formId) => {
   return prisma.form.delete({
     where: { id: formId },
