@@ -33,13 +33,11 @@ export const getAllTemplatesController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
 
-    // Get user details (or null if unauthenticated)
     const userId = req.user?.id || null;
-    const isAdmin = req.user?.role === "ADMIN"; // ✅ Pass this down!
+    const isAdmin = req.user?.role === "ADMIN";
 
     console.log("✅ Fetching Templates for User:", { userId, isAdmin });
 
-    // ✅ Make sure isAdmin is passed to the service!
     const templates = await getAllTemplatesService(
       page,
       pageSize,

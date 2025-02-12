@@ -4,7 +4,7 @@ import prisma from "../prisma/prismaClient.js";
 export const checkTemplateAccess = async (req, res, next) => {
   try {
     const { templateId } = req.params;
-    const userId = req.user?.id; // Will be `undefined` for NON_AUTH users
+    const userId = req.user?.id;
 
     const template = await prisma.template.findUnique({
       where: { id: templateId },
@@ -15,17 +15,14 @@ export const checkTemplateAccess = async (req, res, next) => {
       return res.status(404).json({ message: "Template not found" });
     }
 
-    // Public templates are accessible to everyone
     if (template.isPublic) {
       return next();
     }
 
-    // Owner or Admin can access private templates
     if (userId && (template.ownerId === userId || req.user.role === "ADMIN")) {
       return next();
     }
 
-    // Private templates: check if the user has explicit access
     const hasAccess = userId
       ? template.accessControl.some((access) => access.userId === userId)
       : false;
@@ -55,17 +52,14 @@ export const checkFormAccess = async (req, res, next) => {
       return res.status(404).json({ message: "Form not found" });
     }
 
-    // Admins can access any form
     if (req.user.role === "ADMIN") {
       return next();
     }
 
-    // Users can only manage their own forms
     if (form.userId !== userId) {
       return res.status(403).json({ message: "Unauthorized: You can only manage your own forms" });
     }
 
-    // Ensure user has access to the template the form belongs to
     if (!form.template.isPublic) {
       const hasAccess = form.template.accessControl.some(
         (access) => access.userId === userId

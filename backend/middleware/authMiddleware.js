@@ -39,7 +39,7 @@ export const optionalAuth = async (req, res, next) => {
 
   if (!token) {
     console.log("🔹 No token provided (User is unauthenticated)");
-    req.user = null; // Allow access as a guest
+    req.user = null;
     return next();
   }
 

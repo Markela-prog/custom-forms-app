@@ -133,22 +133,19 @@ export const handleOAuthLogin = async (email, provider, profile) => {
 
   let user = await prisma.user.findUnique({ where: { email } });
 
-  // Extract profile picture URL from OAuth
   const profilePictureUrl = profile.photos?.[0]?.value || null;
   const username = profile.displayName || profile.username || null;
 
   if (!user) {
-    // Create a new user with OAuth profile picture URL
     user = await prisma.user.create({
       data: {
         email,
         username,
-        profilePicture: profilePictureUrl, // Save the image URL directly
+        profilePicture: profilePictureUrl,
         authProvider: [provider],
       },
     });
   } else {
-    // Update missing username if empty
     if (!user.username && username) {
       await prisma.user.update({
         where: { email },
@@ -156,7 +153,6 @@ export const handleOAuthLogin = async (email, provider, profile) => {
       });
     }
 
-    // Update profile picture if missing
     if (!user.profilePicture && profilePictureUrl) {
       await prisma.user.update({
         where: { email },
@@ -164,7 +160,6 @@ export const handleOAuthLogin = async (email, provider, profile) => {
       });
     }
 
-    // Ensure OAuth provider is stored
     if (!user.authProvider.includes(provider)) {
       await prisma.user.update({
         where: { email },

@@ -8,10 +8,8 @@ export const checkTemplateAccess = async (templateId, userId) => {
 
   if (!template) throw new Error("Template not found");
 
-  // If public, allow any authenticated user
   if (template.isPublic) return true;
 
-  // If private, only allow owner or explicitly added users
   const hasAccess = template.accessControl.some(
     (access) => access.userId === userId
   );
@@ -50,10 +48,10 @@ export const getFormsByUser = async (userId) => {
 };
 
 export const getFormsByUserAndTemplate = async (userId, templateId) => {
-    return prisma.form.findFirst({
-      where: { userId, templateId },
-    });
-  };
+  return prisma.form.findFirst({
+    where: { userId, templateId },
+  });
+};
 
 export const deleteForm = async (formId) => {
   return prisma.form.delete({
@@ -62,18 +60,12 @@ export const deleteForm = async (formId) => {
   });
 };
 
-export const finalizeForm = async (formId, userId) => {
-  const form = await prisma.form.findUnique({
-    where: { id: formId },
-    include: { template: true },
-  });
+export const finalizeFormService = async (formId, userId) => {
+  const form = await prisma.form.findUnique({ where: { id: formId } });
 
   if (!form) throw new Error("Form not found");
-
-  // Only form owner or template owner can finalize
-  if (form.userId !== userId && form.template.ownerId !== userId) {
-    throw new Error("Unauthorized to finalize this form");
-  }
+  if (form.isFinalized) throw new Error("Form already submitted");
+  if (form.userId !== userId) throw new Error("Unauthorized");
 
   return prisma.form.update({
     where: { id: formId },

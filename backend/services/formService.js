@@ -13,7 +13,6 @@ export const createFormService = async (
   userId,
   emailCopyRequested
 ) => {
-  // Check if the user already submitted a form for this template
   const existingForm = await getFormsByUserAndTemplate(userId, templateId);
   if (existingForm) {
     throw new Error("You have already filled out this template");

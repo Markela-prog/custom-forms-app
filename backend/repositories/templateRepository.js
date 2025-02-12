@@ -14,7 +14,7 @@ export const getTemplateById = async (templateId) => {
       owner: true,
       questions: true,
       tags: { include: { tag: true } },
-      accessControl: true, // Needed for permission checks
+      accessControl: true,
     },
   });
 };
@@ -28,20 +28,17 @@ export const getAllTemplates = async (
   let whereClause = {};
 
   if (!userId) {
-    // ✅ Non-authenticated users: Only public templates
     whereClause = { isPublic: true };
   } else if (isAdmin) {
-    // ✅ Admins see everything (ignore public/private filter)
     whereClause = {
-      deletedAt: null, // Ensure we don’t fetch soft-deleted templates
+      deletedAt: null,
     };
   } else {
-    // ✅ Regular Authenticated Users
     whereClause = {
       OR: [
-        { isPublic: true }, // Public templates
-        { ownerId: userId }, // Templates owned by user
-        { accessControl: { some: { userId } } }, // Templates user has explicit access to
+        { isPublic: true },
+        { ownerId: userId },
+        { accessControl: { some: { userId } } },
       ],
     };
   }
