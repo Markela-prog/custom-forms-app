@@ -14,9 +14,10 @@ export const getTemplateByIdService = async (templateId) => {
   return await getTemplateById(templateId);
 };
 
-export const getAllTemplatesService = async (page, pageSize, userId) => {
-  return await getAllTemplates(page, pageSize, userId);
+export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) => {
+  return await getAllTemplates(page, pageSize, userId, isAdmin);
 };
+
 
 export const updateTemplateService = async (templateId, updateData) => {
   return await updateTemplate(templateId, updateData);

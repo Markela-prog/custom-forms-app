@@ -33,12 +33,19 @@ export const getAllTemplatesController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
 
+    // Get user details (or null if unauthenticated)
     const userId = req.user?.id || null;
-    const isAdmin = req.user?.role === "ADMIN";
+    const isAdmin = req.user?.role === "ADMIN"; // ✅ Pass this down!
 
     console.log("✅ Fetching Templates for User:", { userId, isAdmin });
 
-    const templates = await getAllTemplatesService(page, pageSize, userId, isAdmin);
+    // ✅ Make sure isAdmin is passed to the service!
+    const templates = await getAllTemplatesService(
+      page,
+      pageSize,
+      userId,
+      isAdmin
+    );
 
     console.log("✅ Templates Retrieved:", templates.length);
     res.json(templates);
@@ -47,7 +54,6 @@ export const getAllTemplatesController = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
 
 export const updateTemplateController = async (req, res) => {
   try {
