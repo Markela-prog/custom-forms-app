@@ -60,7 +60,7 @@ export const deleteForm = async (formId) => {
   });
 };
 
-export const finalizeFormService = async (formId, userId) => {
+export const finalizeForm = async (formId, userId) => {
   const form = await prisma.form.findUnique({ where: { id: formId } });
 
   if (!form) throw new Error("Form not found");
