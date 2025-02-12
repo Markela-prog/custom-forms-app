@@ -30,11 +30,10 @@ export const getAllTemplatesController = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
-    const templates = await getAllTemplatesService(
-      page,
-      pageSize,
-      req.user?.id
-    );
+
+    const userId = req.user?.id || null;
+
+    const templates = await getAllTemplatesService(page, pageSize, userId);
     res.json(templates);
   } catch (error) {
     res.status(400).json({ message: error.message });

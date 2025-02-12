@@ -6,3 +6,5 @@ Not owner can add questions to template +
 Can create answers after form finalization +
 Not owner can view the forms of templates
 Several users can fill the same form +
+
+Get templates no private tempaltes

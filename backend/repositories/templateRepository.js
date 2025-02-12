@@ -20,18 +20,24 @@ export const getTemplateById = async (templateId) => {
 };
 
 export const getAllTemplates = async (page = 1, pageSize = 10, userId) => {
-  return prisma.template.findMany({
+  const query = {
     where: {
-      OR: [
-        { isPublic: true },
-        { ownerId: userId },
-        { accessControl: { some: { userId } } }, // Users who have explicit access
-      ],
+      OR: [{ isPublic: true }],
     },
     skip: (page - 1) * pageSize,
     take: pageSize,
     include: { owner: true, tags: { include: { tag: true } } },
-  });
+  };
+
+  // If user is authenticated, include private templates they have access to
+  if (userId) {
+    query.where.OR.push(
+      { ownerId: userId }, // Templates the user owns
+      { accessControl: { some: { userId } } } // Templates where user has explicit access
+    );
+  }
+
+  return prisma.template.findMany(query);
 };
 
 export const updateTemplate = async (templateId, updateData) => {
