@@ -34,7 +34,7 @@ app.use("/api/templates", templateRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
-app.use("/api/templates", templateAccessRoutes);
+app.use("/api/template-access", templateAccessRoutes);
 
 
 const PORT = process.env.PORT || 5000;
