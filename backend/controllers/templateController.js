@@ -31,11 +31,19 @@ export const getAllTemplatesController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
 
+    // Check if user is authenticated (optional token check)
     const userId = req.user?.id || null;
+    const isAdmin = req.user?.role === "ADMIN";
 
-    const templates = await getAllTemplatesService(page, pageSize, userId);
+    const templates = await getAllTemplatesService(
+      page,
+      pageSize,
+      userId,
+      isAdmin
+    );
     res.json(templates);
   } catch (error) {
+    console.error("Error fetching templates:", error);
     res.status(400).json({ message: error.message });
   }
 };

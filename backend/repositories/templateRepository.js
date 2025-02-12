@@ -19,25 +19,37 @@ export const getTemplateById = async (templateId) => {
   });
 };
 
-export const getAllTemplates = async (page = 1, pageSize = 10, userId) => {
-  const query = {
-    where: {
-      OR: [{ isPublic: true }],
-    },
+export const getAllTemplates = async (
+  page = 1,
+  pageSize = 10,
+  userId,
+  isAdmin
+) => {
+  let whereClause = {};
+
+  if (!userId) {
+    // ✅ Non-authenticated users: Only public templates
+    whereClause = { isPublic: true };
+  } else if (isAdmin) {
+    // ✅ Admin users: See all templates
+    whereClause = {}; // No filter, get all templates
+  } else {
+    // ✅ Authenticated users: Public + Owned + Access-granted templates
+    whereClause = {
+      OR: [
+        { isPublic: true }, // Public templates
+        { ownerId: userId }, // Templates owned by user
+        { accessControl: { some: { userId } } }, // Templates user has explicit access to
+      ],
+    };
+  }
+
+  return prisma.template.findMany({
+    where: whereClause,
     skip: (page - 1) * pageSize,
     take: pageSize,
     include: { owner: true, tags: { include: { tag: true } } },
-  };
-
-  // If user is authenticated, include private templates they have access to
-  if (userId) {
-    query.where.OR.push(
-      { ownerId: userId }, // Templates the user owns
-      { accessControl: { some: { userId } } } // Templates where user has explicit access
-    );
-  }
-
-  return prisma.template.findMany(query);
+  });
 };
 
 export const updateTemplate = async (templateId, updateData) => {
