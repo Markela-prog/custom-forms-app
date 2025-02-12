@@ -69,20 +69,11 @@ model TemplateAccess {
   id         String  @id @default(uuid())
   templateId String
   userId     String
-  role       AccessRole
 
-  template   Template @relation(fields: [templateId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, userId])
-}
-
-enum AccessRole {
-  OWNER
-  EDITOR
-  RESPONDENT
-  AUTHENTICATED
-  NON_AUTHENTICATED
 }
 
 model TemplateStats {

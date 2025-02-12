@@ -10,6 +10,7 @@ import templateRoutes from "./routes/templateRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
 import answerRoutes from "./routes/answerRoutes.js";
+import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use("/api/templates", templateRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
+app.use("/api/templates", templateAccessRoutes);
 
 
 const PORT = process.env.PORT || 5000;
