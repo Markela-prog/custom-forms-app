@@ -56,7 +56,7 @@ export const getAllTemplatesController = async (req, res) => {
 export const updateTemplateController = async (req, res) => {
   try {
     const updatedTemplate = await updateTemplateService(
-      req.params.id,
+      req.params.templateId,
       req.body
     );
     res.json(updatedTemplate);
@@ -67,7 +67,7 @@ export const updateTemplateController = async (req, res) => {
 
 export const deleteTemplateController = async (req, res) => {
   try {
-    await deleteTemplateService(req.params.id);
+    await deleteTemplateService(req.params.templateId);
     res.json({ message: "Template deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });

@@ -38,7 +38,7 @@ export const optionalAuth = async (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    console.log("🔹 No token provided (User is unauthenticated)");
+    console.log("No token provided (User is unauthenticated)");
     req.user = null;
     return next();
   }
@@ -48,14 +48,13 @@ export const optionalAuth = async (req, res, next) => {
     req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
     if (!req.user) {
-      console.log("❌ Token invalid, user not found.");
-      req.user = null; // Treat as guest instead of blocking request
+      console.log("Token invalid, user not found.");
+      req.user = null;
     } else {
-      console.log("✅ Authenticated User:", req.user);
+      console.log("Authenticated User:", req.user);
     }
   } catch (error) {
-    console.error("❌ JWT Verification Failed:", error);
-    req.user = null; // Allow guest access if token is invalid
+    req.user = null;
   }
 
   next();
