@@ -1,6 +1,5 @@
 import prisma from "../prisma/prismaClient.js";
 
-
 export const checkTemplateAccess = async (req, res, next) => {
   try {
     const { templateId } = req.params;

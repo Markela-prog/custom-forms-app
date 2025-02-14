@@ -23,11 +23,12 @@ export const createQuestionController = async (req, res) => {
 
 export const getQuestionsByTemplateController = async (req, res) => {
   try {
-    const questions = await getQuestionsByTemplateService(
-      req.params.templateId
-    );
+    const { templateId } = req.params;
+
+    const questions = await getQuestionsByTemplateService(templateId);
     res.json(questions);
   } catch (error) {
+    console.error("Get Questions Error:", error);
     res.status(404).json({ message: error.message });
   }
 };
