@@ -54,27 +54,38 @@ export const deleteQuestionController = async (req, res) => {
   }
 };
 
-// src/controllers/questionController.js
 export const reorderQuestionsController = async (req, res) => {
-  console.log("🟡 [Controller] Entered reorderQuestionsController");
-
   try {
     const { questions } = req.body;
+    const { templateId } = req.params;
 
-    if (!questions || !Array.isArray(questions)) {
-      console.error("❌ [Controller] Invalid input format");
+    if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    const result = await reorderQuestionsService(questions, req.user);
-    console.log("✅ [Controller] Reorder Result:", result);
+    // 🟡 Fetch All Template Questions
+    const allTemplateQuestions = await getQuestionsByTemplateId(templateId);
+    const allQuestionIds = allTemplateQuestions.map((q) => q.id);
+    const providedIds = questions.map((q) => q.id);
 
-    res.json(result);
+    // 🟡 Validate: All Template Questions Provided
+    if (!areAllQuestionsProvided(allQuestionIds, providedIds)) {
+      return res.status(400).json({
+        message: "Not all questions of the template were provided",
+      });
+    }
+
+    // 🟡 Call Service to Perform Reorder
+    const result = await reorderQuestionsService(questions, templateId);
+    res.status(200).json(result);
   } catch (error) {
-    console.error(
-      "❌ [Controller] Error in reorderQuestionsController:",
-      error.message
-    );
     res.status(400).json({ message: error.message });
   }
+};
+
+// ✅ Utility: Check if All Template Questions Are Provided
+const areAllQuestionsProvided = (allQuestionIds, providedIds) => {
+  if (allQuestionIds.length !== providedIds.length) return false;
+  const missing = allQuestionIds.filter((id) => !providedIds.includes(id));
+  return missing.length === 0;
 };
