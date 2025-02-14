@@ -24,17 +24,19 @@ export const deleteQuestionService = async (questionId) => {
 };
 
 export const reorderQuestionsService = async (orderedQuestions, templateId) => {
-  // 🟠 Validate Order Format
+  // 🟠 Validate Orders Format
   validateOrders(orderedQuestions);
 
-  // 🟠 Perform Reorder
+  // 🟠 Perform Reorder by Assigning Consecutive Order
   const sorted = orderedQuestions.sort((a, b) => a.order - b.order);
   const finalOrders = sorted.map((q, index) => ({
     id: q.id,
     order: index,
   }));
 
+  // 🟠 Batch Update Orders
   await batchUpdateQuestionOrders(finalOrders, templateId);
+
   return { message: "Questions reordered successfully" };
 };
 

@@ -5,7 +5,7 @@ import {
   deleteQuestionService,
   reorderQuestionsService,
 } from "../services/questionService.js";
-import { getQuestionsByTemplateId } from "../repositories/questionRepository.js";
+import { getQuestionsByTemplateId, getQuestionsByIds } from "../repositories/questionRepository.js";
 
 export const createQuestionController = async (req, res) => {
   try {
@@ -55,38 +55,58 @@ export const deleteQuestionController = async (req, res) => {
   }
 };
 
-// ✅ Controller: Validate Provided Questions Against Template Questions
 export const reorderQuestionsController = async (req, res) => {
   try {
     const { questions } = req.body;
-    const { templateId } = req.params;
 
+    // 🟠 Validate Request Format
     if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    // 🟡 Fetch All Questions FROM THIS TEMPLATE ONLY
+    // 🟠 1. Ensure All Provided Questions Are from One Template
+    const dbQuestions = await getQuestionsByIds(questions.map((q) => q.id));
+    if (dbQuestions.length !== questions.length) {
+      return res.status(400).json({
+        message: "Some provided questions do not exist",
+      });
+    }
+
+    // 🟠 2. Validate Single Template Ownership
+    const templateId = dbQuestions[0].templateId;
+    const sameTemplate = dbQuestions.every(
+      (q) => q.templateId === templateId
+    );
+    if (!sameTemplate) {
+      return res.status(400).json({
+        message: "All provided questions must belong to the same template",
+      });
+    }
+
+    // 🟠 3. Ensure All Questions of Template Are Provided
     const allTemplateQuestions = await getQuestionsByTemplateId(templateId);
     const allQuestionIds = allTemplateQuestions.map((q) => q.id);
     const providedIds = questions.map((q) => q.id);
 
-    // 🟡 Validate: All Template Questions Were Provided
     if (!areAllQuestionsProvided(allQuestionIds, providedIds)) {
       return res.status(400).json({
         message: "Not all questions of the template were provided",
       });
     }
 
-    // 🟡 Perform Reorder via Service
+    // 🟠 4. Perform Reorder
     const result = await reorderQuestionsService(questions, templateId);
     res.status(200).json(result);
   } catch (error) {
+    console.error("❌ [Controller] Error in reorderQuestionsController:", error);
     res.status(400).json({ message: error.message });
   }
 };
 
 // ✅ Utility Function: Ensure All Questions Are Provided
 const areAllQuestionsProvided = (allQuestionIds, providedIds) => {
-  if (allQuestionIds.length !== providedIds.length) return false;
-  return allQuestionIds.every((id) => providedIds.includes(id));
+  return (
+    allQuestionIds.length === providedIds.length &&
+    allQuestionIds.every((id) => providedIds.includes(id))
+  );
 };
