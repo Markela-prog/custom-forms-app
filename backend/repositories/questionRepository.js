@@ -45,10 +45,7 @@ export const getQuestionsByIds = async (questionIds) => {
   });
 };
 
-export const batchUpdateQuestionOrders = async (
-  orderedQuestions,
-  templateId
-) => {
+export const batchUpdateQuestionOrders = async (orderedQuestions, templateId) => {
   const updatePromises = orderedQuestions.map(({ id, order }) =>
     prisma.question.update({
       where: { id, templateId },
@@ -56,4 +53,5 @@ export const batchUpdateQuestionOrders = async (
     })
   );
   await Promise.all(updatePromises);
+  console.log("✅ [Repository] Batch update completed successfully.");
 };

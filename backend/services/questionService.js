@@ -23,37 +23,50 @@ export const deleteQuestionService = async (questionId) => {
   return await deleteQuestion(questionId);
 };
 
-export const reorderQuestionsService = async (orderedQuestions) => {
+export const reorderQuestionsService = async (
+  orderedQuestions,
+  currentUser
+) => {
   console.log("🟡 [Service] Starting reorderQuestionsService...");
 
-  const questionIds = orderedQuestions.map((q) => q.id);
-  const dbQuestions = await getQuestionsByIds(questionIds);
-  if (dbQuestions.length !== orderedQuestions.length) {
-    throw new Error("Some questions do not exist");
-  }
+  // 🟠 Get All Questions for the Template
+  const templateId = orderedQuestions[0].templateId; // Passed from middleware
+  const allQuestions = await getQuestionsByTemplateId(templateId);
+  console.log("📌 [Service] All Questions for Template:", allQuestions);
 
-  // 🟠 Merge Partial Reorder
-  const allQuestions = await getQuestionsByTemplateId(
-    dbQuestions[0].templateId
+  // 🟠 Map Provided Orders
+  const providedOrderMap = new Map(
+    orderedQuestions.map((q) => [q.id, q.order])
   );
-  const providedIds = orderedQuestions.map((q) => q.id);
 
-  const remainingQuestions = allQuestions
-    .filter((q) => !providedIds.includes(q.id))
-    .sort((a, b) => a.order - b.order);
+  // 🟠 Separate Reordered and Remaining Questions
+  const reorderedQuestions = allQuestions.filter((q) =>
+    providedOrderMap.has(q.id)
+  );
+  const remainingQuestions = allQuestions.filter(
+    (q) => !providedOrderMap.has(q.id)
+  );
 
-  const sortedProvided = [...orderedQuestions].sort(
+  // 🟠 Apply Provided Orders to Reordered Questions
+  reorderedQuestions.forEach((q) => {
+    q.order = providedOrderMap.get(q.id);
+  });
+
+  // 🟠 Combine and Sort
+  const combined = [...reorderedQuestions, ...remainingQuestions].sort(
     (a, b) => a.order - b.order
   );
-  const combined = [...sortedProvided, ...remainingQuestions].map(
-    (q, index) => ({
-      id: q.id,
-      order: index,
-    })
-  );
+
+  // 🟠 Assign Consecutive Orders
+  const finalOrders = combined.map((q, index) => ({
+    id: q.id,
+    order: index,
+  }));
+
+  console.log("📌 [Service] Final Combined Orders:", finalOrders);
 
   // 🟠 Batch Update
-  await batchUpdateQuestionOrders(combined, dbQuestions[0].templateId);
+  await batchUpdateQuestionOrders(finalOrders, templateId);
   console.log("✅ [Service] Questions reordered successfully!");
 
   return { message: "Questions reordered successfully" };
