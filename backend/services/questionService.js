@@ -5,19 +5,10 @@ import {
   deleteQuestion,
   reorderQuestions,
 } from "../repositories/questionRepository.js";
-import { getTemplateById } from "../repositories/templateRepository.js";
 
-
-export const createQuestionService = async (templateId, userId, isAdmin, questionData) => {
-    const template = await getTemplateById(templateId);
-    if (!template) throw new Error("Template not found");
-  
-    if (template.ownerId !== userId && !isAdmin) {
-      throw new Error("Unauthorized: Only template owner or admin can add questions");
-    }
-  
-    return await createQuestion(templateId, questionData);
-  };
+export const createQuestionService = async (templateId, questionData) => {
+  return await createQuestion(templateId, questionData);
+};
 
 export const getQuestionsByTemplateService = async (templateId) => {
   return await getQuestionsByTemplateId(templateId);

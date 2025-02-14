@@ -1,4 +1,3 @@
-// src/utils/accessControlUtils.js
 import prisma from "../prisma/prismaClient.js";
 
 /**

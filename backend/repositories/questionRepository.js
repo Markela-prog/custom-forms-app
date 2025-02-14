@@ -39,16 +39,12 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const reorderQuestions = async (orderedQuestions) => {
-  try {
-    const updatePromises = orderedQuestions.map((question, index) =>
-      prisma.question.update({
-        where: { id: question.id },
-        data: { order: index }
-      })
-    );
+  const updatePromises = orderedQuestions.map((question, index) =>
+    prisma.question.update({
+      where: { id: question.id },
+      data: { order: index },
+    })
+  );
 
-    return await Promise.all(updatePromises);
-  } catch (error) {
-    throw new Error(`Failed to reorder questions: ${error.message}`);
-  }
+  return await Promise.all(updatePromises);
 };

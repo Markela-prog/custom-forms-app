@@ -26,7 +26,6 @@ export const getTemplateByIdController = async (req, res) => {
   }
 };
 
-
 export const getAllTemplatesController = async (req, res) => {
   try {
     console.log("🔹 User in Request:", req.user);
