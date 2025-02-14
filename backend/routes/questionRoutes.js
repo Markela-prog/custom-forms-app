@@ -7,13 +7,10 @@ import {
   reorderQuestionsController,
 } from "../controllers/questionController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
-import { checkQuestionAccess, checkQuestionOwnerOrAdmin, checkReorderPermission } from "../middleware/questionAccessMiddleware.js";
+import { checkQuestionAccess, checkQuestionOwnerOrAdmin } from "../middleware/questionAccessMiddleware.js";
 const router = express.Router();
 
-router.put("/reorder", protect, (req, res, next) => {
-  console.log("🟡 [Router] Received Reorder Request");
-  next();
-}, checkReorderPermission, reorderQuestionsController);
+router.put("/reorder", protect, reorderQuestionsController);
 router.get("/:templateId", optionalAuth, checkQuestionAccess, getQuestionsByTemplateController);
 router.post("/:templateId", protect, checkQuestionOwnerOrAdmin, createQuestionController);
 router.put("/:questionId", protect, checkQuestionOwnerOrAdmin, updateQuestionController);

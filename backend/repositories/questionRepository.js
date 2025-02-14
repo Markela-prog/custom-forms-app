@@ -39,33 +39,24 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const getQuestionsByIds = async (questionIds) => {
-  console.log("🟡 [Repository] Fetching questions by IDs:", questionIds);
-
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, templateId: true },
   });
 
-  console.log("📌 [Repository] Questions Fetched from DB:", questions);
   return questions;
 };
 
-// ✅ Batch Update Orders (Scoped by Template)
 export const batchUpdateQuestionOrders = async (
   orderedQuestions,
   templateId
 ) => {
-  console.log(
-    "🟡 [Repository] Starting batch update for Template ID:",
-    templateId
-  );
-
   const updatePromises = orderedQuestions.map(({ id, order }) =>
     prisma.question
       .update({
         where: {
           id,
-          templateId, // Scoped to Template
+          templateId,
         },
         data: { order },
       })
@@ -79,5 +70,4 @@ export const batchUpdateQuestionOrders = async (
   );
 
   await Promise.all(updatePromises);
-  console.log("✅ [Repository] Batch update completed successfully.");
 };
