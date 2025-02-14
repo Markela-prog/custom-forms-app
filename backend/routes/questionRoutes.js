@@ -7,15 +7,13 @@ import {
   reorderQuestionsController,
 } from "../controllers/questionController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
-import { checkQuestionAccess, checkQuestionOwnerOrAdmin } from "../middleware/questionAccessMiddleware.js";
+import { checkQuestionPermission } from "../middleware/questionAccessMiddleware.js";
 const router = express.Router();
 
-router.put("/reorder", protect, checkQuestionOwnerOrAdmin, reorderQuestionsController);
-router.get("/:templateId", optionalAuth, checkQuestionAccess, getQuestionsByTemplateController);
-router.post("/:templateId", protect, checkQuestionOwnerOrAdmin, createQuestionController);
-router.put("/:questionId", protect, checkQuestionOwnerOrAdmin, updateQuestionController);
-router.delete("/:questionId", protect, checkQuestionOwnerOrAdmin, deleteQuestionController);
-
-
+router.put("/reorder", protect, checkQuestionPermission({ modify: true }), reorderQuestionsController);
+router.get("/:templateId", optionalAuth, checkQuestionPermission({ modify: false }), getQuestionsByTemplateController);
+router.post("/:templateId", protect, checkQuestionPermission({ modify: true }), createQuestionController);
+router.put("/:questionId", protect, checkQuestionPermission({ modify: true }), updateQuestionController);
+router.delete("/:questionId", protect, checkQuestionPermission({ modify: true }), deleteQuestionController);
 
 export default router;

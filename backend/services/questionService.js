@@ -24,29 +24,38 @@ export const deleteQuestionService = async (questionId) => {
 };
 
 export const reorderQuestionsService = async (orderedQuestions) => {
+  // 🟡 Validate Orders and Fetch Questions
   const questionIds = orderedQuestions.map((q) => q.id);
-
   const dbQuestions = await getQuestionsByIds(questionIds);
-
   if (dbQuestions.length !== orderedQuestions.length) {
     throw new Error("Some questions do not exist");
   }
 
-  const templateId = dbQuestions[0]?.templateId;
-
-  const uniqueTemplate = dbQuestions.every((q) => q.templateId === templateId);
-  if (!uniqueTemplate) {
+  // 🟡 Validate Same Template
+  const templateId = dbQuestions[0].templateId;
+  if (!dbQuestions.every((q) => q.templateId === templateId)) {
     throw new Error("All questions must belong to the same template");
   }
 
-  const orders = orderedQuestions.map((q) => q.order);
+  // 🟡 Fetch All Questions for Template
+  const allQuestions = await getQuestionsByTemplateId(templateId);
 
-  const uniqueOrders = new Set(orders);
-  if (uniqueOrders.size !== orders.length) {
-    throw new Error("Duplicate order values found");
-  }
+  // 🟡 Handle Partial Reorder
+  const providedIds = orderedQuestions.map((q) => q.id);
+  const remainingQuestions = allQuestions.filter(
+    (q) => !providedIds.includes(q.id)
+  );
 
-  await batchUpdateQuestionOrders(orderedQuestions, templateId);
+  // 🟡 Merge and Consecutively Order All Questions
+  const combined = [...orderedQuestions, ...remainingQuestions].map(
+    (q, index) => ({
+      id: q.id,
+      order: index,
+    })
+  );
+
+  // 🟡 Batch Update
+  await batchUpdateQuestionOrders(combined, templateId);
 
   return { message: "Questions reordered successfully" };
 };

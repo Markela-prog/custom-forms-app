@@ -39,12 +39,10 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const getQuestionsByIds = async (questionIds) => {
-  const questions = await prisma.question.findMany({
+  return prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, templateId: true },
   });
-
-  return questions;
 };
 
 export const batchUpdateQuestionOrders = async (
@@ -52,22 +50,10 @@ export const batchUpdateQuestionOrders = async (
   templateId
 ) => {
   const updatePromises = orderedQuestions.map(({ id, order }) =>
-    prisma.question
-      .update({
-        where: {
-          id,
-          templateId,
-        },
-        data: { order },
-      })
-      .catch((error) => {
-        console.error(
-          `❌ [Repository] Failed to update question ${id}:`,
-          error.message
-        );
-        throw error;
-      })
+    prisma.question.update({
+      where: { id, templateId },
+      data: { order },
+    })
   );
-
   await Promise.all(updatePromises);
 };
