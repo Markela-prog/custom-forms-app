@@ -11,7 +11,7 @@ import { checkQuestionAccess, checkQuestionOwnerOrAdmin, checkReorderOwnership }
 const router = express.Router();
 
 router.put("/reorder", protect, checkReorderOwnership, reorderQuestionsController);
-router.get("/:templateId", optionalAuth, checkQuestionAccess({ modify: false }), getQuestionsByTemplateController);
+router.get("/:templateId", optionalAuth, checkQuestionAccess, getQuestionsByTemplateController);
 router.post("/:templateId", protect, checkQuestionOwnerOrAdmin, createQuestionController);
 router.put("/:questionId", protect, checkQuestionOwnerOrAdmin, updateQuestionController);
 router.delete("/:questionId", protect, checkQuestionOwnerOrAdmin, deleteQuestionController);
