@@ -24,10 +24,5 @@ export const deleteQuestionService = async (questionId) => {
 
 export const reorderQuestionsService = async (orderedQuestions) => {
 
-  const orderSet = new Set(orderedQuestions.map((q) => q.order));
-  if (orderSet.size !== orderedQuestions.length) {
-    throw new Error("Duplicate order values found: Order must be unique within the template");
-  }
-
   return await reorderQuestions(orderedQuestions);
 };

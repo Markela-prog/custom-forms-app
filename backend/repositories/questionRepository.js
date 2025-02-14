@@ -39,45 +39,47 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const reorderQuestions = async (orderedQuestions) => {
-  // 1️⃣ Get All Questions from Database
-  const questionIds = orderedQuestions.map(q => q.id);
-  const questions = await prisma.question.findMany({
+  const questionIds = orderedQuestions.map((q) => q.id);
+
+  // 1️⃣ Fetch All Questions from DB
+  const dbQuestions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
-    include: { template: true },
+    select: { id: true, templateId: true },
   });
 
-  if (questions.length !== orderedQuestions.length) {
+  // 2️⃣ Check if All Questions Exist
+  if (dbQuestions.length !== orderedQuestions.length) {
     throw new Error("Some questions do not exist");
   }
 
-  // 2️⃣ Ensure All Questions Are from the Same Template
-  const templateId = questions[0].templateId;
-  const uniqueTemplateCheck = questions.every(
+  // 3️⃣ Ensure All Questions Are from the Same Template
+  const templateId = dbQuestions[0].templateId;
+  const uniqueTemplateCheck = dbQuestions.every(
     (q) => q.templateId === templateId
   );
   if (!uniqueTemplateCheck) {
     throw new Error("All questions must belong to the same template");
   }
 
-  // 3️⃣ Ensure Orders Are Unique
+  // 4️⃣ Ensure Unique Order Values
   const orders = orderedQuestions.map((q) => q.order);
   const uniqueOrders = new Set(orders);
   if (uniqueOrders.size !== orders.length) {
     throw new Error("Duplicate order values found");
   }
 
-  // 4️⃣ Batch Update Orders for Questions (Within Template Scope)
+  // 5️⃣ Batch Update Orders for Questions (With Correct Scope)
   const updatePromises = orderedQuestions.map(({ id, order }) =>
     prisma.question.update({
       where: {
-        id,
-        templateId, // <- Scoped to template
+        id, // ✅ Correct Question ID
+        templateId: templateId, // ✅ Add Template Scope
       },
       data: { order },
     })
   );
 
-  // 5️⃣ Execute Batch Update
+  // 6️⃣ Execute Batch Update
   await Promise.all(updatePromises);
 
   return { message: "Questions reordered successfully" };
