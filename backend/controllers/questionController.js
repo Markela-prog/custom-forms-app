@@ -5,6 +5,7 @@ import {
   deleteQuestionService,
   reorderQuestionsService,
 } from "../services/questionService.js";
+import { getQuestionsByTemplateId } from "../repositories/questionRepository.js";
 
 export const createQuestionController = async (req, res) => {
   try {
