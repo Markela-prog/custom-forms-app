@@ -8,7 +8,7 @@ export const createTemplate = async (templateData) => {
 };
 
 export const getTemplateById = async (templateId) => {
-  return prisma.template.findUnique({
+  const template = await prisma.template.findUnique({
     where: { id: templateId },
     include: {
       owner: true,
@@ -17,6 +17,12 @@ export const getTemplateById = async (templateId) => {
       accessControl: true,
     },
   });
+
+  if (!template) {
+    throw new Error("Template not found");
+  }
+
+  return template;
 };
 
 export const getAllTemplates = async (

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.put("/reorder", protect, checkOwnerOrAdmin, reorderQuestionsController);
 router.post("/:templateId", protect, checkOwnerOrAdmin, createQuestionController);
-router.get("/:templateId", getQuestionsByTemplateController);
+router.get("/:templateId", checkOwnerOrAdmin, getQuestionsByTemplateController);
 router.put("/:questionId", protect, checkOwnerOrAdmin, updateQuestionController);
 router.delete("/:questionId", protect, checkOwnerOrAdmin, deleteQuestionController);
 

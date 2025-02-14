@@ -22,9 +22,10 @@ export const getTemplateByIdController = async (req, res) => {
     const template = await getTemplateByIdService(templateId);
     res.json(template);
   } catch (error) {
-    res.status(403).json({ message: error.message });
+    res.status(404).json({ message: error.message });
   }
 };
+
 
 export const getAllTemplatesController = async (req, res) => {
   try {

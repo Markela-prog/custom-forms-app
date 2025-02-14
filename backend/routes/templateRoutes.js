@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/", protect, createTemplateController);
 
-router.get("/:templateId", checkTemplateAccess, getTemplateByIdController);
+router.get("/:templateId", optionalAuth, checkTemplateAccess, getTemplateByIdController);
 
 router.get("/", optionalAuth, getAllTemplatesController);
 
