@@ -3,8 +3,8 @@ import {
   getQuestionsByTemplateId,
   updateQuestion,
   deleteQuestion,
-  getQuestionsByIds, 
-  batchUpdateQuestionOrders
+  getQuestionsByIds,
+  batchUpdateQuestionOrders,
 } from "../repositories/questionRepository.js";
 import { getTemplateOwnership } from "../repositories/templateRepository.js";
 
@@ -24,41 +24,70 @@ export const deleteQuestionService = async (questionId) => {
   return await deleteQuestion(questionId);
 };
 
-export const reorderQuestionsService = async (orderedQuestions, currentUser) => {
-  const questionIds = orderedQuestions.map(q => q.id);
+export const reorderQuestionsService = async (
+  orderedQuestions,
+  currentUser
+) => {
+  console.log("🟡 [Service] Starting reorderQuestionsService...");
+
+  const questionIds = orderedQuestions.map((q) => q.id);
+  console.log("📌 [Service] Requested Question IDs:", questionIds);
 
   // 1️⃣ Get All Questions by IDs
   const dbQuestions = await getQuestionsByIds(questionIds);
+  console.log("📌 [Service] DB Questions Found:", dbQuestions);
 
   // 2️⃣ Validate: All Questions Exist
   if (dbQuestions.length !== orderedQuestions.length) {
+    console.error("❌ [Error] Some questions do not exist.");
     throw new Error("Some questions do not exist");
   }
 
   // 3️⃣ Validate: All Questions Belong to One Template
-  const templateId = dbQuestions[0].templateId;
-  const uniqueTemplate = dbQuestions.every(q => q.templateId === templateId);
+  const templateId = dbQuestions[0]?.templateId;
+  console.log("📌 [Service] Template ID from DB:", templateId);
+
+  const uniqueTemplate = dbQuestions.every((q) => q.templateId === templateId);
   if (!uniqueTemplate) {
+    console.error("❌ [Error] Questions belong to different templates.");
     throw new Error("All questions must belong to the same template");
   }
 
   // 4️⃣ Validate: Template Ownership or Admin
   const template = await getTemplateOwnership(templateId);
-  if (!template) throw new Error("Template not found");
+  console.log("📌 [Service] Template Ownership Result:", template);
+
+  if (!template) {
+    console.error("❌ [Error] Template not found.");
+    throw new Error("Template not found");
+  }
 
   if (currentUser.role !== "ADMIN" && template.ownerId !== currentUser.id) {
-    throw new Error("Unauthorized: Only template owner or admin can reorder questions");
+    console.error(
+      "❌ [Error] Unauthorized reorder attempt. User ID:",
+      currentUser.id,
+      " | Template Owner ID:",
+      template.ownerId
+    );
+    throw new Error(
+      "Unauthorized: Only template owner or admin can reorder questions"
+    );
   }
 
   // 5️⃣ Validate: Unique Order Values
-  const orders = orderedQuestions.map(q => q.order);
+  const orders = orderedQuestions.map((q) => q.order);
+  console.log("📌 [Service] Orders Provided:", orders);
+
   const uniqueOrders = new Set(orders);
   if (uniqueOrders.size !== orders.length) {
+    console.error("❌ [Error] Duplicate order values found.");
     throw new Error("Duplicate order values found");
   }
 
   // 6️⃣ Batch Update Orders
+  console.log("🟡 [Service] Updating Question Orders...");
   await batchUpdateQuestionOrders(orderedQuestions, templateId);
+  console.log("✅ [Service] Questions reordered successfully!");
 
   return { message: "Questions reordered successfully" };
 };

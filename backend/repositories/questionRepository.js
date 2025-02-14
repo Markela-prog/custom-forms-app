@@ -39,10 +39,15 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const getQuestionsByIds = async (questionIds) => {
-  return prisma.question.findMany({
+  console.log("🟡 [Repository] Fetching questions by IDs:", questionIds);
+
+  const questions = await prisma.question.findMany({
     where: { id: { in: questionIds } },
     select: { id: true, templateId: true },
   });
+
+  console.log("📌 [Repository] Questions Fetched from DB:", questions);
+  return questions;
 };
 
 // ✅ Batch Update Orders (Scoped by Template)
@@ -50,14 +55,29 @@ export const batchUpdateQuestionOrders = async (
   orderedQuestions,
   templateId
 ) => {
-  const updatePromises = orderedQuestions.map(({ id, order }) =>
-    prisma.question.update({
-      where: {
-        id,
-        templateId, // ✅ Scoped to Template
-      },
-      data: { order },
-    })
+  console.log(
+    "🟡 [Repository] Starting batch update for Template ID:",
+    templateId
   );
+
+  const updatePromises = orderedQuestions.map(({ id, order }) =>
+    prisma.question
+      .update({
+        where: {
+          id,
+          templateId, // Scoped to Template
+        },
+        data: { order },
+      })
+      .catch((error) => {
+        console.error(
+          `❌ [Repository] Failed to update question ${id}:`,
+          error.message
+        );
+        throw error;
+      })
+  );
+
   await Promise.all(updatePromises);
+  console.log("✅ [Repository] Batch update completed successfully.");
 };
