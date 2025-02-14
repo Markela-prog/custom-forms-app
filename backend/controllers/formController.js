@@ -35,11 +35,7 @@ export const getFormByIdController = async (req, res) => {
 
 export const getFormsByTemplateController = async (req, res) => {
   try {
-    const forms = await getFormsByTemplateService(
-      req.params.templateId,
-      req.user.id,
-      req.user.role === "ADMIN"
-    );
+    const forms = await getFormsByTemplateService(req.params.templateId);
     res.json(forms);
   } catch (error) {
     res.status(403).json({ message: error.message });
@@ -57,10 +53,7 @@ export const getFormsByUserController = async (req, res) => {
 
 export const deleteFormController = async (req, res) => {
   try {
-    const { formId } = req.params;
-    const userId = req.user.id;
-
-    await deleteFormService(formId, userId);
+    await deleteFormService(req.params.formId);
     res.json({ message: "Form deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -69,10 +62,7 @@ export const deleteFormController = async (req, res) => {
 
 export const finalizeFormController = async (req, res) => {
   try {
-    const { formId } = req.params;
-    const userId = req.user.id;
-
-    await finalizeFormService(formId, userId);
+    await finalizeFormService(req.params.formId);
     res.json({ message: "Form finalized successfully" });
   } catch (error) {
     res.status(403).json({ message: error.message });
