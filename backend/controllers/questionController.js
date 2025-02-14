@@ -54,18 +54,27 @@ export const deleteQuestionController = async (req, res) => {
   }
 };
 
+// src/controllers/questionController.js
 export const reorderQuestionsController = async (req, res) => {
+  console.log("🟡 [Controller] Entered reorderQuestionsController");
+
   try {
     const { questions } = req.body;
 
     if (!questions || !Array.isArray(questions)) {
+      console.error("❌ [Controller] Invalid input format");
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    await reorderQuestionsService(questions);
-    res.json({ message: "Questions reordered successfully" });
+    const result = await reorderQuestionsService(questions, req.user);
+    console.log("✅ [Controller] Reorder Result:", result);
+
+    res.json(result);
   } catch (error) {
-    console.error("Error reordering questions:", error);
+    console.error(
+      "❌ [Controller] Error in reorderQuestionsController:",
+      error.message
+    );
     res.status(400).json({ message: error.message });
   }
 };
