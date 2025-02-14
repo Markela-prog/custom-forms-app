@@ -26,46 +26,43 @@ export const deleteQuestionService = async (questionId) => {
 export const reorderQuestionsService = async (orderedQuestions) => {
   console.log("🟡 [Service] Starting reorderQuestionsService...");
 
-  // 🟠 Validate Template Uniqueness
+  // 🟠 Validate Template Scope
   const questionIds = orderedQuestions.map((q) => q.id);
   const dbQuestions = await getQuestionsByIds(questionIds);
-
   if (dbQuestions.length !== orderedQuestions.length) {
     throw new Error("Some questions do not exist");
   }
 
-  const templateId = dbQuestions[0]?.templateId;
+  const templateId = dbQuestions[0].templateId;
   const uniqueTemplate = dbQuestions.every((q) => q.templateId === templateId);
-
   if (!uniqueTemplate) {
     throw new Error("All questions must belong to the same template");
   }
 
-  // 🟠 Fetch All Template Questions for Accurate Ordering
+  // 🟠 Fetch All Questions for Template
   const allQuestions = await getQuestionsByTemplateId(templateId);
   console.log("📌 [Service] All Questions for Template:", allQuestions);
 
+  // 🟠 Create Order Mapping for Provided Questions
+  const providedOrders = new Map(orderedQuestions.map((q) => [q.id, q.order]));
+
   // 🟠 Separate Provided and Remaining Questions
-  const providedIds = orderedQuestions.map((q) => q.id);
   const remainingQuestions = allQuestions.filter(
-    (q) => !providedIds.includes(q.id)
+    (q) => !providedOrders.has(q.id)
   );
 
-  // 🟠 Merge Partial Reorder
-  const sortedProvided = [...orderedQuestions].sort(
-    (a, b) => a.order - b.order
-  );
+  // 🟠 Merge and Recalculate Orders Consecutively
+  const combined = [
+    ...orderedQuestions.map(({ id }) => ({ id })),
+    ...remainingQuestions.map(({ id }) => ({ id })),
+  ].map((item, index) => ({
+    id: item.id,
+    order: index,
+  }));
 
-  const combined = [...sortedProvided, ...remainingQuestions].map(
-    (q, index) => ({
-      id: q.id,
-      order: index,
-    })
-  );
+  console.log("📌 [Service] Final Consecutive Orders:", combined);
 
-  console.log("📌 [Service] Final Orders for Template:", combined);
-
-  // 🟠 Update Orders (Scoped to Template)
+  // 🟠 Update Orders in Database
   await batchUpdateQuestionOrders(combined, templateId);
   console.log("✅ [Service] Questions reordered successfully!");
 
