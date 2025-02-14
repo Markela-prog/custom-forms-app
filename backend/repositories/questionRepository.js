@@ -39,16 +39,46 @@ export const deleteQuestion = async (questionId) => {
 };
 
 export const reorderQuestions = async (orderedQuestions) => {
-  try {
-    const updatePromises = orderedQuestions.map((question, index) =>
-      prisma.question.update({
-        where: { id: question.id },
-        data: { order: index },
-      })
-    );
+  // 1️⃣ Get All Questions from Database
+  const questionIds = orderedQuestions.map(q => q.id);
+  const questions = await prisma.question.findMany({
+    where: { id: { in: questionIds } },
+    include: { template: true },
+  });
 
-    return await prisma.$transaction(updatePromises);
-  } catch (error) {
-    throw new Error(`Failed to reorder questions: ${error.message}`);
+  if (questions.length !== orderedQuestions.length) {
+    throw new Error("Some questions do not exist");
   }
+
+  // 2️⃣ Ensure All Questions Are from the Same Template
+  const templateId = questions[0].templateId;
+  const uniqueTemplateCheck = questions.every(
+    (q) => q.templateId === templateId
+  );
+  if (!uniqueTemplateCheck) {
+    throw new Error("All questions must belong to the same template");
+  }
+
+  // 3️⃣ Ensure Orders Are Unique
+  const orders = orderedQuestions.map((q) => q.order);
+  const uniqueOrders = new Set(orders);
+  if (uniqueOrders.size !== orders.length) {
+    throw new Error("Duplicate order values found");
+  }
+
+  // 4️⃣ Batch Update Orders for Questions (Within Template Scope)
+  const updatePromises = orderedQuestions.map(({ id, order }) =>
+    prisma.question.update({
+      where: {
+        id,
+        templateId, // <- Scoped to template
+      },
+      data: { order },
+    })
+  );
+
+  // 5️⃣ Execute Batch Update
+  await Promise.all(updatePromises);
+
+  return { message: "Questions reordered successfully" };
 };
