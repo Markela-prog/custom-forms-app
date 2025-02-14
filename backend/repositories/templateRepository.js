@@ -25,6 +25,13 @@ export const getTemplateById = async (templateId) => {
   return template;
 };
 
+export const getTemplateOwnership = async (templateId) => {
+  return prisma.template.findUnique({
+    where: { id: templateId },
+    select: { id: true, ownerId: true },
+  });
+};
+
 export const getAllTemplates = async (
   page = 1,
   pageSize = 10,
