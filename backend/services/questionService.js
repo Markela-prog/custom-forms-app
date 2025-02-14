@@ -29,17 +29,19 @@ export const reorderQuestionsService = async (
 ) => {
   console.log("🟡 [Service] Starting reorderQuestionsService...");
 
-  // 🟠 Get All Questions for the Template
-  const templateId = orderedQuestions[0].templateId; // Passed from middleware
+  // 🟠 Get the Template ID from the provided questions
+  const templateId = orderedQuestions[0].templateId;
+
+  // 🟠 Fetch All Questions from This Template
   const allQuestions = await getQuestionsByTemplateId(templateId);
-  console.log("📌 [Service] All Questions for Template:", allQuestions);
+  console.log("📌 [Service] Template Questions:", allQuestions);
 
   // 🟠 Map Provided Orders
   const providedOrderMap = new Map(
     orderedQuestions.map((q) => [q.id, q.order])
   );
 
-  // 🟠 Separate Reordered and Remaining Questions
+  // 🟠 Separate Provided and Remaining Questions
   const reorderedQuestions = allQuestions.filter((q) =>
     providedOrderMap.has(q.id)
   );
@@ -47,27 +49,27 @@ export const reorderQuestionsService = async (
     (q) => !providedOrderMap.has(q.id)
   );
 
-  // 🟠 Apply Provided Orders to Reordered Questions
+  // 🟠 Apply Provided Orders
   reorderedQuestions.forEach((q) => {
     q.order = providedOrderMap.get(q.id);
   });
 
-  // 🟠 Combine and Sort
+  // 🟠 Combine and Sort All Questions (Only for the Same Template)
   const combined = [...reorderedQuestions, ...remainingQuestions].sort(
     (a, b) => a.order - b.order
   );
 
-  // 🟠 Assign Consecutive Orders
+  // 🟠 Recalculate Orders Consecutively
   const finalOrders = combined.map((q, index) => ({
     id: q.id,
     order: index,
   }));
 
-  console.log("📌 [Service] Final Combined Orders:", finalOrders);
+  console.log("📌 [Service] Final Orders for Template:", finalOrders);
 
-  // 🟠 Batch Update
+  // 🟠 Update Only Questions from This Template
   await batchUpdateQuestionOrders(finalOrders, templateId);
-  console.log("✅ [Service] Questions reordered successfully!");
+  console.log("✅ [Service] Reorder completed!");
 
   return { message: "Questions reordered successfully" };
 };
