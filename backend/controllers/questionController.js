@@ -55,6 +55,7 @@ export const deleteQuestionController = async (req, res) => {
   }
 };
 
+// ✅ Controller: Validate Provided Questions Against Template Questions
 export const reorderQuestionsController = async (req, res) => {
   try {
     const { questions } = req.body;
@@ -64,19 +65,19 @@ export const reorderQuestionsController = async (req, res) => {
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    // 🟡 Fetch All Template Questions
+    // 🟡 Fetch All Questions FROM THIS TEMPLATE ONLY
     const allTemplateQuestions = await getQuestionsByTemplateId(templateId);
     const allQuestionIds = allTemplateQuestions.map((q) => q.id);
     const providedIds = questions.map((q) => q.id);
 
-    // 🟡 Validate: All Template Questions Provided
+    // 🟡 Validate: All Template Questions Were Provided
     if (!areAllQuestionsProvided(allQuestionIds, providedIds)) {
       return res.status(400).json({
         message: "Not all questions of the template were provided",
       });
     }
 
-    // 🟡 Call Service to Perform Reorder
+    // 🟡 Perform Reorder via Service
     const result = await reorderQuestionsService(questions, templateId);
     res.status(200).json(result);
   } catch (error) {
@@ -84,9 +85,8 @@ export const reorderQuestionsController = async (req, res) => {
   }
 };
 
-// ✅ Utility: Check if All Template Questions Are Provided
+// ✅ Utility Function: Ensure All Questions Are Provided
 const areAllQuestionsProvided = (allQuestionIds, providedIds) => {
   if (allQuestionIds.length !== providedIds.length) return false;
-  const missing = allQuestionIds.filter((id) => !providedIds.includes(id));
-  return missing.length === 0;
+  return allQuestionIds.every((id) => providedIds.includes(id));
 };
