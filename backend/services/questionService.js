@@ -24,38 +24,37 @@ export const deleteQuestionService = async (questionId) => {
 };
 
 export const reorderQuestionsService = async (orderedQuestions) => {
-  // 🟡 Validate Orders and Fetch Questions
+  console.log("🟡 [Service] Starting reorderQuestionsService...");
+
   const questionIds = orderedQuestions.map((q) => q.id);
   const dbQuestions = await getQuestionsByIds(questionIds);
   if (dbQuestions.length !== orderedQuestions.length) {
     throw new Error("Some questions do not exist");
   }
 
-  // 🟡 Validate Same Template
-  const templateId = dbQuestions[0].templateId;
-  if (!dbQuestions.every((q) => q.templateId === templateId)) {
-    throw new Error("All questions must belong to the same template");
-  }
-
-  // 🟡 Fetch All Questions for Template
-  const allQuestions = await getQuestionsByTemplateId(templateId);
-
-  // 🟡 Handle Partial Reorder
-  const providedIds = orderedQuestions.map((q) => q.id);
-  const remainingQuestions = allQuestions.filter(
-    (q) => !providedIds.includes(q.id)
+  // 🟠 Merge Partial Reorder
+  const allQuestions = await getQuestionsByTemplateId(
+    dbQuestions[0].templateId
   );
+  const providedIds = orderedQuestions.map((q) => q.id);
 
-  // 🟡 Merge and Consecutively Order All Questions
-  const combined = [...orderedQuestions, ...remainingQuestions].map(
+  const remainingQuestions = allQuestions
+    .filter((q) => !providedIds.includes(q.id))
+    .sort((a, b) => a.order - b.order);
+
+  const sortedProvided = [...orderedQuestions].sort(
+    (a, b) => a.order - b.order
+  );
+  const combined = [...sortedProvided, ...remainingQuestions].map(
     (q, index) => ({
       id: q.id,
       order: index,
     })
   );
 
-  // 🟡 Batch Update
-  await batchUpdateQuestionOrders(combined, templateId);
+  // 🟠 Batch Update
+  await batchUpdateQuestionOrders(combined, dbQuestions[0].templateId);
+  console.log("✅ [Service] Questions reordered successfully!");
 
   return { message: "Questions reordered successfully" };
 };

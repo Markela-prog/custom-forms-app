@@ -1,56 +1,107 @@
-
+import { checkAccess } from "../utils/accessControlUtils.js";
 import prisma from "../prisma/prismaClient.js";
 
-// ✅ Unified Permission Middleware for All Question Routes
-export const checkQuestionPermission = ({ modify = false } = {}) => async (req, res, next) => {
+export const checkQuestionAccess = async (req, res, next) => {
+  const { templateId } = req.params;
+  const user = req.user;
+
+  const { access, reason } = await checkAccess({
+    resource: "template",
+    resourceId: templateId,
+    user,
+  });
+
+  if (!access) {
+    return res.status(403).json({ message: reason });
+  }
+
+  next();
+};
+
+export const checkQuestionOwnerOrAdmin = async (req, res, next) => {
   try {
-    const { templateId, questionId } = { ...req.params, ...req.body };
+    const { questionId } = req.params;
     const user = req.user;
 
-    // 🟡 Fetch Template via Question or Template ID
-    let template;
-    if (questionId) {
-      const question = await prisma.question.findUnique({
-        where: { id: questionId },
-        include: { template: true },
-      });
-      if (!question) return res.status(404).json({ message: "Question not found" });
-      template = question.template;
-    } else if (templateId) {
-      template = await prisma.template.findUnique({
-        where: { id: templateId },
-        select: { id: true, ownerId: true, isPublic: true },
-      });
-      if (!template) return res.status(404).json({ message: "Template not found" });
-    } else {
-      return res.status(400).json({ message: "Template or Question ID required" });
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      include: { template: true },
+    });
+
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
     }
 
-    // ✅ Permission Check:
-    const isOwner = template.ownerId === user.id;
-    const isAdmin = user.role === "ADMIN";
-
-    if (modify) {
-      // 🚫 Only Owner or Admin can Modify (Create, Update, Delete, Reorder)
-      if (!isOwner && !isAdmin) {
-        return res.status(403).json({ message: "Unauthorized: Only template owner or admin can modify questions" });
-      }
-    } else {
-      // 🚫 For View Only: Public Template or Access-Control Check
-      if (!template.isPublic && !isOwner && !isAdmin) {
-        const hasAccess = await prisma.accessControl.findFirst({
-          where: { templateId: template.id, userId: user.id },
-        });
-        if (!hasAccess) {
-          return res.status(403).json({ message: "Unauthorized: No access to this template's questions" });
-        }
-      }
+    if (user.role !== "ADMIN" && question.template.ownerId !== user.id) {
+      return res.status(403).json({
+        message:
+          "Unauthorized: Only template owner or admin can modify questions",
+      });
     }
 
-    // ✅ Permission Granted
     next();
   } catch (error) {
-    console.error("❌ [Middleware] Error in checkQuestionPermission:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const checkReorderOwnership = async (req, res, next) => {
+  try {
+    const { questions } = req.body;
+    const user = req.user;
+
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid input: No questions provided" });
+    }
+
+    // 1️⃣ Fetch Questions from DB
+    const questionIds = questions.map((q) => q.id);
+    const dbQuestions = await prisma.question.findMany({
+      where: { id: { in: questionIds } },
+      select: { id: true, templateId: true },
+    });
+
+    if (dbQuestions.length !== questions.length) {
+      return res.status(400).json({ message: "Some questions do not exist" });
+    }
+
+    // 2️⃣ Validate All Questions Belong to the Same Template
+    const templateId = dbQuestions[0].templateId;
+    const uniqueTemplateCheck = dbQuestions.every(
+      (q) => q.templateId === templateId
+    );
+    if (!uniqueTemplateCheck) {
+      return res
+        .status(400)
+        .json({ message: "All questions must belong to the same template" });
+    }
+
+    // 3️⃣ Fetch Template for Ownership Check
+    const template = await prisma.template.findUnique({
+      where: { id: templateId },
+      select: { ownerId: true },
+    });
+
+    if (!template) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    // 4️⃣ Check Ownership or Admin Privileges
+    if (user.role !== "ADMIN" && template.ownerId !== user.id) {
+      return res.status(403).json({
+        message:
+          "Unauthorized: Only template owner or admin can reorder questions",
+      });
+    }
+
+    // ✅ Pass Template ID for Service Layer if needed
+    req.templateId = templateId;
+
+    next();
+  } catch (error) {
+    console.error("❌ [Middleware] Error in checkReorderOwnership:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
