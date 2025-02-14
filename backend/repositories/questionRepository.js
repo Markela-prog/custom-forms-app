@@ -51,14 +51,10 @@ export const batchUpdateQuestionOrders = async (
 ) => {
   const updatePromises = orderedQuestions.map(({ id, order }) =>
     prisma.question.update({
-      where: {
-        id,
-        templateId, // 🟠 Scoped to Template Only
-      },
+      where: { id, templateId }, // 🟠 Scoped by Template
       data: { order },
     })
   );
-
   await Promise.all(updatePromises);
   console.log("✅ [Repository] Batch update scoped to template completed.");
 };

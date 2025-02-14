@@ -23,53 +23,51 @@ export const deleteQuestionService = async (questionId) => {
   return await deleteQuestion(questionId);
 };
 
-export const reorderQuestionsService = async (
-  orderedQuestions,
-  currentUser
-) => {
+export const reorderQuestionsService = async (orderedQuestions) => {
   console.log("🟡 [Service] Starting reorderQuestionsService...");
 
-  // 🟠 Get the Template ID from the provided questions
-  const templateId = orderedQuestions[0].templateId;
+  // 🟠 Validate Template Uniqueness
+  const questionIds = orderedQuestions.map((q) => q.id);
+  const dbQuestions = await getQuestionsByIds(questionIds);
 
-  // 🟠 Fetch All Questions from This Template
+  if (dbQuestions.length !== orderedQuestions.length) {
+    throw new Error("Some questions do not exist");
+  }
+
+  const templateId = dbQuestions[0]?.templateId;
+  const uniqueTemplate = dbQuestions.every((q) => q.templateId === templateId);
+
+  if (!uniqueTemplate) {
+    throw new Error("All questions must belong to the same template");
+  }
+
+  // 🟠 Fetch All Template Questions for Accurate Ordering
   const allQuestions = await getQuestionsByTemplateId(templateId);
-  console.log("📌 [Service] Template Questions:", allQuestions);
-
-  // 🟠 Map Provided Orders
-  const providedOrderMap = new Map(
-    orderedQuestions.map((q) => [q.id, q.order])
-  );
+  console.log("📌 [Service] All Questions for Template:", allQuestions);
 
   // 🟠 Separate Provided and Remaining Questions
-  const reorderedQuestions = allQuestions.filter((q) =>
-    providedOrderMap.has(q.id)
-  );
+  const providedIds = orderedQuestions.map((q) => q.id);
   const remainingQuestions = allQuestions.filter(
-    (q) => !providedOrderMap.has(q.id)
+    (q) => !providedIds.includes(q.id)
   );
 
-  // 🟠 Apply Provided Orders
-  reorderedQuestions.forEach((q) => {
-    q.order = providedOrderMap.get(q.id);
-  });
-
-  // 🟠 Combine and Sort All Questions (Only for the Same Template)
-  const combined = [...reorderedQuestions, ...remainingQuestions].sort(
+  // 🟠 Merge Partial Reorder
+  const sortedProvided = [...orderedQuestions].sort(
     (a, b) => a.order - b.order
   );
 
-  // 🟠 Recalculate Orders Consecutively
-  const finalOrders = combined.map((q, index) => ({
-    id: q.id,
-    order: index,
-  }));
+  const combined = [...sortedProvided, ...remainingQuestions].map(
+    (q, index) => ({
+      id: q.id,
+      order: index,
+    })
+  );
 
-  console.log("📌 [Service] Final Orders for Template:", finalOrders);
+  console.log("📌 [Service] Final Orders for Template:", combined);
 
-  // 🟠 Update Only Questions from This Template
-  await batchUpdateQuestionOrders(finalOrders, templateId);
-  console.log("✅ [Service] Reorder completed!");
+  // 🟠 Update Orders (Scoped to Template)
+  await batchUpdateQuestionOrders(combined, templateId);
+  console.log("✅ [Service] Questions reordered successfully!");
 
   return { message: "Questions reordered successfully" };
 };
