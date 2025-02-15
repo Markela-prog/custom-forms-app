@@ -5,7 +5,6 @@ import {
   getFormsByTemplate,
   getFormsByUser,
   deleteForm,
-  finalizeForm,
 } from "../repositories/formRepository.js";
 
 export const createFormService = async (templateId, userId, emailCopyRequested) => {
