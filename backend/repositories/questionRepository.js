@@ -59,3 +59,12 @@ export const batchUpdateQuestionOrders = async (
   console.log("✅ [Repository] Batch update completed.");
 };
 
+export const getRequiredQuestions = async (templateId) => {
+  return prisma.question.findMany({
+    where: {
+      templateId,
+      isRequired: true,
+    },
+    select: { id: true, title: true },
+  });
+};

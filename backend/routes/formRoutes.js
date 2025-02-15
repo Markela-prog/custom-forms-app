@@ -5,7 +5,6 @@ import {
   getFormsByTemplateController,
   getFormsByUserController,
   deleteFormController,
-  finalizeFormController,
 } from "../controllers/formController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { checkFormAccess, preventDuplicateFormSubmission } from "../middleware/formAccessMiddleware.js";
@@ -17,6 +16,5 @@ router.get("/template/:templateId", protect, getFormsByTemplateController);
 router.get("/user/:userId", protect, getFormsByUserController);
 router.get("/:formId", protect, checkFormAccess, getFormByIdController);
 router.delete("/:formId", protect, checkFormAccess, deleteFormController);
-router.put("/:formId/finalize", protect, checkFormAccess, finalizeFormController);
 
 export default router;

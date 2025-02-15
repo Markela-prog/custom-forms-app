@@ -6,24 +6,26 @@ export const createForm = async (templateId, userId, emailCopyRequested) => {
   });
 };
 
-export const getFormById = async (formId) => {
+export const getFormById = async (formId, includeAnswers = false) => {
   return prisma.form.findUnique({
     where: { id: formId },
-    include: { answers: true, template: true },
+    include: {
+      template: true,
+      answers: includeAnswers,
+    },
   });
 };
 
 export const getFormsByTemplate = async (templateId) => {
   return prisma.form.findMany({
     where: { templateId },
-    include: { user: true, answers: true },
+    include: { user: true },
   });
 };
 
 export const getFormsByUser = async (userId) => {
   return prisma.form.findMany({
     where: { userId },
-    include: { template: true, answers: true },
   });
 };
 

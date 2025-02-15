@@ -13,14 +13,22 @@ export const createFormController = async (req, res) => {
     const { emailCopyRequested } = req.body;
     const userId = req.user.id;
 
-    const form = await createFormService(
-      templateId,
-      userId,
-      emailCopyRequested
-    );
+    const form = await createFormService(templateId, userId, emailCopyRequested);
     res.status(201).json(form);
   } catch (error) {
     res.status(403).json({ message: error.message });
+  }
+};
+
+export const getFormDetailsController = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const includeAnswers = req.query.include === "answers";
+
+    const form = await getFormDetailsService(formId, includeAnswers);
+    res.json(form);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
   }
 };
 
