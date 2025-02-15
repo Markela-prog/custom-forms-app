@@ -51,7 +51,7 @@ export const getFormsByTemplateController = async (req, res) => {
 
 export const getFormsByUserController = async (req, res) => {
   try {
-    const forms = await getFormsByUserService(req.params.userId);
+    const forms = await getFormsByUserService(req.user.id);
     res.json(forms);
   } catch (error) {
     res.status(404).json({ message: error.message });

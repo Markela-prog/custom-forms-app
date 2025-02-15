@@ -26,6 +26,7 @@ export const getFormsByTemplate = async (templateId) => {
 export const getFormsByUser = async (userId) => {
   return prisma.form.findMany({
     where: { userId },
+    include: { template: true, answers: true },
   });
 };
 

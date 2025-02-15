@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post("/:templateId", protect, preventDuplicateFormSubmission, createFormController);
 router.get("/template/:templateId", protect, checkTemplateAccess, getFormsByTemplateController);
-router.get("/user/:userId", protect, getFormsByUserController);
+router.get("/user", protect, getFormsByUserController);
 router.get("/:formId", protect, checkFormAccess, getFormByIdController);
 router.delete("/:formId", protect, checkFormAccess, deleteFormController);
 

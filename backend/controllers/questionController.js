@@ -10,14 +10,10 @@ import { getQuestionsByTemplateId, getQuestionsByIds } from "../repositories/que
 export const createQuestionController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const question = await createQuestionService(
-      templateId,
-      req.user.id,
-      req.user.role === "ADMIN",
-      req.body
-    );
+    const question = await createQuestionService(templateId, req.body);
     res.status(201).json(question);
   } catch (error) {
+    console.error("Error creating question:", error);
     res.status(403).json({ message: error.message });
   }
 };
