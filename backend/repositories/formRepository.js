@@ -41,10 +41,3 @@ export const deleteForm = async (formId) => {
     include: { answers: true },
   });
 };
-
-export const finalizeForm = async (formId) => {
-  return prisma.form.update({
-    where: { id: formId },
-    data: { isFinalized: true },
-  });
-};

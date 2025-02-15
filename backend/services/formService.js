@@ -32,7 +32,3 @@ export const getFormsByUserService = async (userId) => {
 export const deleteFormService = async (formId) => {
   return await deleteForm(formId);
 };
-
-export const finalizeFormService = async (formId) => {
-  return await finalizeForm(formId);
-};

@@ -1,7 +1,8 @@
+// src/utils/accessControlUtils.js
 import prisma from "../prisma/prismaClient.js";
 
 /**
- * Generic function to check access for different resources (template, form, question)
+ * Generic function to check access for templates, forms, questions
  * @param {string} resource - 'template', 'form', or 'question'
  * @param {string} resourceId - The ID of the resource
  * @param {object} user - User object from req.user
@@ -15,40 +16,45 @@ export const checkAccess = async ({
   checkOwnership = false,
 }) => {
   try {
-    // Dynamically fetch resource based on type
+    // 🟡 1️⃣ Fetch Resource from Database
     const resourceData = await prisma[resource].findUnique({
       where: { id: resourceId },
-      include: { accessControl: true },
+      include:
+        resource === "template" ? { accessControl: true } : { template: true },
     });
 
     if (!resourceData) {
       return { access: false, reason: `${resource} not found` };
     }
 
-    // 🟡 Public Access: Anyone can view
-    if (!checkOwnership && resourceData.isPublic) {
+    // 🟠 2️⃣ Admin or Owner: Full Access
+    if (user.role === "ADMIN" || resourceData.ownerId === user.id) {
       return { access: true, resource: resourceData };
     }
 
-    // 🟠 Admin or Owner: Full Access
-    if (
-      user &&
-      (resourceData.ownerId === user.id || user.role === "ADMIN")
-    ) {
+    // 🟡 3️⃣ Template-Based Access Control
+    if (resource !== "template" && resourceData.template) {
+      const templateId = resourceData.template.id;
+      const templateAccess = await checkAccess({
+        resource: "template",
+        resourceId: templateId,
+        user,
+      });
+      if (!templateAccess.access) {
+        return {
+          access: false,
+          reason: `No access to ${resource} via template`,
+        };
+      }
+    }
+
+    // 🟡 4️⃣ Resource-Specific Access-Control for Users
+    if (resourceData.accessControl?.some((ac) => ac.userId === user.id)) {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 Access-Control for Private Resources
-    const hasAccess = resourceData.accessControl.some(
-      (access) => access.userId === user?.id
-    );
-
-    if (hasAccess) {
-      return { access: true, resource: resourceData };
-    }
-
-    // 🚫 No Access
-    return { access: false, reason: `Unauthorized: No access to this ${resource}` };
+    // 🚫 5️⃣ Default: No Access
+    return { access: false, reason: `Unauthorized to access this ${resource}` };
   } catch (error) {
     console.error(`Error checking ${resource} access:`, error);
     return { access: false, reason: "Internal server error" };

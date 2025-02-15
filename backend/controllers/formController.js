@@ -4,7 +4,6 @@ import {
   getFormsByTemplateService,
   getFormsByUserService,
   deleteFormService,
-  finalizeFormService,
 } from "../services/formService.js";
 
 export const createFormController = async (req, res) => {
@@ -65,14 +64,5 @@ export const deleteFormController = async (req, res) => {
     res.json({ message: "Form deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
-  }
-};
-
-export const finalizeFormController = async (req, res) => {
-  try {
-    await finalizeFormService(req.params.formId);
-    res.json({ message: "Form finalized successfully" });
-  } catch (error) {
-    res.status(403).json({ message: error.message });
   }
 };
