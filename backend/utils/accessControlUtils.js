@@ -3,16 +3,17 @@ import prisma from "../prisma/prismaClient.js";
 
 /**
  * Generic function to check access for templates, forms, questions
- * @param {string} resource - 'template', 'form', or 'question'
- * @param {string} resourceId - The ID of the resource
+ * @param {string} resource - Resource type ('template', 'form', etc.)
+ * @param {string} resourceId - Resource ID
  * @param {object} user - User object from req.user
- * @param {boolean} checkOwnership - If true, checks if user is owner or admin
+ * @param {function|null} resourceAccessHandler - Custom logic per resource (optional)
  * @returns {object} - { access: boolean, reason: string, resource: object }
  */
 export const checkAccess = async ({
   resource,
   resourceId,
   user,
+  resourceAccessHandler = null, // New: Custom per-resource logic
   checkOwnership = false,
 }) => {
   try {
@@ -27,17 +28,27 @@ export const checkAccess = async ({
       return { access: false, reason: `${resource} not found` };
     }
 
-    // 🟠 2️⃣ Admin or Owner: Full Access
-    if (user.role === "ADMIN" || resourceData.ownerId === user.id) {
+    // ✅ 2️⃣ Run Resource-Specific Logic First (Overrides)
+    if (resourceAccessHandler) {
+      const overrideResult = await resourceAccessHandler({
+        resourceData,
+        user,
+      });
+      if (overrideResult !== null) {
+        return overrideResult; // Return if custom handler gives result
+      }
+    }
+
+    // 🟠 3️⃣ Admin or Owner: Full Access
+    if (user?.role === "ADMIN" || resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 3️⃣ Template-Based Access Control
+    // 🟡 4️⃣ Template-Based Access Control (For Authenticated Users)
     if (resource !== "template" && resourceData.template) {
-      const templateId = resourceData.template.id;
       const templateAccess = await checkAccess({
         resource: "template",
-        resourceId: templateId,
+        resourceId: resourceData.template.id,
         user,
       });
       if (!templateAccess.access) {
@@ -48,13 +59,18 @@ export const checkAccess = async ({
       }
     }
 
-    // 🟡 4️⃣ Resource-Specific Access-Control for Users
-    if (resourceData.accessControl?.some((ac) => ac.userId === user.id)) {
+    // 🟡 5️⃣ Resource-Specific Access-Control for Users
+    if (user && resourceData.accessControl?.some((ac) => ac.userId === user.id)) {
       return { access: true, resource: resourceData };
     }
 
-    // 🚫 5️⃣ Default: No Access
-    return { access: false, reason: `Unauthorized to access this ${resource}` };
+    // 🚫 6️⃣ Default: No Access
+    return {
+      access: false,
+      reason: user
+        ? `Unauthorized to access this ${resource}`
+        : `Login required to access this ${resource}`,
+    };
   } catch (error) {
     console.error(`Error checking ${resource} access:`, error);
     return { access: false, reason: "Internal server error" };
