@@ -20,14 +20,20 @@ export const checkAccess = async ({
     // 🟡 1️⃣ Fetch Resource from Database
     const resourceData = await prisma[resource].findUnique({
       where: { id: resourceId },
-      include: resource === "template" ? { accessControl: true } : { template: true },
+      include:
+        resource === "template" ? { accessControl: true } : { template: true },
     });
 
     if (!resourceData) {
       return { access: false, reason: `${resource} not found` };
     }
 
-    // 🟠 2️⃣ Apply Resource-Specific Logic
+    // 🟠 2️⃣ ADMIN OVERRIDE (Admin Can Always Access Everything)
+    if (user?.role === "ADMIN") {
+      return { access: true, resource: resourceData };
+    }
+
+    // 🟡 3️⃣ Apply Resource-Specific Logic
     if (resourceAccessHandler) {
       const overrideResult = await resourceAccessHandler({
         resourceData,
@@ -39,12 +45,12 @@ export const checkAccess = async ({
       }
     }
 
-    // 🟠 3️⃣ Admin or Owner: Full Access
-    if (user?.role === "ADMIN" || resourceData.ownerId === user?.id) {
+    // 🟠 4️⃣ Owner or Admin (Full Access)
+    if (resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 4️⃣ Template-Based Access Control (For Authenticated Users)
+    // 🟡 5️⃣ Template-Based Access Control (For Authenticated Users)
     if (resource !== "template" && resourceData.template) {
       const templateAccess = await checkAccess({
         resource: "template",
@@ -59,15 +65,20 @@ export const checkAccess = async ({
       }
     }
 
-    // 🟡 5️⃣ ACL Users (Read Only)
-    if (user && resourceData.accessControl?.some((ac) => ac.userId === user.id)) {
+    // 🟡 6️⃣ ACL Users (Read Only)
+    if (
+      user &&
+      resourceData.accessControl?.some((ac) => ac.userId === user.id)
+    ) {
       return { access: true, resource: resourceData };
     }
 
-    // 🚫 6️⃣ Default: No Access
+    // 🚫 7️⃣ Default: No Access
     return {
       access: false,
-      reason: user ? `Unauthorized to access this ${resource}` : `Login required to access this ${resource}`,
+      reason: user
+        ? `Unauthorized to access this ${resource}`
+        : `Login required to access this ${resource}`,
     };
   } catch (error) {
     console.error(`Error checking ${resource} access:`, error);
