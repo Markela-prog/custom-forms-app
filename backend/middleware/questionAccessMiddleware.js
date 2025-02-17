@@ -1,11 +1,12 @@
 // src/middleware/questionAccessMiddleware.js
 import { checkResourceAccess } from "./resourceAccessMiddleware.js";
+import { handleQuestionAccess } from "./questionAccessHandler.js";
 
-// ✅ Question Access: Template Owner, Admin
-export const checkQuestionAccess = checkResourceAccess("question", "read");
+// ✅ Question Access Middleware (Read for Public/Owner/ACL)
+export const checkQuestionAccess = checkResourceAccess("question", "read", handleQuestionAccess);
 
-// ✅ Owner or Admin for Question Modifications
-export const checkQuestionOwnerOrAdmin = checkResourceAccess("question", "owner");
+// ✅ Question Modification Middleware (Owner/Admin Only)
+export const checkQuestionOwnerOrAdmin = checkResourceAccess("question", "owner", handleQuestionAccess);
 
 
 export const checkReorderOwnership = async (req, res, next) => {
@@ -14,13 +15,10 @@ export const checkReorderOwnership = async (req, res, next) => {
     const user = req.user;
 
     if (!questions || !Array.isArray(questions) || questions.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid input: No questions provided" });
+      return res.status(400).json({ message: "Invalid input: No questions provided" });
     }
 
-    // 1️⃣ Fetch Questions from DB
-    const questionIds = questions.map((q) => q.id);
+    const questionIds = questions.map(q => q.id);
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
       select: { id: true, templateId: true },
@@ -30,38 +28,24 @@ export const checkReorderOwnership = async (req, res, next) => {
       return res.status(400).json({ message: "Some questions do not exist" });
     }
 
-    // 2️⃣ Validate All Questions Belong to the Same Template
     const templateId = dbQuestions[0].templateId;
-    const uniqueTemplateCheck = dbQuestions.every(
-      (q) => q.templateId === templateId
-    );
+    const uniqueTemplateCheck = dbQuestions.every(q => q.templateId === templateId);
     if (!uniqueTemplateCheck) {
-      return res
-        .status(400)
-        .json({ message: "All questions must belong to the same template" });
+      return res.status(400).json({ message: "All questions must belong to the same template" });
     }
 
-    // 3️⃣ Fetch Template for Ownership Check
-    const template = await prisma.template.findUnique({
-      where: { id: templateId },
-      select: { ownerId: true },
+    const { access, reason } = await checkAccess({
+      resource: "template",
+      resourceId: templateId,
+      user,
+      checkOwnership: true,
     });
 
-    if (!template) {
-      return res.status(404).json({ message: "Template not found" });
+    if (!access) {
+      return res.status(403).json({ message: reason });
     }
 
-    // 4️⃣ Check Ownership or Admin Privileges
-    if (user.role !== "ADMIN" && template.ownerId !== user.id) {
-      return res.status(403).json({
-        message:
-          "Unauthorized: Only template owner or admin can reorder questions",
-      });
-    }
-
-    // ✅ Pass Template ID for Service Layer if needed
     req.templateId = templateId;
-
     next();
   } catch (error) {
     console.error("❌ [Middleware] Error in checkReorderOwnership:", error);
