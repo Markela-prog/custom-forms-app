@@ -5,19 +5,19 @@ import { checkAccess } from "../utils/accessControlUtils.js";
 /**
  * Unified Access Control Middleware
  * @param {string} resource - template, question, form, answer
- * @param {string} action - create, read, update, delete, reorder, manage_access
+ * @param {string} action - create, read, update, delete, reorder, manage_access, etc.
  */
 export const accessControl = (resource, action) => async (req, res, next) => {
   const user = req.user || null;
 
-  // 🟡 Determine `resourceId`
+  // 🟡 Determine `resourceId` from route params
   let resourceId =
     req.params.templateId ||
     req.params.formId ||
     req.params.questionId ||
     req.params.id;
 
-  // ✅ If action is `create`, `getUserForms`, `getAllTemplates`, `reorderQuestions`, bypass `resourceId`
+  // ✅ Allow actions without resource ID (e.g., create, read_all)
   const actionsWithoutResourceId = [
     "create",
     "read_all",
@@ -36,7 +36,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
       .json({ message: "Invalid permissions configuration" });
   }
 
-  // ✅ Admin Override (Admins can do everything)
+  // ✅ Admin Override
   if (user?.role === "ADMIN") return next();
 
   // 🛡️ Perform Access Check

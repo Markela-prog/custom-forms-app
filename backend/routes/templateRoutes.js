@@ -12,9 +12,9 @@ import { accessControl } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", protect, createTemplateController);
+router.post("/", protect, accessControl("template", "create"), createTemplateController);
 router.get("/:templateId", optionalAuth, accessControl("template", "read"), getTemplateByIdController);
-router.get("/", optionalAuth, getAllTemplatesController);
+router.get("/", optionalAuth, accessControl("template", "read_all"), getAllTemplatesController);
 router.put("/:templateId", protect, accessControl("template", "update"), updateTemplateController);
 router.delete("/:templateId", protect, accessControl("template", "delete"), deleteTemplateController);
 
