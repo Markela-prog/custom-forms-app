@@ -8,40 +8,40 @@ import { handleQuestionAccess } from "./questionAccessHandler.js";
  * @param {string} resourceType - 'template', 'form', 'question'
  * @param {string} accessLevel - 'read', 'owner', 'admin'
  */
-export const checkResourceAccess = (resourceType, accessLevel) => async (req, res, next) => {
-  // 🟡 Handle Question Access Using `templateId`
-  const resourceId = 
-    resourceType === "question" 
-      ? req.params.templateId // Use templateId for questions
-      : req.params[`${resourceType}Id`] || req.params.id;
+export const checkResourceAccess =
+  (resourceType, accessLevel) => async (req, res, next) => {
+    // 🟡 1️⃣ Use `templateId` for questions, not `questionId`
+    const resourceId =
+      resourceType === "question"
+        ? req.params.templateId // For questions: Check access via template
+        : req.params[`${resourceType}Id`] || req.params.id;
 
-  if (!resourceId) {
-    return res.status(400).json({ message: `Missing ${resourceType} ID` });
-  }
+    if (!resourceId) {
+      return res.status(400).json({ message: `Missing ${resourceType} ID` });
+    }
 
-  const user = req.user;
+    const user = req.user;
 
-  // 🟠 Choose Specific Handler Based on Resource Type
-  let resourceHandler = null;
-  if (resourceType === "template") {
-    resourceHandler = handleTemplateAccess;
-  } else if (resourceType === "question") {
-    resourceHandler = handleQuestionAccess;
-  }
+    // 🟠 2️⃣ Select Appropriate Access Handler
+    let resourceHandler = null;
+    if (resourceType === "template") {
+      resourceHandler = handleTemplateAccess;
+    } else if (resourceType === "question") {
+      resourceHandler = handleQuestionAccess;
+    }
 
-  // ✅ Perform Access Check
-  const { access, reason, resource } = await checkAccess({
-    resource: resourceType,
-    resourceId,
-    user,
-    resourceAccessHandler: resourceHandler,
-    checkOwnership: accessLevel === "owner" || accessLevel === "admin",
-  });
+    // ✅ 3️⃣ Perform Access Check
+    const { access, reason } = await checkAccess({
+      resource: resourceType,
+      resourceId,
+      user,
+      resourceAccessHandler: resourceHandler,
+      checkOwnership: accessLevel === "owner" || accessLevel === "admin",
+    });
 
-  if (!access) {
-    return res.status(403).json({ message: reason });
-  }
+    if (!access) {
+      return res.status(403).json({ message: reason });
+    }
 
-  req.resource = resource;
-  next();
-};
+    next();
+  };

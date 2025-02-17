@@ -2,10 +2,10 @@
 import { checkResourceAccess } from "./resourceAccessMiddleware.js";
 import { handleQuestionAccess } from "./questionAccessHandler.js";
 
-// ✅ Get Questions (Public or Private via Template)
+// ✅ Get Questions (via Template Access)
 export const checkQuestionAccess = checkResourceAccess("question", "read");
 
-// ✅ Update or Delete (Only Owner or Admin)
+// ✅ Update or Delete Questions (Only Owner/Admin)
 export const checkQuestionOwnerOrAdmin = checkResourceAccess("question", "owner");
 
 
