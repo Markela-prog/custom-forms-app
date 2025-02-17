@@ -1,23 +1,16 @@
 // src/middleware/accessControlMiddleware.js
+
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
 
-/**
- * Unified Access Control Middleware
- * @param {string} resource - template, question, form, answer
- * @param {string} action - create, read, update, delete, reorder, manage_access, etc.
- */
 export const accessControl = (resource, action) => async (req, res, next) => {
   const user = req.user || null;
-
-  // 🟡 Determine `resourceId` from route params
   let resourceId =
     req.params.templateId ||
     req.params.formId ||
     req.params.questionId ||
     req.params.id;
 
-  // ✅ Allow actions without resource ID (e.g., create, read_all)
   const actionsWithoutResourceId = [
     "create",
     "read_all",
@@ -28,7 +21,10 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     resourceId = null;
   }
 
-  // 🔹 Get Allowed Roles for Action
+  console.log(
+    `[AccessControl] User ${user?.id || "Guest"} - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
+  );
+
   const allowedRoles = permissionsMatrix[resource]?.[action];
   if (!allowedRoles) {
     return res
@@ -47,9 +43,27 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     action,
   });
 
+  // 📌 Add `read_private` Fallback for Auth Users
+  if (!access && ["read"].includes(action)) {
+    const { access: privateAccess, role: privateRole } = await checkAccess({
+      resource,
+      resourceId,
+      user,
+      action: "read_private",
+    });
+
+    if (
+      privateAccess &&
+      permissionsMatrix[resource]?.["read_private"]?.includes(privateRole)
+    ) {
+      return next();
+    }
+  }
+
   if (access && allowedRoles.includes(role)) {
     return next();
   }
 
+  console.error(`Access Denied for ${user?.id || "Guest"}: ${reason}`);
   res.status(403).json({ message: reason || "Access denied" });
 };
