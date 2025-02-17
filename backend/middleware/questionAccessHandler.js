@@ -1,13 +1,12 @@
 // src/middleware/questionAccessHandler.js
-import { checkAccess } from "../utils/accessControlUtils.js";
 import prisma from "../prisma/prismaClient.js";
 
 /**
- * Custom Access Handler for Questions:
- * - Uses `templateId` for access check (not questionId)
+ * Custom Access Handler for Questions via Template ID
+ * - For GET (Questions): Use `templateId` directly
  */
-export const handleQuestionAccess = async ({ user, resourceId, accessLevel }) => {
-  // ✅ 1️⃣ Find Template by Template ID
+export const handleQuestionAccess = async ({ resourceId, user }) => {
+  // ✅ Find Template Directly
   const template = await prisma.template.findUnique({
     where: { id: resourceId },
     include: { accessControl: true },
@@ -17,24 +16,21 @@ export const handleQuestionAccess = async ({ user, resourceId, accessLevel }) =>
     return { access: false, reason: "Template not found" };
   }
 
-  // ✅ 2️⃣ Admin Override
+  // ✅ Admin Access
   if (user?.role === "ADMIN") {
     return { access: true };
   }
 
-  // ✅ 3️⃣ Template Owner Override
+  // ✅ Template Owner Access
   if (template.ownerId === user?.id) {
     return { access: true };
   }
 
-  // ✅ 4️⃣ ACL Check (Read Access for Users with Template Access)
-  if (
-    user &&
-    template.accessControl?.some((ac) => ac.userId === user.id)
-  ) {
+  // ✅ ACL Access for Auth Users
+  if (user && template.accessControl?.some((ac) => ac.userId === user.id)) {
     return { access: true };
   }
 
-  // 🚫 Default: No Access
-  return { access: false, reason: "Unauthorized to view questions for this template" };
+  // 🚫 Default Deny
+  return { access: false, reason: "No access to questions of this template" };
 };

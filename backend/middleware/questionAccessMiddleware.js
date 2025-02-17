@@ -1,6 +1,5 @@
 // src/middleware/questionAccessMiddleware.js
 import { checkResourceAccess } from "./resourceAccessMiddleware.js";
-import { handleQuestionAccess } from "./questionAccessHandler.js";
 
 // ✅ Get Questions (via Template Access)
 export const checkQuestionAccess = checkResourceAccess("question", "read");
