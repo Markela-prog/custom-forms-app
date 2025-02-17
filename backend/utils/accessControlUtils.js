@@ -13,29 +13,29 @@ export const checkAccess = async ({
   resource,
   resourceId,
   user,
-  resourceAccessHandler = null, // New: Custom per-resource logic
+  resourceAccessHandler = null,
   checkOwnership = false,
 }) => {
   try {
     // 🟡 1️⃣ Fetch Resource from Database
     const resourceData = await prisma[resource].findUnique({
       where: { id: resourceId },
-      include:
-        resource === "template" ? { accessControl: true } : { template: true },
+      include: resource === "template" ? { accessControl: true } : { template: true },
     });
 
     if (!resourceData) {
       return { access: false, reason: `${resource} not found` };
     }
 
-    // ✅ 2️⃣ Run Resource-Specific Logic First (Overrides)
+    // 🟠 2️⃣ Apply Resource-Specific Logic
     if (resourceAccessHandler) {
       const overrideResult = await resourceAccessHandler({
         resourceData,
         user,
+        accessLevel: checkOwnership ? "owner" : "read",
       });
       if (overrideResult !== null) {
-        return overrideResult; // Return if custom handler gives result
+        return overrideResult; // Return result from handler
       }
     }
 
@@ -59,7 +59,7 @@ export const checkAccess = async ({
       }
     }
 
-    // 🟡 5️⃣ Resource-Specific Access-Control for Users
+    // 🟡 5️⃣ ACL Users (Read Only)
     if (user && resourceData.accessControl?.some((ac) => ac.userId === user.id)) {
       return { access: true, resource: resourceData };
     }
@@ -67,9 +67,7 @@ export const checkAccess = async ({
     // 🚫 6️⃣ Default: No Access
     return {
       access: false,
-      reason: user
-        ? `Unauthorized to access this ${resource}`
-        : `Login required to access this ${resource}`,
+      reason: user ? `Unauthorized to access this ${resource}` : `Login required to access this ${resource}`,
     };
   } catch (error) {
     console.error(`Error checking ${resource} access:`, error);
