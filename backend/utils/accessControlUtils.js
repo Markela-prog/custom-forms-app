@@ -30,6 +30,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
 
   // 🟡 2️⃣ Role-Based Access
   if (user?.role === "ADMIN") return { access: true, role: "admin" };
+
   if (resourceData.ownerId === user?.id) return { access: true, role: "owner" };
 
   // 🟡 3️⃣ ACL Check
@@ -55,7 +56,9 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
   }
 
   // 🟢 6️⃣ Authenticated Check
-  if (user) return { access: true, role: "authenticated" };
+  if (user && resourceData.isPublic) {
+    return { access: true, role: "authenticated" };
+  }
 
   // 🟠 7️⃣ Public Check (Read Only)
   if (action === "read" && resourceData.isPublic) {
