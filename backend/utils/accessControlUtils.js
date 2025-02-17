@@ -1,4 +1,6 @@
 // src/utils/accessControlUtils.js
+import prisma from "../prisma/prismaClient.js";
+
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
   if (!resourceId) {
     if (["create", "read_all", "getUserForms"].includes(action)) {
@@ -10,9 +12,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
   }
 
   console.log(
-    `[AccessControl] User ${
-      user?.id || "Guest"
-    } attempting ${action} on ${resource} ${resourceId}`
+    `[AccessControl] User ${user?.id || "Guest"} attempting ${action} on ${resource} ${resourceId}`
   );
 
   // 🟡 Special Case: Template Ownership Check for Question Creation
@@ -27,16 +27,11 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     }
 
     if (template.ownerId === user?.id) {
-      console.log(
-        `[AccessControl] User ${user?.id} is the owner of template ${resourceId}`
-      );
+      console.log(`[AccessControl] User ${user?.id} is the owner of template ${resourceId}`);
       return { access: true, role: "owner" };
     }
 
-    return {
-      access: false,
-      reason: "Only the template owner can create questions",
-    };
+    return { access: false, reason: "Only the template owner can create questions" };
   }
 
   // 🟠 Default Resource Lookup
