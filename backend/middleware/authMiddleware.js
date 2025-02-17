@@ -34,22 +34,25 @@ export const isAdmin = (req, res, next) => {
   next();
 };
 
+// src/middleware/authMiddleware.js
 export const optionalAuth = async (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     req.user = null;
+    console.log("[Auth] No token provided");
     return next();
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    req.user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
 
-    if (!req.user) {
-      req.user = null;
-    }
+    console.log("[Auth] User from token:", req.user);
   } catch (error) {
+    console.error("[Auth] Token error:", error);
     req.user = null;
   }
 
