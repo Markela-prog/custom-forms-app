@@ -1,22 +1,23 @@
+// src/middleware/templateAccessHandler.js
 export const handleTemplateAccess = async ({ resourceData, user, accessLevel }) => {
-  // 🟡 1️⃣ READ Access: Public Templates
+  // 🟡 1️⃣ Public Template (Read-Only)
   if (accessLevel === "read" && resourceData.isPublic) {
     return { access: true, resource: resourceData };
   }
 
-  // 🟠 2️⃣ WRITE/DELETE Access: Owner/Admin Only
+  // 🟠 2️⃣ WRITE/DELETE Access (Only Owner or Admin)
   if (["write", "owner"].includes(accessLevel)) {
     if (user?.role === "ADMIN" || resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
-    return { access: false, reason: "Only the owner or admin can modify this template" };
+    return { access: false, reason: "Only the template owner or admin can modify this template" };
   }
 
-  // 🟡 3️⃣ Deny ACL Users for Write/Delete
+  // 🟡 3️⃣ ACL Users Cannot Modify
   if (resourceData.accessControl?.some((ac) => ac.userId === user?.id)) {
     return {
       access: false,
-      reason: "Access Control (ACL) users cannot edit or delete templates",
+      reason: "ACL users cannot edit or delete templates",
     };
   }
 
