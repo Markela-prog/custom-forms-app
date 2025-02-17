@@ -13,7 +13,7 @@ import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
 router.put("/reorder", protect, accessControl("question", "reorder"), reorderQuestionsController);
-router.get("/:templateId", optionalAuth, accessControl("template", "read"), getQuestionsByTemplateController);
+router.get("/:templateId", optionalAuth, accessControl("question", "read"), getQuestionsByTemplateController);
 router.post("/:templateId", protect, accessControl("question", "create"), createQuestionController);
 router.put("/:questionId", protect, accessControl("question", "update"), updateQuestionController);
 router.delete("/:questionId", protect, accessControl("question", "delete"), deleteQuestionController);
