@@ -33,7 +33,12 @@ export const checkAccess = async ({
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 3️⃣ Apply Resource-Specific Logic
+    // 🟡 3️⃣ OWNER OVERRIDE (Owner Can Access Their Own Resource)
+    if (resourceData.ownerId === user?.id) {
+      return { access: true, resource: resourceData };
+    }
+
+    // 🟡 4️⃣ Apply Resource-Specific Logic
     if (resourceAccessHandler) {
       const overrideResult = await resourceAccessHandler({
         resourceData,
@@ -43,11 +48,6 @@ export const checkAccess = async ({
       if (overrideResult !== null) {
         return overrideResult; // Return result from handler
       }
-    }
-
-    // 🟠 4️⃣ Owner or Admin (Full Access)
-    if (resourceData.ownerId === user?.id) {
-      return { access: true, resource: resourceData };
     }
 
     // 🟡 5️⃣ Template-Based Access Control (For Authenticated Users)
