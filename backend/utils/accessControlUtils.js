@@ -4,14 +4,8 @@ import prisma from "../prisma/prismaClient.js";
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
   // 🟡 Handle Cases Without Resource ID
   if (!resourceId) {
-    if (
-      action === "create" ||
-      action === "read_all" ||
-      action === "getUserForms"
-    ) {
-      // ✅ If user is authenticated, allow
+    if (["create", "read_all", "getUserForms"].includes(action)) {
       if (user) return { access: true, role: "authenticated" };
-
       return { access: false, reason: "Unauthorized" };
     }
     return { access: false, reason: "Resource ID is required" };
@@ -31,7 +25,9 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
   // 🟡 2️⃣ Role-Based Access
   if (user?.role === "ADMIN") return { access: true, role: "admin" };
 
-  if (resourceData.ownerId === user?.id) return { access: true, role: "owner" };
+  if (resourceData.ownerId === user?.id) {
+    return { access: true, role: "owner" };
+  }
 
   // 🟡 3️⃣ ACL Check
   if (resourceData.accessControl?.some((ac) => ac.userId === user?.id)) {
@@ -55,12 +51,12 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     return { access: true, role: "template_owner" };
   }
 
-  // ✅ 4️⃣ Authenticated User Access to Public Templates
+  // ✅ Authenticated User Access (for Public Templates)
   if (user && resourceData.isPublic) {
     return { access: true, role: "authenticated" };
   }
 
-  // 🟠 5️⃣ Public Access (Non-authenticated users)
+  // 🟠 Public Check (Read Only, for Non-authenticated users)
   if (!user && resourceData.isPublic && action === "read") {
     return { access: true, role: "any" };
   }
