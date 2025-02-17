@@ -20,7 +20,10 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
   // 🟠 1️⃣ Fetch Resource
   const resourceData = await prisma[resource].findUnique({
     where: { id: resourceId },
-    include: { template: true, accessControl: true },
+    include:
+      resource === "template"
+        ? { accessControl: true, owner: true }
+        : { template: true, accessControl: true },
   });
 
   if (!resourceData) return { access: false, reason: `${resource} not found` };
