@@ -17,6 +17,24 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     } attempting ${action} on ${resource} ${resourceId}`
   );
 
+  // 🟡 Special Case: Validate Template Ownership for Question Creation
+  if (resource === "question" && action === "create") {
+    const template = await prisma.template.findUnique({
+      where: { id: resourceId },
+    });
+    if (!template) return { access: false, reason: "Template not found" };
+
+    if (template.ownerId === user?.id) {
+      return { access: true, role: "owner" };
+    } else {
+      return {
+        access: false,
+        reason: "Only the template owner can create questions",
+      };
+    }
+  }
+
+  // 🟠 Default Resource Fetch
   const resourceData = await prisma[resource].findUnique({
     where: { id: resourceId },
     include: { accessControl: true },
@@ -28,7 +46,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
   if (user?.role === "ADMIN") return { access: true, role: "admin" };
   if (resourceData.ownerId === user?.id) return { access: true, role: "owner" };
 
-  // ✅ ACL Check:
+  // ✅ ACL Check
   const aclUser = resourceData.accessControl?.find(
     (ac) => ac.userId === user?.id
   );
@@ -37,14 +55,9 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     return { access: true, role: "acl" };
   }
 
-  // ✅ Authenticated User for Public Templates
+  // ✅ Authenticated User for Public Resources
   if (user && resourceData.isPublic) {
     return { access: true, role: "authenticated" };
-  }
-
-  // ✅ Public Check for Non-authenticated Users
-  if (!user && resourceData.isPublic && action === "read") {
-    return { access: true, role: "any" };
   }
 
   return { access: false, reason: "Unauthorized" };
