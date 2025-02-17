@@ -7,7 +7,7 @@ import {
   deleteTemplateController,
 } from "../controllers/templateController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
-import { checkTemplateAccess, checkTemplateOwnerOrAdmin } from "../middleware/templateAccessMiddleware.js";
+import { checkTemplateAccess, checkTemplateUpdate, checkTemplateDelete } from "../middleware/templateAccessMiddleware.js";
 
 const router = express.Router();
 
@@ -17,8 +17,8 @@ router.get("/:templateId", optionalAuth, checkTemplateAccess, getTemplateByIdCon
 
 router.get("/", optionalAuth, getAllTemplatesController);
 
-router.put("/:templateId", protect, checkTemplateOwnerOrAdmin, updateTemplateController);
+router.put("/:templateId", protect, checkTemplateUpdate, updateTemplateController);
 
-router.delete("/:templateId", protect, checkTemplateOwnerOrAdmin, deleteTemplateController);
+router.delete("/:templateId", protect, checkTemplateDelete, deleteTemplateController);
 
 export default router;
