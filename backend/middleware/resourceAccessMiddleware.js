@@ -1,18 +1,19 @@
 // src/middleware/resourceAccessMiddleware.js
 import { checkAccess } from "../utils/accessControlUtils.js";
+import { handleTemplateAccess } from "./templateAccessHandler.js";
+import { handleQuestionAccess } from "./questionAccessHandler.js";
 
 /**
  * Middleware to check resource access (template, form, question)
  * @param {string} resourceType - 'template', 'form', 'question'
  * @param {string} accessLevel - 'read', 'owner', 'admin'
- * @param {function|null} resourceAccessHandler - Custom handler (optional)
  */
-export const checkResourceAccess = (resourceType, accessLevel, resourceAccessHandler = null) => async (req, res, next) => {
-  // 🟡 1️⃣ Get Resource ID Correctly
+export const checkResourceAccess = (resourceType, accessLevel) => async (req, res, next) => {
+  // 🟡 Handle Question Access Using `templateId`
   const resourceId = 
-    req.params[`${resourceType}Id`] || 
-    req.params.id || 
-    (resourceType === "question" ? req.params.questionId : null);
+    resourceType === "question" 
+      ? req.params.templateId // Use templateId for questions
+      : req.params[`${resourceType}Id`] || req.params.id;
 
   if (!resourceId) {
     return res.status(400).json({ message: `Missing ${resourceType} ID` });
@@ -20,12 +21,20 @@ export const checkResourceAccess = (resourceType, accessLevel, resourceAccessHan
 
   const user = req.user;
 
-  // 🟠 2️⃣ Perform Centralized Access Check
+  // 🟠 Choose Specific Handler Based on Resource Type
+  let resourceHandler = null;
+  if (resourceType === "template") {
+    resourceHandler = handleTemplateAccess;
+  } else if (resourceType === "question") {
+    resourceHandler = handleQuestionAccess;
+  }
+
+  // ✅ Perform Access Check
   const { access, reason, resource } = await checkAccess({
     resource: resourceType,
     resourceId,
     user,
-    resourceAccessHandler,
+    resourceAccessHandler: resourceHandler,
     checkOwnership: accessLevel === "owner" || accessLevel === "admin",
   });
 

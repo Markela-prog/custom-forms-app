@@ -1,25 +1,31 @@
 // src/middleware/questionAccessHandler.js
+import { checkAccess } from "../utils/accessControlUtils.js";
+
+/**
+ * Custom Access Handler for Questions
+ * - Uses `templateId` to check access
+ */
 export const handleQuestionAccess = async ({ resourceData, user, accessLevel }) => {
-    // 🟡 1️⃣ Public Template Questions (Accessible to Anyone)
-    if (accessLevel === "read" && resourceData.template.isPublic) {
-      return { access: true, resource: resourceData };
-    }
-  
-    // 🟠 2️⃣ Private Template: Only Authenticated Users with Access or Owner/Admin
-    if (accessLevel === "read" && !resourceData.template.isPublic) {
-      if (!user) {
-        return { access: false, reason: "Login required to access private questions" };
-      }
-  
-      const isOwner = resourceData.template.ownerId === user.id;
-      const hasACL = resourceData.template.accessControl?.some(ac => ac.userId === user.id);
-      if (isOwner || hasACL || user.role === "ADMIN") {
-        return { access: true, resource: resourceData };
-      }
-  
-      return { access: false, reason: "No access to private template questions" };
-    }
-  
-    return null; // Fallback to default logic
+  // 🟠 If the user is ADMIN, allow all
+  if (user?.role === "ADMIN") {
+    return { access: true, resource: resourceData };
+  }
+
+  // 🟡 Check Access via Template
+  const templateAccess = await checkAccess({
+    resource: "template",
+    resourceId: resourceData.templateId,
+    user,
+    checkOwnership: accessLevel === "owner",
+  });
+
+  if (templateAccess.access) {
+    return { access: true, resource: resourceData };
+  }
+
+  // 🚫 Default: No Access
+  return {
+    access: false,
+    reason: "No access to questions via template",
   };
-  
+};

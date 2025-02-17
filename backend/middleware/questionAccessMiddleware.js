@@ -2,11 +2,11 @@
 import { checkResourceAccess } from "./resourceAccessMiddleware.js";
 import { handleQuestionAccess } from "./questionAccessHandler.js";
 
-// ✅ Question Access Middleware (Read for Public/Owner/ACL)
-export const checkQuestionAccess = checkResourceAccess("question", "read", handleQuestionAccess);
+// ✅ Get Questions (Public or Private via Template)
+export const checkQuestionAccess = checkResourceAccess("question", "read");
 
-// ✅ Question Modification Middleware (Owner/Admin Only)
-export const checkQuestionOwnerOrAdmin = checkResourceAccess("question", "owner", handleQuestionAccess);
+// ✅ Update or Delete (Only Owner or Admin)
+export const checkQuestionOwnerOrAdmin = checkResourceAccess("question", "owner");
 
 
 export const checkReorderOwnership = async (req, res, next) => {

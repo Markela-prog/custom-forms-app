@@ -1,15 +1,14 @@
 import { checkResourceAccess } from "./resourceAccessMiddleware.js";
-import { handleTemplateAccess } from "./templateAccessHandler.js";
 // src/middleware/templateAccessMiddleware.js
 
 // ✅ Template Access Middleware (Read for Public/Owner/Access-Control)
-export const checkTemplateAccess = checkResourceAccess("template", "read", handleTemplateAccess);
+export const checkTemplateAccess = checkResourceAccess("template", "read");
 
 // ✅ Template Modification Middleware (Owner/Admin only)
 export const checkTemplateOwnerOrAdmin = checkResourceAccess("template", "owner");
 
 // ✅ Template Update Access (Owner/Admin Only, No ACL)
-export const checkTemplateUpdate = checkResourceAccess("template", "owner", handleTemplateAccess);
+export const checkTemplateUpdate = checkResourceAccess("template", "owner");
 
 // ✅ Template Delete Access (Owner/Admin Only, No ACL)
-export const checkTemplateDelete = checkResourceAccess("template", "owner", handleTemplateAccess);
+export const checkTemplateDelete = checkResourceAccess("template", "owner");
