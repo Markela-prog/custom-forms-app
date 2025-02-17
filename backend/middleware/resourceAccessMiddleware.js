@@ -1,7 +1,7 @@
 // src/middleware/resourceAccessMiddleware.js
 import { checkAccess } from "../utils/accessControlUtils.js";
 import { handleTemplateAccess } from "./templateAccessHandler";
-import { handleFormAccess } from "./formAccessHandler";
+import { handleFormAccess } from "./formAccessHandler.js";
 
 /**
  * Middleware to check resource access (template, form, question)
