@@ -38,7 +38,6 @@ export const optionalAuth = async (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    console.log("No token provided (User is unauthenticated)");
     req.user = null;
     return next();
   }
@@ -48,10 +47,7 @@ export const optionalAuth = async (req, res, next) => {
     req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
     if (!req.user) {
-      console.log("Token invalid, user not found.");
       req.user = null;
-    } else {
-      console.log("Authenticated User:", req.user);
     }
   } catch (error) {
     req.user = null;
