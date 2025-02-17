@@ -9,6 +9,7 @@ import {
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
 //import { checkQuestionAccess, checkQuestionOwnerOrAdmin, checkReorderOwnership } from "../middleware/questionAccessMiddleware.js";
 //import { checkTemplateOwnerOrAdmin } from "../middleware/templateAccessMiddleware.js";
+import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
 router.put("/reorder", protect, accessControl("question", "reorder"), reorderQuestionsController);

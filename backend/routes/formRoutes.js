@@ -9,7 +9,7 @@ import {
 import { protect } from "../middleware/authMiddleware.js";
 //import { checkFormAccess, checkFormDeleteAccess, preventDuplicateFormSubmission } from "../middleware/formAccessMiddleware.js";
 //import { checkTemplateAccess } from "../middleware/templateAccessMiddleware.js";
-
+import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
 router.post("/:templateId", protect, accessControl("form", "create"), createFormController);

@@ -6,6 +6,7 @@ import {
 } from "../controllers/answerController.js";
 import { protect } from "../middleware/authMiddleware.js";
 //import { checkAnswerAccess } from "../middleware/answerAccessMiddleware.js";
+import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
 router.post("/:formId", protect, accessControl("answer", "create"), submitAnswersController);
