@@ -1,4 +1,5 @@
 // src/utils/accessControlUtils.js
+import prisma from "../prisma/prismaClient";
 
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
   if (!resourceId) {
