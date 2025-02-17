@@ -11,7 +11,7 @@ export const permissionsMatrix = {
   },
   question: {
     create: ["owner", "admin"],
-    read: ["any"],
+    read: ["any", "authenticated", "owner", "acl", "admin"],
     read_private: ["authenticated", "owner", "acl", "admin"],
     update: ["owner", "admin"],
     delete: ["owner", "admin"],

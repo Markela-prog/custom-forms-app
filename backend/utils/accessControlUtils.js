@@ -1,8 +1,7 @@
-
+// src/utils/accessControlUtils.js
 import prisma from "../prisma/prismaClient.js";
 
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
-  // 🟡 1️⃣ Handle Actions Without Resource ID
   if (!resourceId) {
     if (["create", "read_all", "getUserForms"].includes(action)) {
       return user
@@ -18,32 +17,41 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     } attempting ${action} on ${resource} ${resourceId}`
   );
 
-  // 🟠 2️⃣ Special Case: Questions are Scoped to Template
+  // 🟡 Handle QUESTION Scopes via TEMPLATE Ownership
   if (resource === "question") {
-    const question = await prisma.question.findUnique({
-      where: { id: resourceId },
-      include: { template: { select: { ownerId: true } } },
-    });
+    let templateOwnerId = null;
 
-    if (!question) {
-      return { access: false, reason: "Question not found" };
+    // 🟠 1️⃣ For CREATE, READ, REORDER -> Use templateId
+    if (action === "create" || action === "read" || action === "reorder") {
+      const template = await prisma.template.findUnique({
+        where: { id: resourceId },
+        select: { ownerId: true },
+      });
+      if (!template) return { access: false, reason: "Template not found" };
+      templateOwnerId = template.ownerId;
     }
 
-    // 🟡 Owner Check (via Template)
-    if (question.template?.ownerId === user?.id) {
-      console.log(
-        `[AccessControl] User ${user?.id} is TEMPLATE OWNER for question ${resourceId}`
-      );
-      return { access: true, role: "owner" };
+    // 🟠 2️⃣ For UPDATE, DELETE -> Find Template via Question
+    if (action === "update" || action === "delete") {
+      const question = await prisma.question.findUnique({
+        where: { id: resourceId },
+        include: { template: { select: { ownerId: true } } },
+      });
+      if (!question) return { access: false, reason: "Question not found" };
+      templateOwnerId = question.template?.ownerId;
     }
+
+    // 🟢 Role-Based Checks
+    if (user?.role === "ADMIN") return { access: true, role: "admin" };
+    if (templateOwnerId === user?.id) return { access: true, role: "owner" };
 
     return {
       access: false,
-      reason: "Only template owners can modify questions",
+      reason: "Only template owners can manage questions",
     };
   }
 
-  // 🟠 3️⃣ Default Resource Check (e.g., Template Access)
+  // 🟠 Default Resource Check (e.g., Template Access)
   const resourceData = await prisma[resource].findUnique({
     where: { id: resourceId },
     include: { accessControl: true },
