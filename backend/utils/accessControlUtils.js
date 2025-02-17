@@ -22,7 +22,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     where: { id: resourceId },
     include:
       resource === "template"
-        ? { accessControl: true, owner: true }
+        ? { accessControl: true }
         : { template: true, accessControl: true },
   });
 
@@ -55,13 +55,13 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     return { access: true, role: "template_owner" };
   }
 
-  // 🟢 6️⃣ Authenticated Check
+  // ✅ 4️⃣ Authenticated User Access to Public Templates
   if (user && resourceData.isPublic) {
     return { access: true, role: "authenticated" };
   }
 
-  // 🟠 7️⃣ Public Check (Read Only)
-  if (action === "read" && resourceData.isPublic) {
+  // 🟠 5️⃣ Public Access (Non-authenticated users)
+  if (!user && resourceData.isPublic && action === "read") {
     return { access: true, role: "any" };
   }
 
