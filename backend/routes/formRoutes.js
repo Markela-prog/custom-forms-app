@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post("/:templateId", protect, accessControl("form", "create"), createFormController);
 router.get("/template/:templateId", protect, accessControl("form", "read"), getFormsByTemplateController);
-router.get("/user", protect, accessControl("form", "read"), getFormsByUserController);
+router.get("/user", protect, accessControl("form", "getUserForms"), getFormsByUserController);
 router.get("/:formId", protect, accessControl("form", "read"), getFormByIdController);
 router.delete("/:formId", protect, accessControl("form", "delete"), deleteFormController);
 

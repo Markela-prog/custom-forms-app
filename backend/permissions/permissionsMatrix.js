@@ -4,6 +4,7 @@ export const permissionsMatrix = {
     create: ["authenticated"],
     read: ["any"],
     read_private: ["authenticated", "owner", "acl", "admin"],
+    read_all: ["authenticated", "admin"],
     update: ["owner", "admin"],
     delete: ["owner", "admin"],
     manage_access: ["owner", "admin"]
@@ -20,6 +21,8 @@ export const permissionsMatrix = {
     create: ["authenticated"],
     read: ["owner", "template_owner", "admin"],
     read_private: ["owner", "template_owner", "admin"],
+    read_all: ["admin"],
+    getUserForms: ["authenticated"],
     delete: ["admin", "owner"],
   },
   answer: {

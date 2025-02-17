@@ -2,7 +2,20 @@
 import prisma from "../prisma/prismaClient.js";
 
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
-  if (!resourceId) return { access: false, reason: "Resource ID is required" };
+  // 🟡 Handle Cases Without Resource ID
+  if (!resourceId) {
+    if (
+      action === "create" ||
+      action === "read_all" ||
+      action === "getUserForms"
+    ) {
+      // ✅ If user is authenticated, allow
+      if (user) return { access: true, role: "authenticated" };
+
+      return { access: false, reason: "Unauthorized" };
+    }
+    return { access: false, reason: "Resource ID is required" };
+  }
 
   // 🟠 1️⃣ Fetch Resource
   const resourceData = await prisma[resource].findUnique({
