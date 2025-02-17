@@ -2,7 +2,7 @@
 export const permissionsMatrix = {
   template: {
     create: ["authenticated"],
-    read: ["any"],
+    read: ["any", "authenticated", "owner", "acl", "admin"],
     read_private: ["authenticated", "owner", "acl", "admin"],
     read_all: ["authenticated", "admin"],
     update: ["owner", "admin"],

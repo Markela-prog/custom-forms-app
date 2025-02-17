@@ -2,11 +2,8 @@
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
 
-// src/middleware/accessControlMiddleware.js
 export const accessControl = (resource, action) => async (req, res, next) => {
-  const user = req.user; // Make sure req.user is passed
-  console.log("[AccessControl] Middleware received User:", user);
-
+  const user = req.user || null;
   let resourceId =
     req.params.templateId ||
     req.params.formId ||
@@ -23,15 +20,17 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     resourceId = null;
   }
 
-  const allowedRoles = permissionsMatrix[resource]?.[action];
-  if (!allowedRoles) {
+  const allowedRoles = permissionsMatrix[resource]?.[action] || [];
+  if (!allowedRoles.length) {
     return res
       .status(500)
       .json({ message: "Invalid permissions configuration" });
   }
 
+  // ✅ Admin Override
   if (user?.role === "ADMIN") return next();
 
+  // 🛡️ Perform Access Check
   const { access, role, reason } = await checkAccess({
     resource,
     resourceId,
@@ -45,6 +44,11 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     } - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
   );
 
+  if (access && allowedRoles.includes(role)) {
+    return next();
+  }
+
+  // 🟡 Fallback: Check `read_private` for Authenticated Users
   if (!access && action === "read") {
     const { access: privateAccess, role: privateRole } = await checkAccess({
       resource,
@@ -58,10 +62,6 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     ) {
       return next();
     }
-  }
-
-  if (access && allowedRoles.includes(role)) {
-    return next();
   }
 
   console.error(`Access Denied for ${user?.id || "Guest"}: ${reason}`);
