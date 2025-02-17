@@ -3,11 +3,6 @@ import prisma from "../prisma/prismaClient.js";
 
 /**
  * Generic function to check access for templates, forms, questions
- * @param {string} resource - Resource type ('template', 'form', etc.)
- * @param {string} resourceId - Resource ID
- * @param {object} user - User object from req.user
- * @param {function|null} resourceAccessHandler - Custom logic per resource (optional)
- * @returns {object} - { access: boolean, reason: string, resource: object }
  */
 export const checkAccess = async ({
   resource,
@@ -17,13 +12,20 @@ export const checkAccess = async ({
   checkOwnership = false,
 }) => {
   try {
+    // 🟡 Handle Question Access via Template ID
+    if (resource === "question" && !resourceId) {
+      return { access: false, reason: "Template ID is required" };
+    }
+
     // 🟡 Validate Resource ID
     if (!resourceId) {
       return { access: false, reason: `${resource} ID is required` };
     }
 
-    // 🟡 1️⃣ Fetch Resource
-    const resourceData = await prisma[resource].findUnique({
+    // 🟡 1️⃣ Fetch Resource (Template if Question)
+    const resourceData = await prisma[
+      resource === "question" ? "template" : resource
+    ].findUnique({
       where: { id: resourceId },
       include:
         resource === "template" ? { accessControl: true } : { template: true },
@@ -43,7 +45,7 @@ export const checkAccess = async ({
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 4️⃣ Run Custom Access Handler
+    // 🟡 4️⃣ Apply Custom Logic
     if (resourceAccessHandler) {
       const overrideResult = await resourceAccessHandler({
         resourceData,
