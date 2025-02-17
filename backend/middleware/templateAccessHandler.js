@@ -1,16 +1,24 @@
 export const handleTemplateAccess = async ({ resourceData, user, accessLevel }) => {
-  // 🟡 1️⃣ Read Access (Check Public First)
+  // 🟡 1️⃣ READ Access: Public Templates
   if (accessLevel === "read" && resourceData.isPublic) {
     return { access: true, resource: resourceData };
   }
 
-  // 🟠 2️⃣ Modification Access (Only Owner/Admin)
+  // 🟠 2️⃣ WRITE/DELETE Access: Owner/Admin Only
   if (["write", "owner"].includes(accessLevel)) {
     if (user?.role === "ADMIN" || resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
-    return { access: false, reason: "Only owner or admin can modify this template" };
+    return { access: false, reason: "Only the owner or admin can modify this template" };
   }
 
-  return null; // Fallback to generic handler for other operations
+  // 🟡 3️⃣ Deny ACL Users for Write/Delete
+  if (resourceData.accessControl?.some((ac) => ac.userId === user?.id)) {
+    return {
+      access: false,
+      reason: "Access Control (ACL) users cannot edit or delete templates",
+    };
+  }
+
+  return { access: false, reason: "Unauthorized template access" };
 };

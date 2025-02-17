@@ -7,8 +7,8 @@ export const checkTemplateAccess = checkResourceAccess("template", "read");
 // ✅ Template Modification Middleware (Owner/Admin only)
 export const checkTemplateOwnerOrAdmin = checkResourceAccess("template", "owner");
 
-// ✅ Template Update Access (Owner or Admin Only)
+// ✅ Template Update Access (Owner/Admin Only, No ACL)
 export const checkTemplateUpdate = checkResourceAccess("template", "owner");
 
-// ✅ Template Delete Access (Owner or Admin Only)
+// ✅ Template Delete Access (Owner/Admin Only, No ACL)
 export const checkTemplateDelete = checkResourceAccess("template", "owner");
