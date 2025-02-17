@@ -1,6 +1,5 @@
 // src/middleware/resourceAccessMiddleware.js
 import { checkAccess } from "../utils/accessControlUtils.js";
-import { checkAccess } from "../utils/accessControlUtils.js";
 import { handleTemplateAccess } from "./templateAccessHandler.js";
 
 /**
