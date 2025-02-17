@@ -1,4 +1,5 @@
 // src/utils/accessControlUtils.js
+// src/utils/accessControlUtils.js
 import prisma from "../prisma/prismaClient.js";
 
 export const checkAccess = async ({ resource, resourceId, user, action }) => {
@@ -17,59 +18,60 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     } attempting ${action} on ${resource} ${resourceId}`
   );
 
+  let templateOwnerId = null;
+  let accessControl = null;
+
   // 🟡 Handle QUESTION Scopes via TEMPLATE Ownership
   if (resource === "question") {
-    let templateOwnerId = null;
-
-    // 🟠 1️⃣ For CREATE, READ, REORDER -> Use templateId
-    if (action === "create" || action === "read" || action === "reorder") {
+    if (["create", "read", "reorder"].includes(action)) {
+      // 🟠 For CREATE, READ, REORDER -> Find Template by templateId
       const template = await prisma.template.findUnique({
         where: { id: resourceId },
-        select: { ownerId: true },
+        include: { accessControl: true },
       });
       if (!template) return { access: false, reason: "Template not found" };
       templateOwnerId = template.ownerId;
+      accessControl = template.accessControl;
     }
 
-    // 🟠 2️⃣ For UPDATE, DELETE -> Find Template via Question
-    if (action === "update" || action === "delete") {
+    if (["update", "delete"].includes(action)) {
+      // 🟠 For UPDATE, DELETE -> Find Template via Question
       const question = await prisma.question.findUnique({
         where: { id: resourceId },
-        include: { template: { select: { ownerId: true } } },
+        include: { template: { include: { accessControl: true } } },
       });
       if (!question) return { access: false, reason: "Question not found" };
-      templateOwnerId = question.template?.ownerId;
+      templateOwnerId = question.template.ownerId;
+      accessControl = question.template.accessControl;
     }
-
-    // 🟢 Role-Based Checks
-    if (user?.role === "ADMIN") return { access: true, role: "admin" };
-    if (templateOwnerId === user?.id) return { access: true, role: "owner" };
-
-    return {
-      access: false,
-      reason: "Only template owners can manage questions",
-    };
   }
 
-  // 🟠 Default Resource Check (e.g., Template Access)
-  const resourceData = await prisma[resource].findUnique({
-    where: { id: resourceId },
-    include: { accessControl: true },
-  });
+  // 🟡 Role-Based Access Logic
+  if (user?.role === "ADMIN") {
+    return { access: true, role: "admin" };
+  }
 
-  if (!resourceData) return { access: false, reason: `${resource} not found` };
+  if (templateOwnerId === user?.id) {
+    console.log(
+      `[AccessControl] User ${user?.id} is the OWNER of the template.`
+    );
+    return { access: true, role: "owner" };
+  }
 
-  // 🟢 Role-Based Access
-  if (user?.role === "ADMIN") return { access: true, role: "admin" };
-  if (resourceData.ownerId === user?.id) return { access: true, role: "owner" };
-
-  // ✅ ACL Check
-  if (resourceData.accessControl?.some((ac) => ac.userId === user?.id)) {
+  // 🟢 ACL Check
+  const isACL = accessControl?.some((ac) => ac.userId === user?.id);
+  if (isACL) {
+    console.log(`[AccessControl] User ${user?.id} has ACL access.`);
     return { access: true, role: "acl" };
   }
 
-  // ✅ Authenticated for Public Resources
-  if (user && resourceData.isPublic) {
+  // 🟢 Public or Authenticated Check
+  if (
+    user &&
+    resource === "template" &&
+    action === "read" &&
+    resourceData?.isPublic
+  ) {
     return { access: true, role: "authenticated" };
   }
 
