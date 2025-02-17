@@ -5,11 +5,11 @@ import {
   deleteAnswerController,
 } from "../controllers/answerController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { checkAnswerAccess } from "../middleware/answerAccessMiddleware.js";
+//import { checkAnswerAccess } from "../middleware/answerAccessMiddleware.js";
 const router = express.Router();
 
-router.post("/:formId", protect, submitAnswersController);
-router.put("/:formId/:answerId", protect, checkAnswerAccess, updateAnswerController);
-router.delete("/:formId/:answerId", protect, checkAnswerAccess, deleteAnswerController);
+router.post("/:formId", protect, accessControl("answer", "create"), submitAnswersController);
+router.put("/:formId/:answerId", protect, accessControl("answer", "update"), updateAnswerController);
+router.delete("/:formId/:answerId", protect, accessControl("answer", "delete"), deleteAnswerController);
 
 export default router;
