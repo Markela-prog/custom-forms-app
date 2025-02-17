@@ -1,5 +1,4 @@
 // src/middleware/accessControlMiddleware.js
-
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
 
