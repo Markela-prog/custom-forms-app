@@ -17,7 +17,12 @@ export const checkAccess = async ({
   checkOwnership = false,
 }) => {
   try {
-    // 🟡 1️⃣ Fetch Resource from Database
+    // 🟡 Validate Resource ID
+    if (!resourceId) {
+      return { access: false, reason: `${resource} ID is required` };
+    }
+
+    // 🟡 1️⃣ Fetch Resource
     const resourceData = await prisma[resource].findUnique({
       where: { id: resourceId },
       include:
@@ -28,17 +33,17 @@ export const checkAccess = async ({
       return { access: false, reason: `${resource} not found` };
     }
 
-    // 🟠 2️⃣ ADMIN OVERRIDE (Admin Can Always Access Everything)
+    // 🟠 2️⃣ ADMIN Access
     if (user?.role === "ADMIN") {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 3️⃣ OWNER OVERRIDE (Owner Can Access Their Own Resource)
+    // 🟡 3️⃣ OWNER Access
     if (resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 4️⃣ Apply Resource-Specific Logic
+    // 🟡 4️⃣ Run Custom Access Handler
     if (resourceAccessHandler) {
       const overrideResult = await resourceAccessHandler({
         resourceData,
@@ -46,11 +51,11 @@ export const checkAccess = async ({
         accessLevel: checkOwnership ? "owner" : "read",
       });
       if (overrideResult !== null) {
-        return overrideResult; // Return result from handler
+        return overrideResult;
       }
     }
 
-    // 🟡 5️⃣ Template-Based Access Control (For Authenticated Users)
+    // 🟡 5️⃣ Template ACL Check
     if (resource !== "template" && resourceData.template) {
       const templateAccess = await checkAccess({
         resource: "template",
@@ -65,15 +70,7 @@ export const checkAccess = async ({
       }
     }
 
-    // 🟡 6️⃣ ACL Users (Read Only)
-    if (
-      user &&
-      resourceData.accessControl?.some((ac) => ac.userId === user.id)
-    ) {
-      return { access: true, resource: resourceData };
-    }
-
-    // 🚫 7️⃣ Default: No Access
+    // 🚫 Default Deny
     return {
       access: false,
       reason: user

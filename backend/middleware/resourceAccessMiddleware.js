@@ -9,10 +9,10 @@ import { handleQuestionAccess } from "./questionAccessHandler.js";
  * @param {string} accessLevel - 'read', 'owner', 'admin'
  */
 export const checkResourceAccess = (resourceType, accessLevel) => async (req, res, next) => {
-  // 🟡 For Questions: Use `templateId`
-  const resourceId = 
-    resourceType === "question" 
-      ? req.params.templateId 
+  // 🟡 Handle Question Access via Template ID
+  const resourceId =
+    resourceType === "question"
+      ? req.params.templateId // Pass templateId for questions
       : req.params[`${resourceType}Id`] || req.params.id;
 
   if (!resourceId) {
@@ -21,7 +21,7 @@ export const checkResourceAccess = (resourceType, accessLevel) => async (req, re
 
   const user = req.user;
 
-  // 🟠 Select Specific Handler
+  // 🟠 Select Handler Based on Resource Type
   let resourceHandler = null;
   if (resourceType === "template") {
     resourceHandler = handleTemplateAccess;
@@ -29,7 +29,7 @@ export const checkResourceAccess = (resourceType, accessLevel) => async (req, re
     resourceHandler = handleQuestionAccess;
   }
 
-  // ✅ Perform Access Check (Bypass `question` and check `template` instead)
+  // ✅ Perform Access Check
   const { access, reason } = await checkAccess({
     resource: resourceType === "question" ? "template" : resourceType,
     resourceId,
