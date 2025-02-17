@@ -3,11 +3,6 @@ import prisma from "../prisma/prismaClient.js";
 
 /**
  * Generic function to check access for templates, forms, questions
- * @param {string} resource - Resource type ('template', 'form', etc.)
- * @param {string} resourceId - Resource ID
- * @param {object} user - User object from req.user
- * @param {function|null} resourceAccessHandler - Custom logic per resource (optional)
- * @returns {object} - { access: boolean, reason: string, resource: object }
  */
 export const checkAccess = async ({
   resource,
@@ -17,6 +12,10 @@ export const checkAccess = async ({
   checkOwnership = false,
 }) => {
   try {
+    if (!resourceId) {
+      throw new Error(`No ${resource} ID provided`);
+    }
+
     // 🟡 1️⃣ Fetch Resource from Database
     const resourceData = await prisma[resource].findUnique({
       where: { id: resourceId },
@@ -28,12 +27,12 @@ export const checkAccess = async ({
       return { access: false, reason: `${resource} not found` };
     }
 
-    // 🟠 2️⃣ ADMIN OVERRIDE (Admin Can Always Access Everything)
+    // 🟠 2️⃣ ADMIN OVERRIDE
     if (user?.role === "ADMIN") {
       return { access: true, resource: resourceData };
     }
 
-    // 🟡 3️⃣ OWNER OVERRIDE (Owner Can Access Their Own Resource)
+    // 🟡 3️⃣ OWNER OVERRIDE
     if (resourceData.ownerId === user?.id) {
       return { access: true, resource: resourceData };
     }
@@ -43,29 +42,13 @@ export const checkAccess = async ({
       const overrideResult = await resourceAccessHandler({
         resourceData,
         user,
-        accessLevel: checkOwnership ? "owner" : "read",
       });
       if (overrideResult !== null) {
-        return overrideResult; // Return result from handler
+        return overrideResult;
       }
     }
 
-    // 🟡 5️⃣ Template-Based Access Control (For Authenticated Users)
-    if (resource !== "template" && resourceData.template) {
-      const templateAccess = await checkAccess({
-        resource: "template",
-        resourceId: resourceData.template.id,
-        user,
-      });
-      if (!templateAccess.access) {
-        return {
-          access: false,
-          reason: `No access to ${resource} via template`,
-        };
-      }
-    }
-
-    // 🟡 6️⃣ ACL Users (Read Only)
+    // 🟡 5️⃣ ACL Check
     if (
       user &&
       resourceData.accessControl?.some((ac) => ac.userId === user.id)
@@ -73,7 +56,7 @@ export const checkAccess = async ({
       return { access: true, resource: resourceData };
     }
 
-    // 🚫 7️⃣ Default: No Access
+    // 🚫 Default: No Access
     return {
       access: false,
       reason: user
