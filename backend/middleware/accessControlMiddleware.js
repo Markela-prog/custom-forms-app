@@ -21,9 +21,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     resourceId = null;
   }
 
-  console.log(
-    `[AccessControl] User ${user?.id || "Guest"} - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
-  );
+  
 
   const allowedRoles = permissionsMatrix[resource]?.[action];
   if (!allowedRoles) {
@@ -42,6 +40,10 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     user,
     action,
   });
+
+  console.log(
+    `[AccessControl] User ${user?.id || "Guest"} - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
+  );
 
   // 📌 Add `read_private` Fallback for Auth Users
   if (!access && ["read"].includes(action)) {
