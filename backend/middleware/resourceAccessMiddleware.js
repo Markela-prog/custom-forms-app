@@ -8,39 +8,48 @@ import { handleQuestionAccess } from "./questionAccessHandler.js";
  * @param {string} resourceType - 'template', 'form', 'question'
  * @param {string} accessLevel - 'read', 'owner', 'admin'
  */
-export const checkResourceAccess = (resourceType, accessLevel) => async (req, res, next) => {
-  // 🟡 Handle Question Access via Template ID
-  const resourceId =
-    resourceType === "question"
-      ? req.params.templateId // Pass templateId for questions
-      : req.params[`${resourceType}Id`] || req.params.id;
+export const checkResourceAccess =
+  (resourceType, accessLevel) => async (req, res, next) => {
+    // 🟡 Handle Question Access via Template ID
+    let resourceId;
 
-  if (!resourceId) {
-    return res.status(400).json({ message: `Missing ${resourceType} ID` });
-  }
+    if (resourceType === "question") {
+      // Use `templateId` from route params when accessing questions
+      resourceId = req.params.templateId;
+    } else {
+      // Standard logic for other resources
+      resourceId = req.params[`${resourceType}Id`] || req.params.id;
+    }
 
-  const user = req.user;
+    // Log resource ID for debugging
+    console.log(`[ResourceAccess] ${resourceType} Resource ID:`, resourceId);
 
-  // 🟠 Select Handler Based on Resource Type
-  let resourceHandler = null;
-  if (resourceType === "template") {
-    resourceHandler = handleTemplateAccess;
-  } else if (resourceType === "question") {
-    resourceHandler = handleQuestionAccess;
-  }
+    if (!resourceId) {
+      return res.status(400).json({ message: `Missing ${resourceType} ID` });
+    }
 
-  // ✅ Perform Access Check
-  const { access, reason } = await checkAccess({
-    resource: resourceType === "question" ? "template" : resourceType,
-    resourceId,
-    user,
-    resourceAccessHandler: resourceHandler,
-    checkOwnership: accessLevel === "owner" || accessLevel === "admin",
-  });
+    const user = req.user;
 
-  if (!access) {
-    return res.status(403).json({ message: reason });
-  }
+    // 🟠 Select Handler Based on Resource Type
+    let resourceHandler = null;
+    if (resourceType === "template") {
+      resourceHandler = handleTemplateAccess;
+    } else if (resourceType === "question") {
+      resourceHandler = handleQuestionAccess;
+    }
 
-  next();
-};
+    // ✅ Perform Access Check
+    const { access, reason } = await checkAccess({
+      resource: resourceType === "question" ? "template" : resourceType,
+      resourceId,
+      user,
+      resourceAccessHandler: resourceHandler,
+      checkOwnership: accessLevel === "owner" || accessLevel === "admin",
+    });
+
+    if (!access) {
+      return res.status(403).json({ message: reason });
+    }
+
+    next();
+  };

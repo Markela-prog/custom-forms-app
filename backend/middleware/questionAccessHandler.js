@@ -3,7 +3,6 @@ import prisma from "../prisma/prismaClient.js";
 
 /**
  * Custom Access Handler for Questions via Template ID
- * Handles all scenarios for question visibility based on template
  */
 export const handleQuestionAccess = async ({ resourceId, user }) => {
   if (!resourceId) {

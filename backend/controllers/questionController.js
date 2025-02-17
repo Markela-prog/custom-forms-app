@@ -18,9 +18,14 @@ export const createQuestionController = async (req, res) => {
   }
 };
 
+
 export const getQuestionsByTemplateController = async (req, res) => {
   try {
     const { templateId } = req.params;
+
+    if (!templateId) {
+      return res.status(400).json({ message: "Template ID is required" });
+    }
 
     const questions = await getQuestionsByTemplateService(templateId);
     res.json(questions);
@@ -29,6 +34,7 @@ export const getQuestionsByTemplateController = async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 };
+
 
 export const updateQuestionController = async (req, res) => {
   try {
