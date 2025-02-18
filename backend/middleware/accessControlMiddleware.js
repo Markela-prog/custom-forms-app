@@ -1,6 +1,6 @@
 // src/middleware/accessControlMiddleware.js
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
-import { checkAccess } from "../utils/checkAccess.js";
+import { checkAccess } from "../utils/accessControlUtils.js";
 import { getResourceId } from "../utils/getResourceId.js";
 
 export const accessControl = (resource, action) => async (req, res, next) => {
