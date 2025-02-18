@@ -1,8 +1,9 @@
+// src/utils/getResourceId.js
 export const getResourceId = (resource, action, req) => {
   if (resource === "question") {
     if (action === "reorder") {
-      const firstQuestion = req.body.questions?.[0];
-      return firstQuestion?.templateId || null;
+      // 🟠 Extract templateId from the first question provided in the body
+      return req.body.questions?.[0]?.templateId || null;
     }
     if (["create", "read"].includes(action)) {
       return req.params.templateId || null;

@@ -26,12 +26,13 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   // ✅ Admin Override
   if (user?.role === "ADMIN") return next();
 
-  // 🛡️ Perform Access Check
+  // 🛡️ Perform Access Check with Questions for `reorder`
   const { access, role, reason } = await checkAccess({
     resource,
     resourceId,
     user,
     action,
+    questions: req.body.questions || [],
   });
 
   console.log(

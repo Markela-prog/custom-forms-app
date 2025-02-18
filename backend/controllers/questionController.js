@@ -60,24 +60,25 @@ export const deleteQuestionController = async (req, res) => {
 export const reorderQuestionsController = async (req, res) => {
   try {
     const { questions } = req.body;
+
     if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    // 🟠 Ensure Template ID is Provided
+    // 🟠 Extract Template ID from the First Question
     const templateId = questions[0]?.templateId;
     if (!templateId) {
-      return res
-        .status(400)
-        .json({ message: "Template ID is required for reorder" });
+      return res.status(400).json({
+        message: "Template ID is required for reorder",
+      });
     }
 
     // 🟠 Validate Questions from Repository
     const dbQuestions = await getQuestionsByIds(questions.map((q) => q.id));
     if (dbQuestions.length !== questions.length) {
-      return res
-        .status(400)
-        .json({ message: "Some provided questions do not exist" });
+      return res.status(400).json({
+        message: "Some provided questions do not exist",
+      });
     }
 
     // 🟠 Validate Single Template Ownership
@@ -85,6 +86,17 @@ export const reorderQuestionsController = async (req, res) => {
     if (!sameTemplate) {
       return res.status(400).json({
         message: "All provided questions must belong to the same template",
+      });
+    }
+
+    // 🟠 Ensure All Questions of Template Are Provided
+    const allTemplateQuestions = await getQuestionsByTemplateId(templateId);
+    const allQuestionIds = allTemplateQuestions.map((q) => q.id);
+    const providedIds = questions.map((q) => q.id);
+
+    if (!areAllQuestionsProvided(allQuestionIds, providedIds)) {
+      return res.status(400).json({
+        message: "Not all questions of the template were provided",
       });
     }
 
