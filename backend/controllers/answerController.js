@@ -1,4 +1,5 @@
 import { submitAnswersService } from "../services/answerService.js";
+import prisma from "../prisma/prismaClient.js";
 
 export const submitAnswersController = async (req, res) => {
   try {
