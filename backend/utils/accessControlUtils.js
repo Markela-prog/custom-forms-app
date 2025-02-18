@@ -74,6 +74,12 @@ export const checkAccess = async ({
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
 
+    // 🟢 ✅ Owner Check
+    if (user?.id === templateOwnerId) {
+      console.log(`[AccessControl] ✅ User ${user.id} is the OWNER.`);
+      return { access: true, role: "owner" };
+    }
+
     // 🟢 ✅ Non-authenticated users (Guests) can read public template questions
     if (!user && template.isPublic) {
       console.log(
@@ -88,12 +94,6 @@ export const checkAccess = async ({
         `[AccessControl] ✅ Authenticated user accessing public template questions.`
       );
       return { access: true, role: "authenticated" };
-    }
-
-    // 🟢 ✅ Owner Check
-    if (user?.id === templateOwnerId) {
-      console.log(`[AccessControl] ✅ User ${user.id} is the OWNER.`);
-      return { access: true, role: "owner" };
     }
 
     // 🟢 ✅ ACL Check (for shared access)
