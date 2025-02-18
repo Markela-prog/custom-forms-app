@@ -4,6 +4,14 @@ import { checkAccess } from "../utils/accessControlUtils.js";
 
 export const accessControl = (resource, action) => async (req, res, next) => {
   const user = req.user || null;
+
+  console.log(`[AccessControl] Request URL: ${req.originalUrl}`);
+  console.log(`[AccessControl] Request Params:`, req.params);
+  console.log(`[AccessControl] Request Method: ${req.method}`);
+  console.log(`[AccessControl] Request Path: ${req.path}`);
+  console.log(`[AccessControl] Query:`, req.query);
+  console.log(`[AccessControl] Body:`, req.body);
+
   let resourceId =
     req.params.templateId ||
     req.params.formId ||
