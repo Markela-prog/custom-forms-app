@@ -34,7 +34,6 @@ export const isAdmin = (req, res, next) => {
   next();
 };
 
-// src/middleware/authMiddleware.js
 export const optionalAuth = async (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
 

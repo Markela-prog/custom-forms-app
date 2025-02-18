@@ -21,7 +21,6 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
-    // ✅ Use `templateId` from arguments or fallback to first question
     const targetTemplateId = templateId || questions[0]?.templateId;
 
     if (!targetTemplateId) {
@@ -52,11 +51,43 @@ export const checkAccess = async ({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-    if (!template) return { access: false, reason: "Template not found" };
+
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
 
     resourceData = template;
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
+
+    // 🟢 ✅ Non-authenticated users (Guests) can read public template questions
+    if (!user && template.isPublic) {
+      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+      return { access: true, role: "any" };
+    }
+
+    // 🟢 ✅ Authenticated users can read public template questions
+    if (user && template.isPublic) {
+      console.log(
+        `[AccessControl] ✅ Authenticated user accessing public template.`
+      );
+      return { access: true, role: "authenticated" };
+    }
+
+    // 🟢 ✅ Owner Check
+    if (user?.id === templateOwnerId) {
+      console.log(`[AccessControl] ✅ User ${user.id} is the OWNER.`);
+      return { access: true, role: "owner" };
+    }
+
+    // 🟢 ✅ ACL Check (for shared access)
+    const isACL = template.accessControl?.some((ac) => ac.userId === user?.id);
+    if (isACL) {
+      console.log(`[AccessControl] ✅ User ${user?.id} has ACL access.`);
+      return { access: true, role: "acl" };
+    }
+
+    return { access: false, reason: "Unauthorized" };
   }
 
   // 🟡 Handle QUESTION Update/Delete
