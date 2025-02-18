@@ -7,12 +7,11 @@ import {
   deleteFormController,
 } from "../controllers/formController.js";
 import { protect } from "../middleware/authMiddleware.js";
-//import { checkFormAccess, checkFormDeleteAccess, preventDuplicateFormSubmission } from "../middleware/formAccessMiddleware.js";
-//import { checkTemplateAccess } from "../middleware/templateAccessMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
-router.post("/:templateId", protect, accessControl("form", "create"), createFormController);
+//router.post("/:templateId", protect, accessControl("form", "create"), createFormController);
+
 router.get("/template/:templateId", protect, accessControl("form", "read"), getFormsByTemplateController);
 router.get("/user", protect, accessControl("form", "getUserForms"), getFormsByUserController);
 router.get("/:formId", protect, accessControl("form", "read"), getFormByIdController);
