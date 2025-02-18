@@ -1,6 +1,7 @@
 // src/middleware/accessControlMiddleware.js
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
+import { getResourceId } from "../utils/getResourceId.js";
 
 export const accessControl = (resource, action) => async (req, res, next) => {
   const user = req.user || null;
@@ -12,21 +13,9 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   console.log(`[AccessControl] Query:`, req.query);
   console.log(`[AccessControl] Body:`, req.body);
 
-  let resourceId =
-    req.params.templateId ||
-    req.params.formId ||
-    req.params.questionId ||
-    req.params.id;
+  let resourceId = getResourceId(resource, action, req);
 
-  const actionsWithoutResourceId = [
-    "create",
-    "read_all",
-    "getUserForms",
-    "reorder",
-  ];
-  if (actionsWithoutResourceId.includes(action)) {
-    resourceId = null;
-  }
+  console.log(`[AccessControl] Derived Resource ID: ${resourceId}`);
 
   const allowedRoles = permissionsMatrix[resource]?.[action] || [];
   if (!allowedRoles.length) {
@@ -50,33 +39,11 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     `[AccessControl] Result -> Access: ${access}, Role: ${role}, Reason: ${reason}`
   );
 
-  console.log(
-    `[AccessControl] User ${
-      user?.id || "Guest"
-    } - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
-  );
-
   if (access && allowedRoles.includes(role)) {
     console.log(
       `[AccessControl] ✅ Access GRANTED for User: ${user?.id}, Role: ${role}`
     );
     return next();
-  }
-
-  // 🟡 Fallback: Check `read_private` for Authenticated Users
-  if (!access && action === "read") {
-    const { access: privateAccess, role: privateRole } = await checkAccess({
-      resource,
-      resourceId,
-      user,
-      action: "read_private",
-    });
-    if (
-      privateAccess &&
-      permissionsMatrix[resource]?.["read_private"]?.includes(privateRole)
-    ) {
-      return next();
-    }
   }
 
   console.error(`Access Denied for ${user?.id || "Guest"}: ${reason}`);
