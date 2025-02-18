@@ -1,7 +1,11 @@
 // src/utils/getResourceId.js
 export const getResourceId = (resource, action, req) => {
+  // ✅ Bypass resourceId check for template creation
+  if (resource === "template" && action === "create") {
+    return null;
+  }
+
   if (resource === "question" && action === "reorder") {
-    // ✅ Use `templateId` from body instead of `questions[0].templateId`
     return req.body.templateId || null;
   }
 

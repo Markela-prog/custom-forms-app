@@ -11,7 +11,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   console.log(`[AccessControl] Request Body:`, req.body);
 
   const resourceId = getResourceId(resource, action, req);
-  console.log(`[AccessControl] Derived Resource ID: ${resourceId}`);
+  console.log(`[AccessControl] Derived Resource ID: ${resourceId || "no-id"}`);
 
   const allowedRoles = permissionsMatrix[resource]?.[action] || [];
   if (!allowedRoles.length) {
@@ -29,7 +29,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     resourceId,
     user,
     action,
-    templateId: req.body.templateId, // ✅ Pass templateId from request body
+    templateId: req.body.templateId,
     questions: req.body.questions || [],
   });
 

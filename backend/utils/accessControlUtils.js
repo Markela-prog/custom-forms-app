@@ -12,8 +12,21 @@ export const checkAccess = async ({
   console.log(
     `[AccessControl] Checking access for User: ${
       user?.id || "Guest"
-    } on ${resource} ${resourceId}`
+    } on ${resource} ${resourceId || "no-id"} (Action: ${action})`
   );
+
+  // ✅ Bypass resource check for template creation (only requires authentication)
+  if (resource === "template" && action === "create") {
+    if (user) {
+      console.log("[AccessControl] ✅ Authenticated user creating template.");
+      return { access: true, role: "authenticated" };
+    } else {
+      return {
+        access: false,
+        reason: "Only authenticated users can create templates",
+      };
+    }
+  }
 
   let resourceData = null;
   let templateOwnerId = null;
@@ -22,7 +35,6 @@ export const checkAccess = async ({
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
     const targetTemplateId = templateId || questions[0]?.templateId;
-
     if (!targetTemplateId) {
       return { access: false, reason: "Template ID not found in request" };
     }
@@ -31,18 +43,11 @@ export const checkAccess = async ({
       where: { id: targetTemplateId },
       include: { owner: true, accessControl: true },
     });
-
-    if (!template) {
-      return { access: false, reason: "Template not found" };
-    }
+    if (!template) return { access: false, reason: "Template not found" };
 
     resourceData = template;
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
-
-    console.log(
-      `[AccessControl] QUESTION REORDER via TEMPLATE: Template Owner: ${templateOwnerId}, ACL Users: ${accessControl?.length}`
-    );
   }
 
   // 🟡 Handle QUESTION Create/Read
@@ -51,10 +56,7 @@ export const checkAccess = async ({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-
-    if (!template) {
-      return { access: false, reason: "Template not found" };
-    }
+    if (!template) return { access: false, reason: "Template not found" };
 
     resourceData = template;
     templateOwnerId = template.ownerId;
@@ -100,24 +102,20 @@ export const checkAccess = async ({
         },
       },
     });
-    if (!question) {
-      return { access: false, reason: "Question not found" };
-    }
+    if (!question) return { access: false, reason: "Question not found" };
 
     resourceData = question.template;
     templateOwnerId = question.template.ownerId;
     accessControl = question.template.accessControl;
   }
 
-  // 🟡 Handle TEMPLATE Directly
+  // 🟡 Handle TEMPLATE Directly (for read/update/delete)
   if (resource === "template") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-    if (!template) {
-      return { access: false, reason: "Template not found" };
-    }
+    if (!template) return { access: false, reason: "Template not found" };
 
     resourceData = template;
     templateOwnerId = template.ownerId;
