@@ -171,7 +171,19 @@ export const checkAccess = async ({
     return { access: true, role: "authenticated" };
   }
 
-  // 🚀 TEMPLATE FORMS ACCESS (Forms of a Template)
+  /** ✅ 1) USER FORMS ACCESS: Only Authenticated Users Get Their Own Forms **/
+  if (resource === "userForms" && action === "getUserForms") {
+    // User can only view their own forms
+    if (user?.id === resourceId) {
+      console.log(
+        `[AccessControl] ✅ User ${user.id} accessing their own forms.`
+      );
+      return { access: true, role: "authenticated" };
+    }
+    return { access: false, reason: "Only owner can access their forms" };
+  }
+
+  /** ✅ 2) TEMPLATE FORMS ACCESS: Only Template Owner/Admin Can View Template Forms **/
   if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -180,45 +192,47 @@ export const checkAccess = async ({
     if (!template) return { access: false, reason: "Template not found" };
 
     if (user?.id === template.ownerId) {
+      console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
       return { access: true, role: "owner" };
     }
 
     if (user?.role === "ADMIN") {
+      console.log(`[AccessControl] ✅ Admin accessing template forms.`);
       return { access: true, role: "admin" };
     }
 
-    return { access: false, reason: "Only template owner or admin can access template forms" };
+    return {
+      access: false,
+      reason: "Only template owner or admin can access template forms",
+    };
   }
 
-  // 🚀 USER FORMS ACCESS (User's Filled Forms)
-  if (resource === "userForms" && action === "getUserForms") {
-    if (user) {
-      return { access: true, role: "authenticated" };
-    }
-    return { access: false, reason: "Only authenticated users can access their forms" };
-  }
-
-  // 🚀 FORM ACCESS BY ID (Strict Ownership Check)
+  /** ✅ 3) FORM ACCESS BY ID: Form Owner, Template Owner, or Admin **/
   if (resource === "form" && action === "read") {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
       include: {
-        template: { select: { ownerId: true } },
+        template: {
+          select: { ownerId: true },
+        },
       },
     });
 
     if (!form) return { access: false, reason: "Form not found" };
 
     if (user?.id === form.userId) {
-      return { access: true, role: "owner" }; // ✅ Form Owner
+      console.log(`[AccessControl] ✅ User ${user.id} is form owner.`);
+      return { access: true, role: "owner" };
     }
 
     if (user?.id === form.template.ownerId) {
-      return { access: true, role: "template_owner" }; // ✅ Template Owner
+      console.log(`[AccessControl] ✅ User ${user.id} is template owner.`);
+      return { access: true, role: "template_owner" };
     }
 
     if (user?.role === "ADMIN") {
-      return { access: true, role: "admin" }; // ✅ Admin
+      console.log(`[AccessControl] ✅ Admin accessing the form.`);
+      return { access: true, role: "admin" };
     }
 
     return { access: false, reason: "Unauthorized to view this form" };
