@@ -29,6 +29,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     resourceId,
     user,
     action,
+    templateId: req.body.templateId, // ✅ Pass templateId from request body
     questions: req.body.questions || [],
   });
 

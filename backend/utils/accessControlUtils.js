@@ -21,8 +21,9 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
-    // ✅ Use `templateId` from request body or fallback to first question
+    // ✅ Use `templateId` from arguments or fallback to first question
     const targetTemplateId = templateId || questions[0]?.templateId;
+
     if (!targetTemplateId) {
       return { access: false, reason: "Template ID not found in request" };
     }
@@ -51,9 +52,7 @@ export const checkAccess = async ({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-    if (!template) {
-      return { access: false, reason: "Template not found" };
-    }
+    if (!template) return { access: false, reason: "Template not found" };
 
     resourceData = template;
     templateOwnerId = template.ownerId;
