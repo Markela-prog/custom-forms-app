@@ -34,7 +34,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   });
 
   console.log(
-    `[AccessControl] Result -> Access: ${access}, Role: ${role}, Reason: ${reason}`
+    `[AccessControl] Result -> Access: ${access}, Role: ${user?.role}, Reason: ${reason}`
   );
 
   if (access && allowedRoles.includes(role)) {
