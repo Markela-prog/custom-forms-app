@@ -172,7 +172,7 @@ export const checkAccess = async ({
     return { access: true, role: "authenticated" };
   }
 
-  /** 🟢 1) USER FORMS (Current User's Forms) - Special Case **/
+  /** 🔴 1) USER FORMS (Get User's Own Forms) **/
   if (resource === "userForms" && action === "getUserForms") {
     if (user?.id === resourceId) {
       console.log(
@@ -182,11 +182,11 @@ export const checkAccess = async ({
     }
     return {
       access: false,
-      reason: "Only the form owner can access their forms",
+      reason: "Only the form owner can access their own forms",
     };
   }
 
-  /** 🟢 2) TEMPLATE FORMS (Forms of a Specific Template) **/
+  /** 🔴 2) TEMPLATE FORMS (Get Forms by Template) **/
   if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -197,29 +197,24 @@ export const checkAccess = async ({
       return { access: false, reason: "Template not found" };
     }
 
-    resourceData = template; // 🟡 Assign resourceData to avoid "resource not found"
-    templateOwnerId = template.ownerId;
-
-    if (user?.id === templateOwnerId) {
-      accessRole = "owner";
+    if (user?.id === template.ownerId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
       return { access: true, role: "owner" };
     }
 
     if (user?.role === "ADMIN") {
-      accessRole = "admin";
       console.log(`[AccessControl] ✅ Admin accessing template forms.`);
       return { access: true, role: "admin" };
     }
 
     return {
       access: false,
-      role: "none",
-      reason: "Only the template owner or admin can access template forms",
+      reason:
+        "Only the template owner or admin can access these template forms",
     };
   }
 
-  /** 🟢 3) FORM (Get a Specific Form) **/
+  /** 🔴 3) FORM (Get a Single Form) **/
   if (resource === "form" && action === "read") {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
@@ -234,42 +229,29 @@ export const checkAccess = async ({
       return { access: false, reason: "Form not found" };
     }
 
-    resourceData = form; // 🟡 Assign resourceData
-    formUserId = form.userId;
-    templateOwnerId = form.template.ownerId;
-
-    if (user?.id === formUserId) {
-      accessRole = "owner";
+    if (user?.id === form.userId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
       return { access: true, role: "owner" };
     }
 
-    if (user?.id === templateOwnerId) {
-      accessRole = "template_owner";
+    if (user?.id === form.template?.ownerId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
       return { access: true, role: "template_owner" };
     }
 
     if (user?.role === "ADMIN") {
-      accessRole = "admin";
-      console.log(`[AccessControl] ✅ Admin accessing the form.`);
+      console.log(`[AccessControl] ✅ Admin accessing form.`);
       return { access: true, role: "admin" };
     }
 
     return {
       access: false,
-      role: "none",
-      reason: "Unauthorized to view this form",
+      reason:
+        "Only the form owner, template owner, or admin can access this form",
     };
   }
 
-  /** 🛑 RESOURCE NOT FOUND: Handle Missing Cases Gracefully **/
-  if (!resourceData) {
-    console.error(`[AccessControl] ❌ Resource ${resource} not found.`);
-    return { access: false, role: accessRole, reason: `${resource} not found` };
-  }
-
-  /** 🚫 FINAL FALLBACK **/
-  console.log(`[AccessControl] ❌ User ${user?.id} Access Denied.`);
-  return { access: false, role: accessRole, reason: "Unauthorized" };
+  /** 🛑 Fallback for Unknown Resource (Only if Not Handled Above) **/
+  console.error(`[AccessControl] ❌ Resource ${resource} not found.`);
+  return { access: false, reason: `${resource} not found` };
 };
