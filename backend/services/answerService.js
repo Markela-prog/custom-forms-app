@@ -1,15 +1,23 @@
-// src/services/answersService.js
-import { createForm } from "../repositories/formRepository.js";
+//src/services/answersService.js
+import {
+  createForm,
+  getFormsByUserAndTemplate,
+} from "../repositories/formRepository.js";
 import { submitAnswersAndFinalize } from "../repositories/answerRepository.js";
 import { getQuestionIdsByTemplate } from "../repositories/questionRepository.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
 
-export const submitAnswersService = async ({ templateId, userId, answers }) => {
+export const submitAnswersService = async ({
+  templateId,
+  userId,
+  userRole,
+  answers,
+}) => {
   // 🛡️ 1. Access Check: Based on TEMPLATE
   const access = await checkAccess({
     resource: "template",
     resourceId: templateId,
-    user: { id: userId },
+    user: { id: userId, role: userRole },
     action: "read",
   });
 
@@ -17,7 +25,15 @@ export const submitAnswersService = async ({ templateId, userId, answers }) => {
     throw new Error(`Access denied: ${access.reason}`);
   }
 
-  // 🚨 2. Validate Questions Belong to Template
+  // 🚨 2. Prevent Duplicate Forms (Non-Admins Only)
+  if (userRole !== "ADMIN") {
+    const existingForm = await getFormsByUserAndTemplate(userId, templateId);
+    if (existingForm) {
+      throw new Error("You have already submitted answers for this template.");
+    }
+  }
+
+  // 🚨 3. Validate Questions Belong to Template
   const validQuestionIds = await getQuestionIdsByTemplate(templateId);
   const providedQuestionIds = new Set(answers.map((a) => a.questionId));
 
@@ -33,9 +49,6 @@ export const submitAnswersService = async ({ templateId, userId, answers }) => {
     );
   }
 
-  // ⚙️ 3. Create a NEW Form
-  const form = await createForm(templateId, userId, false);
-
   // 🚩 4. Validate Required Questions
   const requiredQuestions = await getQuestionIdsByTemplate(templateId, true);
   const missingQuestions = requiredQuestions.filter(
@@ -48,12 +61,13 @@ export const submitAnswersService = async ({ templateId, userId, answers }) => {
     );
   }
 
-  // ✅ 5. Submit Answers and Finalize
+  // ⚙️ 5. Create Form and Submit Answers
+  const form = await createForm(templateId, userId, false);
   const submissionResult = await submitAnswersAndFinalize(form.id, answers);
 
   return {
     message: "Answers submitted and form finalized successfully",
-    form: form, // Return form details
-    answers: submissionResult.answersCount,
+    form: form,
+    answersCount: submissionResult.answersCount,
   };
 };

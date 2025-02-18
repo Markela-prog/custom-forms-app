@@ -5,6 +5,7 @@ export const submitAnswersController = async (req, res) => {
     const { templateId } = req.params;
     const { answers } = req.body;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     if (!answers || !Array.isArray(answers) || answers.length === 0) {
       return res.status(400).json({
@@ -15,6 +16,7 @@ export const submitAnswersController = async (req, res) => {
     const result = await submitAnswersService({
       templateId,
       userId,
+      userRole,
       answers,
     });
 
