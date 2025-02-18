@@ -8,12 +8,9 @@ export const accessControl = (resource, action) => async (req, res, next) => {
 
   console.log(`[AccessControl] Request URL: ${req.originalUrl}`);
   console.log(`[AccessControl] Request Params:`, req.params);
-  console.log(`[AccessControl] Request Method: ${req.method}`);
-  console.log(`[AccessControl] Request Path: ${req.path}`);
-  console.log(`[AccessControl] Query:`, req.query);
-  console.log(`[AccessControl] Body:`, req.body);
+  console.log(`[AccessControl] Request Body:`, req.body);
 
-  let resourceId = getResourceId(resource, action, req);
+  const resourceId = getResourceId(resource, action, req);
   console.log(`[AccessControl] Derived Resource ID: ${resourceId}`);
 
   const allowedRoles = permissionsMatrix[resource]?.[action] || [];
@@ -26,7 +23,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   // ✅ Admin Override
   if (user?.role === "ADMIN") return next();
 
-  // 🛡️ Perform Access Check with Questions for `reorder`
+  // 🛡️ Perform Access Check
   const { access, role, reason } = await checkAccess({
     resource,
     resourceId,
@@ -40,12 +37,9 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   );
 
   if (access && allowedRoles.includes(role)) {
-    console.log(
-      `[AccessControl] ✅ Access GRANTED for User: ${user?.id}, Role: ${role}`
-    );
     return next();
   }
 
   console.error(`Access Denied for ${user?.id || "Guest"}: ${reason}`);
-  res.status(403).json({ message: reason || "Access denied" });
+  return res.status(403).json({ message: reason || "Access denied" });
 };

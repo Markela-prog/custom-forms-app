@@ -59,14 +59,12 @@ export const deleteQuestionController = async (req, res) => {
 
 export const reorderQuestionsController = async (req, res) => {
   try {
-    const { questions } = req.body;
+    const { questions, templateId } = req.body;
 
     if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ message: "Invalid input format" });
     }
 
-    // 🟠 Extract Template ID from the First Question
-    const templateId = questions[0]?.templateId;
     if (!templateId) {
       return res.status(400).json({
         message: "Template ID is required for reorder",
