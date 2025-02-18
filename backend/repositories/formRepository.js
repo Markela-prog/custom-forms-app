@@ -12,7 +12,7 @@ export const createForm = async (templateId, userId, emailCopyRequested) => {
   });
 };
 
-export const getFormById = async (formId, includeAnswers = false) => {
+export const getFormById = async (formId, includeAnswers = true) => {
   return prisma.form.findUnique({
     where: { id: formId },
     include: {
