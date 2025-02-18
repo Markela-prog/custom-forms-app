@@ -167,7 +167,7 @@ export const checkAccess = async ({
     return { access: true, role: "authenticated" };
   }
 
-  /** 🔴 1) USER FORMS (Get User's Own Forms) **/
+  /** 🟡 1) USER FORMS (Get User's Own Forms) **/
   if (resource === "userForms" && action === "getUserForms") {
     if (user?.id === resourceId) {
       console.log(
@@ -181,7 +181,7 @@ export const checkAccess = async ({
     };
   }
 
-  /** 🔴 2) TEMPLATE FORMS (Get Forms by Template) **/
+  /** 🟡 2) TEMPLATE FORMS (Get Forms by Template) **/
   if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -209,7 +209,7 @@ export const checkAccess = async ({
     };
   }
 
-  /** 🔴 3) FORM (Get a Single Form) **/
+  /** 🟡 3) FORM (Get a Single Form) **/
   if (resource === "form" && action === "read") {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
@@ -246,12 +246,48 @@ export const checkAccess = async ({
     };
   }
 
+  /** ✅ THEN: Handle Default Template and Question Logic **/
+
+  // 🟡 Handle TEMPLATE Directly (for read/update/delete)
+  if (resource === "template") {
+    const template = await prisma.template.findUnique({
+      where: { id: resourceId },
+      include: { owner: true, accessControl: true },
+    });
+    if (!template) return { access: false, reason: "Template not found" };
+
+    resourceData = template;
+    templateOwnerId = template.ownerId;
+
+    // 🟢 ✅ Guests can read public templates
+    if (!user && template.isPublic) {
+      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+      return { access: true, role: "any" };
+    }
+  }
+
+  // 🟡 Handle QUESTION Create/Read
+  if (resource === "question" && ["create", "read"].includes(action)) {
+    const template = await prisma.template.findUnique({
+      where: { id: resourceId },
+      include: { owner: true, accessControl: true },
+    });
+    if (!template) return { access: false, reason: "Template not found" };
+
+    resourceData = template;
+    templateOwnerId = template.ownerId;
+
+    if (user?.id === templateOwnerId) {
+      return { access: true, role: "owner" };
+    }
+  }
+
+  /** 🛑 FINAL FALLBACK (After All Checks) **/
   if (!resourceData) {
-    console.error(`[AccessControl] Resource ${resource} not found.`);
+    console.error(`[AccessControl] ❌ Resource ${resource} not found.`);
     return { access: false, reason: `${resource} not found` };
   }
 
-  /** 🛑 Fallback for Unknown Resource (Only if Not Handled Above) **/
-  console.error(`[AccessControl] ❌ Resource ${resource} not found.`);
-  return { access: false, reason: `${resource} not found` };
+  console.log(`[AccessControl] ❌ User ${user?.id} Access Denied.`);
+  return { access: false, reason: "Unauthorized" };
 };
