@@ -1,6 +1,9 @@
 export const permissionsMatrix = {
-  user: {
-    getUserForms: ["authenticated"], // ✅ Fixes Invalid permissions configuration error
+  userForms: {
+    getUserForms: ["authenticated"],
+  },
+  templateForms: {
+    read: ["owner", "admin"],
   },
   template: {
     create: ["authenticated"],
@@ -10,9 +13,6 @@ export const permissionsMatrix = {
     update: ["owner", "admin"],
     delete: ["owner", "admin"],
     manage_access: ["owner", "admin"],
-  },
-  templateForms: {
-    read: ["owner", "admin"], // ✅ Only Owner/Admin can get template forms
   },
   question: {
     create: ["owner", "admin"],
