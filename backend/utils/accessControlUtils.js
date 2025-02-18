@@ -163,12 +163,6 @@ export const checkAccess = async ({
     return { access: true, role: "acl" };
   }
 
-  // 🟢 Authenticated User Check (for public templates)
-  if (user && resourceData.isPublic) {
-    console.log(`[AccessControl] ✅ User ${user?.id} is AUTHENTICATED.`);
-    return { access: true, role: "authenticated" };
-  }
-
   /** 🟡 1) USER FORMS (Get User's Own Forms) **/
   if (resource === "userForms" && action === "getUserForms") {
     if (user?.id === resourceId) {
