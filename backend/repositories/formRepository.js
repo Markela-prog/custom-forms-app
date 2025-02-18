@@ -6,7 +6,8 @@ export const createForm = async (templateId, userId, emailCopyRequested) => {
       templateId,
       userId,
       emailCopyRequested,
-      isFinalized: true,
+      isFinalized: false,
+      createdAt: new Date(),
     },
   });
 };

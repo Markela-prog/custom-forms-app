@@ -9,21 +9,18 @@ import { checkAccess } from "../utils/accessControlUtils.js";
 export const submitAnswersService = async ({ templateId, userId, answers }) => {
   // 🛡️ 1. Access Check (Uses current Access Control logic)
   const access = await checkAccess({
-    resource: "form",
+    resource: "template",
     resourceId: templateId,
     user: { id: userId },
-    action: "create",
+    action: "read",
   });
 
   if (!access.access) {
     throw new Error(`Access denied: ${access.reason}`);
   }
 
-  // ⚙️ 2. Create Form if Not Exists
-  let form = await getFormsByUserAndTemplate(userId, templateId);
-  if (!form) {
-    form = await createForm(templateId, userId, false);
-  }
+  // ⚙️ 2. Create a NEW Form (Always new for each submission)
+  const form = await createForm(templateId, userId, false);
 
   // 🚩 3. Validate Required Questions
   const requiredQuestions = await getRequiredQuestions(templateId);
@@ -41,9 +38,11 @@ export const submitAnswersService = async ({ templateId, userId, answers }) => {
   }
 
   // ✅ 4. Submit Answers and Finalize
-  const result = await submitAnswersAndFinalize(form.id, answers);
+  const submissionResult = await submitAnswersAndFinalize(form.id, answers);
+
   return {
     message: "Answers submitted and form finalized successfully",
-    formId: form.id,
+    form: form, // Return the created form details
+    answers: submissionResult.answersCount,
   };
 };

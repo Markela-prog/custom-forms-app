@@ -1,9 +1,10 @@
 import prisma from "../prisma/prismaClient.js";
 
+
 export const submitAnswersAndFinalize = async (formId, answers) => {
   return await prisma.$transaction(async (tx) => {
     // ✅ Bulk Insert Answers
-    await tx.answer.createMany({
+    const createdAnswers = await tx.answer.createMany({
       data: answers.map((answer) => ({
         formId,
         questionId: answer.questionId,
@@ -12,10 +13,15 @@ export const submitAnswersAndFinalize = async (formId, answers) => {
     });
 
     // ✅ Finalize Form
-    return await tx.form.update({
+    const finalizedForm = await tx.form.update({
       where: { id: formId },
       data: { isFinalized: true },
     });
+
+    return {
+      form: finalizedForm,
+      answersCount: createdAnswers.count,
+    };
   });
 };
 

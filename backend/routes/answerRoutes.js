@@ -12,7 +12,7 @@ const router = express.Router();
 router.post(
   "/:templateId/submit",
   protect,
-  accessControl("form", "create"),
+  accessControl("template", "create"),
   submitAnswersController
 );
 router.put("/:formId/:answerId", protect, accessControl("answer", "update"), updateAnswerController);
