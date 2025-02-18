@@ -39,12 +39,19 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   });
 
   console.log(
+    `[AccessControl] Result -> Access: ${access}, Role: ${role}, Reason: ${reason}`
+  );
+
+  console.log(
     `[AccessControl] User ${
       user?.id || "Guest"
     } - Role: ${role} - AllowedRoles: ${allowedRoles.join(",")}`
   );
 
   if (access && allowedRoles.includes(role)) {
+    console.log(
+      `[AccessControl] ✅ Access GRANTED for User: ${user?.id}, Role: ${role}`
+    );
     return next();
   }
 
