@@ -43,8 +43,15 @@ export const getFormsByUserAndTemplate = async (userId, templateId) => {
 };
 
 export const deleteForm = async (formId) => {
-  return prisma.form.delete({
-    where: { id: formId },
-    include: { answers: true },
+  return await prisma.$transaction(async (tx) => {
+    // ✅ Step 1: Delete Answers Related to the Form
+    await tx.answer.deleteMany({
+      where: { formId },
+    });
+
+    // ✅ Step 2: Delete the Form
+    return await tx.form.delete({
+      where: { id: formId },
+    });
   });
 };

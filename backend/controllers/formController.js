@@ -12,7 +12,11 @@ export const createFormController = async (req, res) => {
     const { emailCopyRequested } = req.body;
     const userId = req.user.id;
 
-    const form = await createFormService(templateId, userId, emailCopyRequested);
+    const form = await createFormService(
+      templateId,
+      userId,
+      emailCopyRequested
+    );
     res.status(201).json(form);
   } catch (error) {
     res.status(403).json({ message: error.message });
@@ -61,7 +65,7 @@ export const getFormsByUserController = async (req, res) => {
 export const deleteFormController = async (req, res) => {
   try {
     await deleteFormService(req.params.formId);
-    res.json({ message: "Form deleted successfully" });
+    res.status(200).json({ message: "Form deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
