@@ -171,25 +171,27 @@ export const checkAccess = async ({
     return { access: true, role: "authenticated" };
   }
 
-  /** ✅ 1) USER FORMS ACCESS: Only Authenticated Users Get Their Own Forms **/
+  /** 🟡 1) USER FORMS (Get forms created by the current user) **/
   if (resource === "userForms" && action === "getUserForms") {
-    // User can only view their own forms
     if (user?.id === resourceId) {
       console.log(
         `[AccessControl] ✅ User ${user.id} accessing their own forms.`
       );
       return { access: true, role: "authenticated" };
     }
-    return { access: false, reason: "Only owner can access their forms" };
+    return { access: false, reason: "Only the owner can access their forms" };
   }
 
-  /** ✅ 2) TEMPLATE FORMS ACCESS: Only Template Owner/Admin Can View Template Forms **/
+  /** 🟡 2) TEMPLATE FORMS (Get forms for a specific template) **/
   if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
       select: { ownerId: true },
     });
-    if (!template) return { access: false, reason: "Template not found" };
+
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
 
     if (user?.id === template.ownerId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
@@ -203,11 +205,11 @@ export const checkAccess = async ({
 
     return {
       access: false,
-      reason: "Only template owner or admin can access template forms",
+      reason: "Only the template owner or admin can access template forms",
     };
   }
 
-  /** ✅ 3) FORM ACCESS BY ID: Form Owner, Template Owner, or Admin **/
+  /** 🟡 3) FORM (Get a specific form by formId) **/
   if (resource === "form" && action === "read") {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
@@ -218,15 +220,17 @@ export const checkAccess = async ({
       },
     });
 
-    if (!form) return { access: false, reason: "Form not found" };
+    if (!form) {
+      return { access: false, reason: "Form not found" };
+    }
 
     if (user?.id === form.userId) {
-      console.log(`[AccessControl] ✅ User ${user.id} is form owner.`);
+      console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
       return { access: true, role: "owner" };
     }
 
     if (user?.id === form.template.ownerId) {
-      console.log(`[AccessControl] ✅ User ${user.id} is template owner.`);
+      console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
       return { access: true, role: "template_owner" };
     }
 
