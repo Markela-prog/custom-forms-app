@@ -18,20 +18,26 @@ export const createQuestion = async (templateId, questionData) => {
   });
 };
 
-export const getQuestionIdsByTemplate = async (
-  templateId,
-  requiredOnly = false
-) => {
+export const getQuestionsByTemplateId = async (templateId) => {
+  return prisma.question.findMany({
+    where: { templateId },
+    orderBy: { order: "asc" },
+  });
+};
+
+
+export const getQuestionIdsByTemplate = async (templateId, requiredOnly = false) => {
   const questions = await prisma.question.findMany({
     where: {
       templateId,
-      ...(requiredOnly && { isRequired: true }), // Optional filter for required only
+      ...(requiredOnly && { isRequired: true }),
     },
     select: { id: true },
   });
 
-  return questions.map((q) => q.id);
+  return questions.map(q => q.id);
 };
+
 
 export const updateQuestion = async (questionId, updateData) => {
   return prisma.question.update({
