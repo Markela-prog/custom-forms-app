@@ -45,8 +45,6 @@ export const checkAccess = async ({
     }
   }
 
-
-
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
     const targetTemplateId = templateId || questions[0]?.templateId;
@@ -276,6 +274,36 @@ export const checkAccess = async ({
     if (user?.id === templateOwnerId) {
       return { access: true, role: "owner" };
     }
+  }
+
+  /** 🟡 ANSWER (Update/Delete) **/
+  // Only Form Owner or Admin can update/delete answers
+  if (resource === "answer" && ["update", "delete"].includes(action)) {
+    const form = await prisma.form.findUnique({
+      where: { id: resourceId },
+      select: { userId: true },
+    });
+
+    if (!form) {
+      return { access: false, reason: "Form not found" };
+    }
+
+    if (user?.id === form.userId) {
+      console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
+      return { access: true, role: "owner" };
+    }
+
+    if (user?.role === "ADMIN") {
+      console.log(
+        `[AccessControl] ✅ Admin overriding for answer modification.`
+      );
+      return { access: true, role: "admin" };
+    }
+
+    return {
+      access: false,
+      reason: "Only the form owner or admin can modify answers",
+    };
   }
 
   /** 🛑 FINAL FALLBACK (After All Checks) **/
