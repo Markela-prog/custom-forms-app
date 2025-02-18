@@ -2,6 +2,7 @@ import prisma from "../prisma/prismaClient.js";
 
 export const submitAnswersAndFinalize = async (formId, answers) => {
   return await prisma.$transaction(async (tx) => {
+    // ✅ Bulk Insert Answers
     await tx.answer.createMany({
       data: answers.map((answer) => ({
         formId,
@@ -10,12 +11,11 @@ export const submitAnswersAndFinalize = async (formId, answers) => {
       })),
     });
 
-    const finalizedForm = await tx.form.update({
+    // ✅ Finalize Form
+    return await tx.form.update({
       where: { id: formId },
       data: { isFinalized: true },
     });
-
-    return finalizedForm;
   });
 };
 

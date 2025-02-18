@@ -1,27 +1,49 @@
+import {
+  createForm,
+  getFormsByUserAndTemplate,
+} from "../repositories/formRepository.js";
 import { submitAnswersAndFinalize } from "../repositories/answerRepository.js";
-import { getFormById } from "../repositories/formRepository.js";
 import { getRequiredQuestions } from "../repositories/questionRepository.js";
+import { checkAccess } from "../utils/accessControlUtils.js";
 
-export const submitAnswersService = async (formId, answers, userId) => {
-  const form = await getFormById(formId);
-  if (!form) throw new Error("Form not found");
+export const submitAnswersService = async ({ templateId, userId, answers }) => {
+  // 🛡️ 1. Access Check (Uses current Access Control logic)
+  const access = await checkAccess({
+    resource: "form",
+    resourceId: templateId,
+    user: { id: userId },
+    action: "create",
+  });
 
-  if (form.userId !== userId) {
-    throw new Error("Unauthorized: You can only submit answers to your own form");
+  if (!access.access) {
+    throw new Error(`Access denied: ${access.reason}`);
   }
 
-  if (form.isFinalized) {
-    throw new Error("Cannot submit answers: Form has been finalized");
+  // ⚙️ 2. Create Form if Not Exists
+  let form = await getFormsByUserAndTemplate(userId, templateId);
+  if (!form) {
+    form = await createForm(templateId, userId, false);
   }
 
-  const requiredQuestions = await getRequiredQuestions(form.templateId);
-  const answeredQuestionIds = new Set(answers.map(a => a.questionId));
+  // 🚩 3. Validate Required Questions
+  const requiredQuestions = await getRequiredQuestions(templateId);
+  const answeredQuestionIds = new Set(answers.map((a) => a.questionId));
+  const missingQuestions = requiredQuestions.filter(
+    (q) => !answeredQuestionIds.has(q.id)
+  );
 
-  const missingQuestions = requiredQuestions.filter(q => !answeredQuestionIds.has(q.id));
   if (missingQuestions.length > 0) {
-    throw new Error(`Missing required answers for questions: ${missingQuestions.map(q => q.title).join(", ")}`);
+    throw new Error(
+      `Missing required answers for: ${missingQuestions
+        .map((q) => q.title)
+        .join(", ")}`
+    );
   }
 
-  const result = await submitAnswersAndFinalize(formId, answers);
-  return { message: "Answers submitted and form finalized successfully", form: result };
+  // ✅ 4. Submit Answers and Finalize
+  const result = await submitAnswersAndFinalize(form.id, answers);
+  return {
+    message: "Answers submitted and form finalized successfully",
+    formId: form.id,
+  };
 };

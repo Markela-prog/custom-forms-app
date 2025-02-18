@@ -2,7 +2,12 @@ import prisma from "../prisma/prismaClient.js";
 
 export const createForm = async (templateId, userId, emailCopyRequested) => {
   return prisma.form.create({
-    data: { templateId, userId, emailCopyRequested },
+    data: {
+      templateId,
+      userId,
+      emailCopyRequested,
+      isFinalized: true,
+    },
   });
 };
 

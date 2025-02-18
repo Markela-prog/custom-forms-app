@@ -1,23 +1,26 @@
-import {
-  submitAnswersService
-} from "../services/answerService.js";
+import { submitAnswersService } from "../services/answerService.js";
 
 export const submitAnswersController = async (req, res) => {
   try {
-    const { formId } = req.params;
+    const { templateId } = req.params;
     const { answers } = req.body;
     const userId = req.user.id;
 
     if (!answers || !Array.isArray(answers) || answers.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid answers format or no answers provided" });
+      return res.status(400).json({
+        message: "Invalid answers format or no answers provided",
+      });
     }
 
-    const result = await submitAnswersService(formId, answers, userId);
+    const result = await submitAnswersService({
+      templateId,
+      userId,
+      answers,
+    });
+
     res.status(201).json(result);
   } catch (error) {
-    console.error("Error submitting answers:", error.message);
+    console.error("❌ [Submit Answers] Error:", error.message);
     res.status(400).json({ message: error.message });
   }
 };

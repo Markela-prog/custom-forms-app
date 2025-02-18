@@ -9,7 +9,12 @@ import { protect } from "../middleware/authMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 
-router.post("/:formId", protect, accessControl("answer", "create"), submitAnswersController);
+router.post(
+  "/:templateId/submit",
+  protect,
+  accessControl("form", "create"),
+  submitAnswersController
+);
 router.put("/:formId/:answerId", protect, accessControl("answer", "update"), updateAnswerController);
 router.delete("/:formId/:answerId", protect, accessControl("answer", "delete"), deleteAnswerController);
 
