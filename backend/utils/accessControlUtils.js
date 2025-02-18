@@ -15,6 +15,18 @@ export const checkAccess = async ({
     } on ${resource} ${resourceId || "no-id"} (Action: ${action})`
   );
 
+  // ✅ SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
+  if (resource === "template" && action === "read") {
+    const template = await prisma.template.findUnique({
+      where: { id: resourceId },
+      select: { isPublic: true },
+    });
+    if (template?.isPublic && !user) {
+      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+      return { access: true, role: "any" };
+    }
+  }
+
   // ✅ Bypass resource check for template creation (only requires authentication)
   if (resource === "template" && action === "create") {
     if (user) {
@@ -64,14 +76,16 @@ export const checkAccess = async ({
 
     // 🟢 ✅ Non-authenticated users (Guests) can read public template questions
     if (!user && template.isPublic) {
-      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+      console.log(
+        `[AccessControl] ✅ Guest accessing public template questions.`
+      );
       return { access: true, role: "any" };
     }
 
     // 🟢 ✅ Authenticated users can read public template questions
     if (user && template.isPublic) {
       console.log(
-        `[AccessControl] ✅ Authenticated user accessing public template.`
+        `[AccessControl] ✅ Authenticated user accessing public template questions.`
       );
       return { access: true, role: "authenticated" };
     }
@@ -120,6 +134,12 @@ export const checkAccess = async ({
     resourceData = template;
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
+
+    // 🟢 ✅ Guests can read public templates
+    if (!user && template.isPublic) {
+      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+      return { access: true, role: "any" };
+    }
   }
 
   if (!resourceData) {
