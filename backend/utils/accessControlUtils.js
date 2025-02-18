@@ -171,54 +171,49 @@ export const checkAccess = async ({
     return { access: true, role: "authenticated" };
   }
 
-  // 🟡 Handle GET FORMS BY TEMPLATE
-  if (resource === "form" && action === "read" && templateId) {
+  // 🟡 GET FORMS BY TEMPLATE: Template ownership check
+  if (resource === "template" && action === "read") {
     const template = await prisma.template.findUnique({
-      where: { id: templateId },
+      where: { id: resourceId },
       select: { ownerId: true },
     });
     if (!template) return { access: false, reason: "Template not found" };
 
-    if (user?.role === "ADMIN" || user?.id === template.ownerId) {
-      console.log(`[AccessControl] ✅ User ${user?.id} is template owner or admin.`);
-      return { access: true, role: user?.role === "ADMIN" ? "admin" : "template_owner" };
+    if (user?.id === template.ownerId || user?.role === "ADMIN") {
+      return {
+        access: true,
+        role: user?.role === "ADMIN" ? "admin" : "template_owner",
+      };
     }
-
     return { access: false, reason: "Not template owner or admin" };
   }
 
-  // 🟡 Handle GET FORMS BY USER
-  if (resource === "form" && action === "getUserForms") {
+  // 🟡 GET FORMS BY USER: User ownership check
+  if (resource === "user" && action === "getUserForms") {
     if (user) {
-      console.log(`[AccessControl] ✅ Authenticated user accessing their forms.`);
       return { access: true, role: "authenticated" };
     }
-    return { access: false, reason: "Only authenticated users can access their forms" };
+    return {
+      access: false,
+      reason: "Only authenticated users can access their forms",
+    };
   }
 
-  // 🟡 Handle GET FORM BY ID
-  if (resource === "form" && action === "read" && resourceId) {
+  // 🟡 GET FORM BY ID: Check form owner, template owner, or admin
+  if (resource === "form" && action === "read") {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
-      include: { template: true },
+      include: { template: { select: { ownerId: true } } },
     });
     if (!form) return { access: false, reason: "Form not found" };
 
-    // ✅ Admin Check
-    if (user?.role === "ADMIN") {
-      return { access: true, role: "admin" };
+    if (
+      user?.id === form.userId || // Form owner
+      user?.id === form.template.ownerId || // Template owner
+      user?.role === "ADMIN" // Admin
+    ) {
+      return { access: true, role: user?.role === "ADMIN" ? "admin" : "owner" };
     }
-
-    // ✅ Form Owner Check
-    if (form.userId === user?.id) {
-      return { access: true, role: "owner" };
-    }
-
-    // ✅ Template Owner Check
-    if (form.template.ownerId === user?.id) {
-      return { access: true, role: "template_owner" };
-    }
-
     return { access: false, reason: "Unauthorized to view this form" };
   }
 

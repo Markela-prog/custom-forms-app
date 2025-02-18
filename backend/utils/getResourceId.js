@@ -5,6 +5,14 @@ export const getResourceId = (resource, action, req) => {
     return null;
   }
 
+  if (resource === "user" && action === "getUserForms") {
+    return req.user?.id || null;  // ✅ Use current user's ID
+  }
+
+  if (resource === "form" && ["read", "delete"].includes(action)) {
+    return req.params.formId || null;  // ✅ Use formId
+  }
+
   if (resource === "question" && action === "reorder") {
     return req.body.templateId || null;
   }
