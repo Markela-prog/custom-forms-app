@@ -6,6 +6,7 @@ export const checkAccess = async ({
   resourceId,
   user,
   action,
+  templateId = null,
   questions = [],
 }) => {
   console.log(
@@ -20,22 +21,20 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
-    if (questions.length === 0) {
-      return { access: false, reason: "No questions provided for reorder" };
-    }
-
-    // Get templateId from the first question
-    const templateId = questions[0].templateId;
-    if (!templateId) {
-      return { access: false, reason: "Template ID not found in questions" };
+    // ✅ Use `templateId` from request body or fallback to first question
+    const targetTemplateId = templateId || questions[0]?.templateId;
+    if (!targetTemplateId) {
+      return { access: false, reason: "Template ID not found in request" };
     }
 
     const template = await prisma.template.findUnique({
-      where: { id: templateId },
+      where: { id: targetTemplateId },
       include: { owner: true, accessControl: true },
     });
 
-    if (!template) return { access: false, reason: "Template not found" };
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
 
     resourceData = template;
     templateOwnerId = template.ownerId;
@@ -52,7 +51,9 @@ export const checkAccess = async ({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-    if (!template) return { access: false, reason: "Template not found" };
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
 
     resourceData = template;
     templateOwnerId = template.ownerId;
@@ -69,7 +70,9 @@ export const checkAccess = async ({
         },
       },
     });
-    if (!question) return { access: false, reason: "Question not found" };
+    if (!question) {
+      return { access: false, reason: "Question not found" };
+    }
 
     resourceData = question.template;
     templateOwnerId = question.template.ownerId;
@@ -82,7 +85,9 @@ export const checkAccess = async ({
       where: { id: resourceId },
       include: { owner: true, accessControl: true },
     });
-    if (!template) return { access: false, reason: "Template not found" };
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
 
     resourceData = template;
     templateOwnerId = template.ownerId;
