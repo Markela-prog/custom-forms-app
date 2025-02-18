@@ -143,11 +143,6 @@ export const checkAccess = async ({
     }
   }
 
-  if (!resourceData) {
-    console.error(`[AccessControl] Resource ${resource} not found.`);
-    return { access: false, reason: `${resource} not found` };
-  }
-
   // 🟡 Role-Based Access Logic
   if (user?.role === "ADMIN") {
     console.log(`[AccessControl] ✅ Admin Override`);
@@ -249,6 +244,11 @@ export const checkAccess = async ({
       reason:
         "Only the form owner, template owner, or admin can access this form",
     };
+  }
+
+  if (!resourceData) {
+    console.error(`[AccessControl] Resource ${resource} not found.`);
+    return { access: false, reason: `${resource} not found` };
   }
 
   /** 🛑 Fallback for Unknown Resource (Only if Not Handled Above) **/
