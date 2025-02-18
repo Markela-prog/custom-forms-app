@@ -26,7 +26,7 @@ export const permissionsMatrix = {
     delete: ["admin", "owner"],
   },
   answer: {
-    create: ["owner", "admin"],
+    create: ["owner", "acl", "admin"],
     update: ["admin", "owner"],
     delete: ["admin", "owner"],
     read: ["admin", "owner"],
