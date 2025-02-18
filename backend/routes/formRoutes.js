@@ -12,7 +12,7 @@ const router = express.Router();
 
 //router.post("/:templateId", protect, accessControl("form", "create"), createFormController);
 
-router.get("/template/:templateId", protect, accessControl("template", "read"), getFormsByTemplateController);
+router.get("/template/:templateId", protect, accessControl("templateForms", "read"), getFormsByTemplateController);
 router.get("/user", protect, accessControl("user", "getUserForms"), getFormsByUserController);
 router.get("/:formId", protect, accessControl("form", "read"), getFormByIdController);
 router.delete("/:formId", protect, accessControl("form", "delete"), deleteFormController);

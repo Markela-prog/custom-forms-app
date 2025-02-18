@@ -172,20 +172,25 @@ export const checkAccess = async ({
   }
 
   // 🟡 GET FORMS BY TEMPLATE: Template ownership check
-  if (resource === "template" && action === "read") {
+  if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
       select: { ownerId: true },
     });
+
     if (!template) return { access: false, reason: "Template not found" };
 
-    if (user?.id === template.ownerId || user?.role === "ADMIN") {
-      return {
-        access: true,
-        role: user?.role === "ADMIN" ? "admin" : "template_owner",
-      };
+    if (user?.id === template.ownerId) {
+      return { access: true, role: "owner" };
     }
-    return { access: false, reason: "Not template owner or admin" };
+    if (user?.role === "ADMIN") {
+      return { access: true, role: "admin" };
+    }
+
+    return {
+      access: false,
+      reason: "Only template owner or admin can access template forms",
+    };
   }
 
   // 🟡 GET FORMS BY USER: User ownership check
@@ -200,20 +205,26 @@ export const checkAccess = async ({
   }
 
   // 🟡 GET FORM BY ID: Check form owner, template owner, or admin
-  if (resource === "form" && action === "read") {
+  if (resource === "form" && ["read", "delete"].includes(action)) {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
-      include: { template: { select: { ownerId: true } } },
+      include: {
+        template: {
+          select: { ownerId: true },
+        },
+      },
     });
     if (!form) return { access: false, reason: "Form not found" };
 
+    // ✅ Ownership Checks
     if (
-      user?.id === form.userId || // Form owner
-      user?.id === form.template.ownerId || // Template owner
-      user?.role === "ADMIN" // Admin
+      user?.id === form.userId || // User is Form Owner
+      user?.id === form.template?.ownerId || // User is Template Owner
+      user?.role === "ADMIN" // User is Admin
     ) {
       return { access: true, role: user?.role === "ADMIN" ? "admin" : "owner" };
     }
+
     return { access: false, reason: "Unauthorized to view this form" };
   }
 
