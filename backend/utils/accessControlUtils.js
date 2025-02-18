@@ -15,6 +15,11 @@ export const checkAccess = async ({
     } on ${resource} ${resourceId || "no-id"} (Action: ${action})`
   );
 
+  let resourceData = null;
+  let templateOwnerId = null;
+  let accessControl = null;
+  let accessRole = "undefined";
+
   // ✅ SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
   if (resource === "template" && action === "read") {
     const template = await prisma.template.findUnique({
@@ -40,10 +45,7 @@ export const checkAccess = async ({
     }
   }
 
-  let resourceData = null;
-  let templateOwnerId = null;
-  let accessControl = null;
-  let accessRole = "undefined";
+
 
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
