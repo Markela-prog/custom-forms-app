@@ -1,26 +1,24 @@
 export const getResourceId = (resource, action, req) => {
-    switch (resource) {
-      case "question":
-        // 🟢 For `create`, `read`, `reorder`: Use `templateId`
-        if (["create", "read", "reorder"].includes(action)) {
-          return req.params.templateId;
-        }
-        // 🟢 For `update`, `delete`: Use `questionId`
-        if (["update", "delete"].includes(action)) {
-          return req.params.questionId;
-        }
-        break;
-  
-      case "template":
-        // 🟢 For `template` actions: Use `templateId`
-        return req.params.templateId;
-  
-      case "form":
-        // 🟢 For `form` actions: Use `formId`
-        return req.params.formId;
-  
-      default:
-        // 🟡 Fallback for other resources: Use `id`
-        return req.params.id;
+  if (resource === "question") {
+    if (action === "reorder") {
+      const firstQuestion = req.body.questions?.[0];
+      return firstQuestion?.templateId || null;
     }
-  };
+    if (["create", "read"].includes(action)) {
+      return req.params.templateId || null;
+    }
+    if (["update", "delete"].includes(action)) {
+      return req.params.questionId || null;
+    }
+  }
+
+  if (resource === "template") {
+    return req.params.templateId || null;
+  }
+
+  if (resource === "form") {
+    return req.params.formId || null;
+  }
+
+  return req.params.id || null;
+};

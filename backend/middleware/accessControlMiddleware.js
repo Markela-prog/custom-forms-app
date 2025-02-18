@@ -14,7 +14,6 @@ export const accessControl = (resource, action) => async (req, res, next) => {
   console.log(`[AccessControl] Body:`, req.body);
 
   let resourceId = getResourceId(resource, action, req);
-
   console.log(`[AccessControl] Derived Resource ID: ${resourceId}`);
 
   const allowedRoles = permissionsMatrix[resource]?.[action] || [];

@@ -18,14 +18,19 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
       const template = await prisma.template.findUnique({
         where: { id: resourceId },
         include: {
-          owner: true, // Include owner
+          owner: true,
           accessControl: true,
         },
       });
       if (!template) return { access: false, reason: "Template not found" };
 
+      // ✅ Allow `read` for public templates
+      if (action === "read" && template.isPublic) {
+        return { access: true, role: "any" };
+      }
+
       resourceData = template;
-      templateOwnerId = template.ownerId; // Fixed: Fetch ownerId
+      templateOwnerId = template.ownerId;
       accessControl = template.accessControl;
 
       console.log(
@@ -39,7 +44,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
         include: {
           template: {
             include: {
-              owner: true, // Include template owner
+              owner: true,
               accessControl: true,
             },
           },
@@ -48,7 +53,7 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
       if (!question) return { access: false, reason: "Question not found" };
 
       resourceData = question.template;
-      templateOwnerId = question.template.ownerId; // Fixed: Fetch ownerId
+      templateOwnerId = question.template.ownerId;
       accessControl = question.template.accessControl;
 
       console.log(
@@ -62,14 +67,14 @@ export const checkAccess = async ({ resource, resourceId, user, action }) => {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
       include: {
-        owner: true, // Include owner
+        owner: true,
         accessControl: true,
       },
     });
     if (!template) return { access: false, reason: "Template not found" };
 
     resourceData = template;
-    templateOwnerId = template.ownerId; // Fixed: Fetch ownerId
+    templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
 
     console.log(
