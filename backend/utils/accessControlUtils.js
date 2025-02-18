@@ -5,7 +5,7 @@ import {
   questionPolicy,
   formPolicy,
   answerPolicy,
-} from "./resourcePolicyCheckers.js";
+} from "./resourcePolicyChecker.js";
 
 /**
  * ✅ Unified Access Checker
