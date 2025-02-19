@@ -27,7 +27,7 @@ export const getTemplateById = async (templateId) => {
 
 export const getAllTemplates = async (
   page = 1,
-  pageSize = 10,
+  pageSize = 20,
   userId,
   isAdmin
 ) => {
