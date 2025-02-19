@@ -63,8 +63,9 @@ export const getTemplatesByUser = async (userId) => {
   return prisma.template.findMany({
     where: { ownerId: userId },
     include: {
-      questions: true,
       tags: { include: { tag: true } },
+      questions: true,
+      accessControl: true,
     },
   });
 };

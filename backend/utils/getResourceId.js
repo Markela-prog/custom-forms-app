@@ -17,6 +17,9 @@ export const getResourceId = (resource, action, req) => {
       // Forms by user: Use userId from token
       return req.user?.id || null;
 
+    case "userTemplates": // ✅ Handle fetching user's own templates
+      return req.user?.id || null;
+
     /** FORM CASES **/
     case "form":
       // Single form actions: Use formId

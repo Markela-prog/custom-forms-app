@@ -55,6 +55,17 @@ export const checkAccess = async ({
     }
   }
 
+  // ✅ Allow fetching owned templates
+  if (resource === "userTemplates" && action === "getUserTemplates") {
+    if (user?.id === resourceId) {
+      console.log(
+        `[AccessControl] ✅ User ${user.id} accessing their templates.`
+      );
+      return { access: true, role: "authenticated" };
+    }
+    return { access: false, reason: "Unauthorized" };
+  }
+
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
     const targetTemplateId = templateId || questions[0]?.templateId;

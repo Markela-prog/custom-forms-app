@@ -5,6 +5,9 @@ export const permissionsMatrix = {
   templateForms: {
     read: ["owner", "admin"],
   },
+  userTemplates: {
+    getUserTemplates: ["authenticated"], 
+  },
   template: {
     create: ["authenticated"],
     read: ["any", "authenticated", "owner", "acl", "admin"],
