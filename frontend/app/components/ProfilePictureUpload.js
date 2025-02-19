@@ -1,15 +1,19 @@
+"use client";
 import { useState } from "react";
+import { Upload, Loader2, CheckCircle, XCircle } from "lucide-react";
 
 const ProfilePictureUpload = ({ onUploadSuccess }) => {
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const [statusMessage, setStatusMessage] = useState(null);
+  const [statusType, setStatusType] = useState(null);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     setUploading(true);
-    setError(null);
+    setStatusMessage(null);
+    setStatusType(null);
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -22,9 +26,7 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
         `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
         {
           method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData, // Send file as FormData
         }
       );
@@ -39,8 +41,12 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
 
       const data = JSON.parse(responseText);
       onUploadSuccess(data.user.profilePicture);
+
+      setStatusMessage("Profile picture updated successfully!");
+      setStatusType("success");
     } catch (err) {
-      setError("Failed to upload image");
+      setStatusMessage("Failed to upload image.");
+      setStatusType("error");
       console.error("🚨 Upload Error:", err);
     } finally {
       setUploading(false);
@@ -48,7 +54,7 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
       <input
         type="file"
         onChange={handleFileChange}
@@ -58,11 +64,33 @@ const ProfilePictureUpload = ({ onUploadSuccess }) => {
       />
       <label
         htmlFor="fileInput"
-        className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded"
+        className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 shadow-md hover:bg-blue-600 transition"
       >
+        {uploading ? (
+          <Loader2 className="animate-spin w-5 h-5" />
+        ) : (
+          <Upload className="w-5 h-5" />
+        )}
         {uploading ? "Uploading..." : "Upload Profile Picture"}
       </label>
-      {error && <p className="text-red-500">{error}</p>}
+
+      {/* ✅ Status Messages */}
+      {statusMessage && (
+        <div
+          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg ${
+            statusType === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {statusType === "success" ? (
+            <CheckCircle className="w-5 h-5 text-green-700" />
+          ) : (
+            <XCircle className="w-5 h-5 text-red-700" />
+          )}
+          <p>{statusMessage}</p>
+        </div>
+      )}
     </div>
   );
 };

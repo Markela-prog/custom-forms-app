@@ -25,7 +25,7 @@ export const demoteUserService = async (userId) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
-  return updateUserRole(userId, "USER"); // ✅ Allow self-demotion
+  return updateUserRole(userId, "USER");
 };
 
 export const deleteUserService = async (userId) => {
@@ -34,5 +34,5 @@ export const deleteUserService = async (userId) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
-  return deleteUserById(userId); // ✅ Allow self-deletion
+  return deleteUserById(userId);
 };

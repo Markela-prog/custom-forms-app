@@ -96,12 +96,11 @@ export const resetPassword = async (token, newPassword) => {
 export const setPassword = async (userId, password) => {
   let user = await findUserById(userId);
   if (!user) throw new Error("User not found");
-  if (user.password) throw new Error("Password is already set");
 
   const hashedPassword = await bcrypt.hash(password, 10);
   return updateUserById(userId, {
     password: hashedPassword,
-    authProvider: { push: "CREDENTIALS" },
+    authProvider: user.authProvider.includes("CREDENTIALS") ? user.authProvider : [...user.authProvider, "CREDENTIALS"],
   });
 };
 

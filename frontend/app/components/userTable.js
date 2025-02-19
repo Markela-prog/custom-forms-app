@@ -141,7 +141,7 @@ export default function UserTable({ users, setUsers }) {
                   onChange={() => handleSelectSingle(user.id)}
                 />
               </td>
-              <td className="p-2 border">{user.username}</td>
+              <td className="p-2 border">{user.username || "Annonymous"}</td>
               <td className="p-2 border">{user.email}</td>
               <td className="p-2 border">{user.role}</td>
             </tr>
