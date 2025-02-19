@@ -5,6 +5,7 @@ import {
   getAllTemplatesController,
   updateTemplateController,
   deleteTemplateController,
+  getTemplatesByUserController
 } from "../controllers/templateController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";

@@ -19,7 +19,7 @@ const DashboardPage = () => {
     const fetchData = async () => {
       try {
         const [templatesRes, formsRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/templates/my`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/templates/user`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/forms/user`, {
