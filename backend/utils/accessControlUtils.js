@@ -214,39 +214,33 @@ export const checkAccess = async ({
   }
 
   /** 🟡 3) FORM (Get a Single Form) **/
-  if (resource === "form" && action === "read") {
+  if (resource === "form" && ["read", "delete"].includes(action)) {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
-      include: {
-        template: {
-          select: { ownerId: true },
-        },
-      },
+      select: { userId: true }, // Ensure we get the form owner
     });
 
     if (!form) {
       return { access: false, reason: "Form not found" };
     }
 
+    resourceData = form; // ✅ Now resourceData is set correctly
+
+    // ✅ Admins can delete any form
+    if (user?.role === "ADMIN") {
+      console.log(`[AccessControl] ✅ Admin deleting form ${resourceId}`);
+      return { access: true, role: "admin" };
+    }
+
+    // ✅ Form owners can delete their own forms
     if (user?.id === form.userId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
       return { access: true, role: "owner" };
     }
 
-    if (user?.id === form.template?.ownerId) {
-      console.log(`[AccessControl] ✅ User ${user.id} is the template owner.`);
-      return { access: true, role: "template_owner" };
-    }
-
-    if (user?.role === "ADMIN") {
-      console.log(`[AccessControl] ✅ Admin accessing form.`);
-      return { access: true, role: "admin" };
-    }
-
     return {
       access: false,
-      reason:
-        "Only the form owner, template owner, or admin can access this form",
+      reason: "Only the form owner or admin can delete this form",
     };
   }
 
