@@ -23,18 +23,18 @@ const LoginPage = () => {
       );
 
       const data = await response.json();
-      console.log("Login Response Data:", data); // Debugging
-
       if (!response.ok) throw new Error(data.message || "Login failed");
 
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
         console.log("Stored Token:", localStorage.getItem("accessToken"));
 
-        // Delay redirect to ensure token is stored
-        setTimeout(() => {
-          router.push("/profile");
-        }, 100);
+        // ✅ Fix: Trigger a state update so the header refreshes immediately
+        window.dispatchEvent(new Event("storage"));
+
+        // ✅ Force refresh the page after redirect to ensure header updates
+        router.push("/");
+        router.refresh();
       } else {
         throw new Error("No access token received");
       }
