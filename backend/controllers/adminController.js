@@ -33,9 +33,7 @@ export const demoteUsers = async (req, res) => {
     const { userIds } = req.body;
     if (!userIds || userIds.length === 0) throw new Error("No users selected");
 
-    await Promise.all(
-      userIds.map((userId) => demoteUserService(userId, req.user.id))
-    );
+    await Promise.all(userIds.map((userId) => demoteUserService(userId)));
 
     res.json({ message: "Users demoted successfully" });
   } catch (error) {
