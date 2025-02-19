@@ -3,18 +3,20 @@ import { useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "../context/authContext";
 
-const AuthGuard = ({ children }) => {
-  const { isAuthenticated, loading } = useContext(AuthContext);
+const AuthGuard = ({ children, adminOnly = false }) => {
+  const { isAuthenticated, user, loading } = useContext(AuthContext);
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/"); // Redirect if not authenticated
+    if (!loading) {
+      if (!isAuthenticated || (adminOnly && user?.role !== "ADMIN")) {
+        router.push("/"); // Redirect unauthorized users
+      }
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, user, loading, router, adminOnly]);
 
-  if (loading || !isAuthenticated) {
-    return <p className="text-center mt-4">Checking authentication...</p>; // Prevents flashing content
+  if (loading || !isAuthenticated || (adminOnly && user?.role !== "ADMIN")) {
+    return <p className="text-center mt-4">Checking authentication...</p>;
   }
 
   return <>{children}</>;

@@ -9,7 +9,7 @@ const Header = () => {
   const { isAuthenticated, user, logout, loading } = useContext(AuthContext);
 
   if (pathname === "/login" || pathname === "/register") return null;
-  if (loading) return null; // Prevent rendering before auth state is set
+  if (loading) return null; // Prevents rendering before auth state is set
 
   return (
     <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
@@ -17,7 +17,7 @@ const Header = () => {
         Custom Forms
       </h1>
       <nav className="flex gap-4">
-        {isAuthenticated ? (
+        {isAuthenticated && user ? (
           <>
             <button
               onClick={() => router.push("/dashboard")}
@@ -31,7 +31,7 @@ const Header = () => {
             >
               Profile
             </button>
-            {user?.role === "ADMIN" && (
+            {user.role === "ADMIN" && (
               <button
                 onClick={() => router.push("/admin/users")}
                 className="bg-yellow-500 px-4 py-2 rounded hover:bg-yellow-600"
