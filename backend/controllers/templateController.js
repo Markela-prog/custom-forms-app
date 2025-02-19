@@ -31,7 +31,7 @@ export const getAllTemplatesController = async (req, res) => {
     console.log("🔹 User in Request:", req.user);
 
     const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const pageSize = parseInt(req.query.pageSize) || 20;
 
     const userId = req.user?.id || null;
     const isAdmin = req.user?.role === "ADMIN";
