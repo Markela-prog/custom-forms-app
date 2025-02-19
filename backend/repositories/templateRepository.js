@@ -59,6 +59,16 @@ export const getAllTemplates = async (
   });
 };
 
+export const getTemplatesByUser = async (userId) => {
+  return prisma.template.findMany({
+    where: { ownerId: userId },
+    include: {
+      questions: true,
+      tags: { include: { tag: true } },
+    },
+  });
+};
+
 export const updateTemplate = async (templateId, updateData) => {
   return prisma.template.update({
     where: { id: templateId },

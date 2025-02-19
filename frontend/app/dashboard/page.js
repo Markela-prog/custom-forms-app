@@ -1,85 +1,90 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const fakeForms = [
-  { id: "1", title: "Event Registration", createdAt: "Feb 10, 2025" },
-  { id: "2", title: "Customer Feedback", createdAt: "Feb 8, 2025" },
-  { id: "3", title: "Employee Survey", createdAt: "Feb 5, 2025" },
-];
-
-const fakeTemplates = [
-  { id: "101", title: "Blank Form" },
-  { id: "102", title: "Feedback Form" },
-  { id: "103", title: "Event Registration" },
-];
 
 const DashboardPage = () => {
   const router = useRouter();
+  const [templates, setTemplates] = useState([]);
+  const [forms, setForms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const token = localStorage.getItem("accessToken");
+
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        const [templatesRes, formsRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/templates/my`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/forms/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (!templatesRes.ok || !formsRes.ok)
+          throw new Error("Failed to load data");
+
+        setTemplates(await templatesRes.json());
+        setForms(await formsRes.json());
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [router, token]);
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-white p-6">
-        <h2 className="text-xl font-semibold">Dashboard</h2>
-        <nav className="mt-4 flex flex-col gap-2">
-          <button onClick={() => router.push("/dashboard")} className="text-left p-2 hover:bg-gray-700 rounded">
-            📂 My Forms
-          </button>
-          <button onClick={() => router.push("/profile")} className="text-left p-2 hover:bg-gray-700 rounded">
-            👤 Profile
-          </button>
-          <button onClick={() => router.push("/trash")} className="text-left p-2 hover:bg-gray-700 rounded">
-            🗑 Trash
-          </button>
-        </nav>
-      </aside>
+    <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-center">Dashboard</h1>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Your Forms</h1>
-          <button
-            onClick={() => router.push("/forms/new")}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+
+      <div className="flex justify-between mt-4">
+        <h2 className="text-xl font-semibold">My Templates</h2>
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={() => router.push("/templates/create")}
+        >
+          ➕ Create New Template
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {templates.map((template) => (
+          <div
+            key={template.id}
+            className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+            onClick={() => router.push(`/templates/${template.id}`)}
           >
-            ➕ Create New Form
-          </button>
-        </div>
-
-        {/* Recent Forms */}
-        <section>
-          <h2 className="text-xl font-semibold mb-3">Recent Forms</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {fakeForms.map((form) => (
-              <div
-                key={form.id}
-                className="p-4 border rounded-lg bg-white shadow hover:shadow-lg cursor-pointer"
-                onClick={() => router.push(`/forms/${form.id}`)}
-              >
-                <h3 className="font-semibold text-lg">{form.title}</h3>
-                <p className="text-gray-500 text-sm">Created on {form.createdAt}</p>
-              </div>
-            ))}
+            <h2 className="font-semibold text-lg">{template.title}</h2>
+            <p className="text-gray-500">{template.description}</p>
           </div>
-        </section>
+        ))}
+      </div>
 
-        {/* Templates */}
-        <section className="mt-6">
-          <h2 className="text-xl font-semibold mb-3">Templates</h2>
-          <div className="flex gap-4">
-            {fakeTemplates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => router.push(`/forms/new?template=${template.title}`)}
-                className="p-4 bg-gray-200 rounded-lg hover:bg-gray-300"
-              >
-                {template.title}
-              </button>
-            ))}
+      <h2 className="text-xl font-semibold mt-6">My Submitted Forms</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {forms.map((form) => (
+          <div
+            key={form.id}
+            className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+            onClick={() => router.push(`/forms/${form.id}`)}
+          >
+            <h2 className="font-semibold">{form.templateTitle}</h2>
+            <p className="text-gray-500">Submitted on: {form.createdAt}</p>
           </div>
-        </section>
-      </main>
+        ))}
+      </div>
     </div>
   );
 };

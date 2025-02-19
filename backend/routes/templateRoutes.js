@@ -14,6 +14,12 @@ const router = express.Router();
 router.post("/", protect, accessControl("template", "create"), createTemplateController);
 router.get("/:templateId", optionalAuth, accessControl("template", "read"), getTemplateByIdController);
 router.get("/", optionalAuth, getAllTemplatesController);
+router.get(
+  "/user",
+  protect,
+  accessControl("template", "read"),
+  getTemplatesByUserController
+);
 router.put("/:templateId", protect, accessControl("template", "update"), updateTemplateController);
 router.delete("/:templateId", protect, accessControl("template", "delete"), deleteTemplateController);
 

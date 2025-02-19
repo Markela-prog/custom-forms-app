@@ -4,6 +4,7 @@ import {
   getAllTemplatesService,
   updateTemplateService,
   deleteTemplateService,
+  getTemplatesByUserService
 } from "../services/templateService.js";
 
 export const createTemplateController = async (req, res) => {
@@ -49,6 +50,17 @@ export const getAllTemplatesController = async (req, res) => {
     res.json(templates);
   } catch (error) {
     console.error("❌ Error fetching templates:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const getTemplatesByUserController = async (req, res) => {
+  try {
+    const userId = req.user.id; // ✅ Get authenticated user's ID
+    const templates = await getTemplatesByUserService(userId);
+    res.json(templates);
+  } catch (error) {
+    console.error("❌ Error fetching user templates:", error);
     res.status(400).json({ message: error.message });
   }
 };
