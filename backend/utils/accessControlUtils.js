@@ -26,9 +26,19 @@ export const checkAccess = async ({
       where: { id: resourceId },
       select: { isPublic: true },
     });
-    if (template?.isPublic && !user) {
-      console.log(`[AccessControl] ✅ Guest accessing public template.`);
+
+    if (!template) {
+      return { access: false, reason: "Template not found" };
+    }
+
+    // ✅ Allow guests to read public templates
+    if (template.isPublic && !user) {
       return { access: true, role: "any" };
+    }
+
+    // ✅ Allow authenticated users to read public templates
+    if (template.isPublic && user) {
+      return { access: true, role: "authenticated" };
     }
   }
 

@@ -42,16 +42,25 @@ export const getFormsByUserAndTemplate = async (userId, templateId) => {
   });
 };
 
-export const deleteForm = async (formId) => {
-  return await prisma.$transaction(async (tx) => {
-    // ✅ Step 1: Delete Answers Related to the Form
-    await tx.answer.deleteMany({
-      where: { formId },
-    });
+export const deleteForm = async (formId, user) => {
 
-    // ✅ Step 2: Delete the Form
-    return await tx.form.delete({
-      where: { id: formId },
-    });
+  const form = await prisma.form.findUnique({
+    where: { id: formId },
+    select: { userId: true },
+  });
+
+  if (!form) {
+    throw new Error("Form not found");
+  }
+
+  // 🛡️ Allow only Admins or Form Owners to delete
+  if (user.role !== "ADMIN" && user.id !== form.userId) {
+    throw new Error("Only the form owner or admin can delete this form");
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    await tx.answer.deleteMany({ where: { formId } });
+
+    return await tx.form.delete({ where: { id: formId } });
   });
 };

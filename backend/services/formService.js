@@ -28,6 +28,6 @@ export const getFormsByUserService = async (userId) => {
   return await getFormsByUser(userId);
 };
 
-export const deleteFormService = async (formId) => {
-  return await deleteForm(formId);
+export const deleteFormService = async (formId, user) => {
+  return await deleteForm(formId, user);
 };

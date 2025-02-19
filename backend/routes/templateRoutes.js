@@ -7,7 +7,6 @@ import {
   deleteTemplateController,
 } from "../controllers/templateController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
-//import { checkTemplateAccess, checkTemplateUpdate, checkTemplateDelete } from "../middleware/templateAccessMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();

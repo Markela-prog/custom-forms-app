@@ -64,9 +64,10 @@ export const getFormsByUserController = async (req, res) => {
 
 export const deleteFormController = async (req, res) => {
   try {
-    await deleteFormService(req.params.formId);
+    await deleteFormService(req.params.formId, req.user);
     res.status(200).json({ message: "Form deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+

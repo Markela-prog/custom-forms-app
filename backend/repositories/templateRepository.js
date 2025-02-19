@@ -36,9 +36,7 @@ export const getAllTemplates = async (
   if (!userId) {
     whereClause = { isPublic: true };
   } else if (isAdmin) {
-    whereClause = {
-      deletedAt: null,
-    };
+    whereClause = {};
   } else {
     whereClause = {
       OR: [
