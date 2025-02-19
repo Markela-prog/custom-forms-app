@@ -1,13 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const ChangePasswordForm = ({ onClose }) => {
-  const [currentPassword, setCurrentPassword] = useState("");
+const ChangePasswordForm = ({ onClose, onStatusMessage }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // Reset messages when form opens
+  useEffect(() => {
+    setError(null);
+    setSuccess(null);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +41,9 @@ const ChangePasswordForm = ({ onClose }) => {
 
       if (!response.ok) throw new Error("Failed to change password");
 
-      setSuccess("Password changed successfully");
+      onStatusMessage("Password changed successfully! 🔑"); // ✅ Use status message prop
+      onClose();
+
       setTimeout(onClose, 2000);
     } catch (error) {
       setError(error.message);

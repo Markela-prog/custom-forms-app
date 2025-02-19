@@ -4,6 +4,7 @@ import { AuthContext } from "../context/authContext";
 import AuthGuard from "../components/AuthGuard";
 import ProfilePictureUpload from "../components/ProfilePictureUpload";
 import ChangePasswordForm from "../components/ChangePasswordForm";
+import StatusMessage from "../components/StatusMessage"; // ✅ Import
 import { Pencil } from "lucide-react"; // Icon for editing
 
 const ProfilePage = () => {
@@ -13,6 +14,7 @@ const ProfilePage = () => {
   const [newUsername, setNewUsername] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState(null); // ✅ Status Message
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -61,6 +63,7 @@ const ProfilePage = () => {
 
       setUser((prev) => ({ ...prev, username: newUsername }));
       setEditingUsername(false);
+      setStatusMessage("Username updated successfully! ✅"); // ✅ Set success message
     } catch (error) {
       console.error("Error updating username:", error);
     }
@@ -77,6 +80,13 @@ const ProfilePage = () => {
           <p className="text-center text-gray-500">Loading profile...</p>
         )}
 
+        {statusMessage && (
+          <StatusMessage
+            message={statusMessage}
+            onClose={() => setStatusMessage(null)}
+          />
+        )}
+
         {user ? (
           <div className="flex flex-col items-center space-y-4">
             {/* Profile Picture */}
@@ -88,9 +98,10 @@ const ProfilePage = () => {
 
             {/* Change Profile Image Button */}
             <ProfilePictureUpload
-              onUploadSuccess={(newPic) =>
-                setUser((prev) => ({ ...prev, profilePicture: newPic }))
-              }
+              onUploadSuccess={(newPic) => {
+                setUser((prev) => ({ ...prev, profilePicture: newPic }));
+                setStatusMessage("Profile picture updated! 🖼️");
+              }}
             />
 
             {/* Username Section */}
@@ -144,9 +155,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Change Password Form Modal */}
-            {changingPassword && (
-              <ChangePasswordForm onClose={() => setChangingPassword(false)} />
-            )}
+            {changingPassword && <ChangePasswordForm onClose={() => setChangingPassword(false)} onStatusMessage={setStatusMessage} />}
           </div>
         ) : (
           <p className="text-center text-gray-500">No user data found.</p>
