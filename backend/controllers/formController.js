@@ -3,9 +3,9 @@ import {
   getFormByIdService,
   getFormsByTemplateService,
   getFormsByUserService,
-  deleteFormService,
-  getFormsByUserAndTemplate
+  deleteFormService
 } from "../services/formService.js";
+import { getFormsByUserAndTemplate } from "../repositories/formRepository.js";
 
 export const createFormController = async (req, res) => {
   try {
