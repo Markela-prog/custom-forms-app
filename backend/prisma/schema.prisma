@@ -105,10 +105,13 @@ model Question {
 enum QuestionType {
   SINGLE_LINE
   MULTI_LINE
+  RADIOBOX
   INTEGER
   CHECKBOX
   MULTIPLE_CHOICE
   DROPDOWN
+  TIME
+  DATE
 }
 
 model Form {
