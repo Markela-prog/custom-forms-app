@@ -1,5 +1,5 @@
 import {
-  createQuestion,
+  createQuestions,
   getQuestionsByTemplateId,
   updateQuestion,
   deleteQuestion,
@@ -9,7 +9,7 @@ import {
 
 export const createQuestionsService = async (templateId, questions) => {
   return await Promise.all(
-    questions.map((question) => createQuestion(templateId, question))
+    questions.map((question) => createQuestions(templateId, question))
   );
 };
 

@@ -1,5 +1,5 @@
 import {
-  createQuestionService,
+  createQuestionsService,
   getQuestionsByTemplateService,
   updateQuestionService,
   deleteQuestionService,
