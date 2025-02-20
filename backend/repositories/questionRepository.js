@@ -1,6 +1,12 @@
 import prisma from "../prisma/prismaClient.js";
 
 export const createQuestions = async (templateId, questions) => {
+  if (!Array.isArray(questions)) {
+    throw new Error("Invalid data: questions must be an array");
+  }
+
+  console.log("📌 Creating Questions:", questions); // Debugging log
+
   const highestOrder = await prisma.question.aggregate({
     where: { templateId },
     _max: { order: true },

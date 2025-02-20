@@ -13,17 +13,25 @@ import {
 export const createQuestionsController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const { questions } = req.body; // Expecting an array of questions
+    const { questions } = req.body;
 
-    if (!Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({ message: "Invalid input format" });
+    console.log("📌 Received Body:", req.body); // Debugging log
+
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({ message: "questions must be an array" });
     }
 
-    const createdQuestions = await createQuestionsService(templateId, questions);
+    if (questions.length === 0) {
+      return res.status(400).json({ message: "No questions provided" });
+    }
 
+    const createdQuestions = await createQuestionsService(
+      templateId,
+      questions
+    );
     res.status(201).json(createdQuestions);
   } catch (error) {
-    console.error("Error creating questions:", error);
+    console.error("❌ Error creating questions:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

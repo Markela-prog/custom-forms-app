@@ -8,9 +8,7 @@ import {
 } from "../repositories/questionRepository.js";
 
 export const createQuestionsService = async (templateId, questions) => {
-  return await Promise.all(
-    questions.map((question) => createQuestions(templateId, question))
-  );
+  return await createQuestions(templateId, questions);
 };
 
 export const getQuestionsByTemplateService = async (templateId) => {
