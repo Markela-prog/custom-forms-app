@@ -8,7 +8,6 @@ const ChangePasswordForm = ({ onClose, onStatusMessage }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Reset messages when form opens
   useEffect(() => {
     setError(null);
     setSuccess(null);
@@ -41,7 +40,7 @@ const ChangePasswordForm = ({ onClose, onStatusMessage }) => {
 
       if (!response.ok) throw new Error("Failed to change password");
 
-      onStatusMessage("Password changed successfully! 🔑"); // ✅ Use status message prop
+      onStatusMessage("Password changed successfully! 🔑");
       onClose();
 
       setTimeout(onClose, 2000);

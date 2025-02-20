@@ -13,5 +13,12 @@ router.get("/template/:templateId", protect, accessControl("templateForms", "rea
 router.get("/user", protect, accessControl("userForms", "getUserForms"), getFormsByUserController);
 router.get("/:formId", protect, accessControl("form", "read"), getFormByIdController);
 router.delete("/:formId", protect, accessControl("form", "delete"), deleteFormController);
+router.get(
+  "/check-submission/:templateId",
+  protect,
+  accessControl("userForms", "getUserForms"),
+  checkFormSubmissionController
+);
+
 
 export default router;

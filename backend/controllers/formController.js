@@ -71,3 +71,17 @@ export const deleteFormController = async (req, res) => {
   }
 };
 
+export const checkFormSubmissionController = async (req, res) => {
+  try {
+    const { templateId } = req.params;
+    const userId = req.user.id;
+
+    const existingForm = await getFormsByUserAndTemplate(userId, templateId);
+    res.json({ hasSubmitted: !!existingForm });
+  } catch (error) {
+    console.error("Check Form Submission Error:", error);
+    res.status(500).json({ message: "Server error checking form submission" });
+  }
+};
+
+

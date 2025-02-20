@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Upload } from "lucide-react"; // Icon for upload
+import { Upload } from "lucide-react";
 
 const ProfilePictureUpload = ({ onUploadSuccess }) => {
   const [uploading, setUploading] = useState(false);

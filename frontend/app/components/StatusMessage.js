@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X } from "lucide-react"; // Icons
+import { X } from "lucide-react";
 
 const StatusMessage = ({ message, onClose }) => {
   const [visible, setVisible] = useState(true);
@@ -8,7 +8,7 @@ const StatusMessage = ({ message, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onClose, 300); // Delay for exit animation
+      setTimeout(onClose, 300);
     }, 3000);
 
     return () => clearTimeout(timer);

@@ -5,14 +5,14 @@ import { AuthContext } from "../context/authContext";
 
 const AuthSuccess = () => {
   const router = useRouter();
-  const { login } = useContext(AuthContext); // ✅ Use global login function
+  const { login } = useContext(AuthContext);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
 
     if (token) {
-      login(token); // ✅ Updates auth state immediately
+      login(token);
       console.log("✅ OAuth Login Successful, Token Stored:", token);
       router.push("/");
     } else {

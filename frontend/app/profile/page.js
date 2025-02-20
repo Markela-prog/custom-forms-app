@@ -4,8 +4,8 @@ import { AuthContext } from "../context/authContext";
 import AuthGuard from "../components/AuthGuard";
 import ProfilePictureUpload from "../components/ProfilePictureUpload";
 import ChangePasswordForm from "../components/ChangePasswordForm";
-import StatusMessage from "../components/StatusMessage"; // ✅ Import
-import { Pencil } from "lucide-react"; // Icon for editing
+import StatusMessage from "../components/StatusMessage";
+import { Pencil } from "lucide-react";
 
 const ProfilePage = () => {
   const { isAuthenticated } = useContext(AuthContext);
@@ -14,7 +14,7 @@ const ProfilePage = () => {
   const [newUsername, setNewUsername] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState(null); // ✅ Status Message
+  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -63,7 +63,7 @@ const ProfilePage = () => {
 
       setUser((prev) => ({ ...prev, username: newUsername }));
       setEditingUsername(false);
-      setStatusMessage("Username updated successfully! ✅"); // ✅ Set success message
+      setStatusMessage("Username updated successfully! ✅");
     } catch (error) {
       console.error("Error updating username:", error);
     }
@@ -71,7 +71,7 @@ const ProfilePage = () => {
 
   return (
     <AuthGuard>
-      <div className="max-w-3xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
+      <div className="max-w-3xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-2">
         <h1 className="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-white">
           Profile
         </h1>

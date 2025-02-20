@@ -13,7 +13,7 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return; // Ensure user is logged in before fetching data
+    if (!isAuthenticated) return;
 
     const fetchData = async () => {
       try {
@@ -45,7 +45,7 @@ const DashboardPage = () => {
   return (
     <AuthGuard>
       {" "}
-      {/* ✅ Ensures user is logged in before rendering */}
+      {/* Ensures user is logged in before rendering */}
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-center">Dashboard</h1>
 

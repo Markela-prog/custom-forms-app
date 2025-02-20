@@ -12,7 +12,7 @@ const ProfileEditForm = ({ user, onClose }) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
-      setPreview(URL.createObjectURL(file)); // Show preview
+      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -32,14 +32,14 @@ const ProfileEditForm = ({ user, onClose }) => {
         {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },
-          body: formData, // Multipart form data for image upload
+          body: formData,
         }
       );
 
       if (!response.ok) throw new Error("Failed to update profile");
 
-      onClose(); // Close form after success
-      window.location.reload(); // Refresh page to see changes
+      onClose();
+      window.location.reload();
     } catch (error) {
       setError("Error updating profile");
     } finally {

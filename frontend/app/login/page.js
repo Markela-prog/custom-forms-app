@@ -13,7 +13,6 @@ const LoginPage = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const router = useRouter();
 
-  // 🔹 Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
@@ -34,7 +33,7 @@ const LoginPage = () => {
 
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
-        window.dispatchEvent(new Event("storage")); // Ensure header updates
+        window.dispatchEvent(new Event("storage"));
         router.push("/");
         router.refresh();
       } else {
@@ -45,7 +44,6 @@ const LoginPage = () => {
     }
   };
 
-  // 🔹 Handle Register
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
@@ -69,10 +67,9 @@ const LoginPage = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Registration failed");
 
-      // ✅ Automatically log in user after registration
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
-        window.dispatchEvent(new Event("storage")); // Force header update
+        window.dispatchEvent(new Event("storage"));
         router.push("/");
         router.refresh();
       } else {
@@ -87,7 +84,6 @@ const LoginPage = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
   };
 
-  // 🔹 Handle Forgot Password
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError(null);

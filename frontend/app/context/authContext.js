@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }) => {
 
     checkAuth();
 
-    // ✅ Listen for authentication updates (OAuth and normal login)
     window.addEventListener("storage", checkAuth);
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
@@ -47,14 +46,14 @@ export const AuthProvider = ({ children }) => {
   const login = (token) => {
     localStorage.setItem("accessToken", token);
     setIsAuthenticated(true);
-    window.dispatchEvent(new Event("storage")); // Force update across tabs
+    window.dispatchEvent(new Event("storage"));
   };
 
   const logout = () => {
     localStorage.removeItem("accessToken");
     setIsAuthenticated(false);
     setUser(null);
-    window.dispatchEvent(new Event("storage")); // Force update across tabs
+    window.dispatchEvent(new Event("storage"));
   };
 
   return (

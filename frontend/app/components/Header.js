@@ -9,7 +9,7 @@ const Header = () => {
   const { isAuthenticated, user, logout, loading } = useContext(AuthContext);
 
   if (pathname === "/login" || pathname === "/register" || pathname === "/reset-password") return null;
-  if (loading) return null; // Prevents rendering before auth state is set
+  if (loading) return null;
 
   return (
     <header className="flex justify-between items-center p-4 bg-gray-800 text-white">

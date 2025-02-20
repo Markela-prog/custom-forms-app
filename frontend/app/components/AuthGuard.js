@@ -10,7 +10,7 @@ const AuthGuard = ({ children, adminOnly = false }) => {
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated || (adminOnly && user?.role !== "ADMIN")) {
-        router.push("/"); // Redirect unauthorized users
+        router.push("/");
       }
     }
   }, [isAuthenticated, user, loading, router, adminOnly]);

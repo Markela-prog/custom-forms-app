@@ -2,8 +2,7 @@
 import { useState } from "react";
 
 const QuestionField = ({ question, value, onChange }) => {
-  // Parse options if applicable (e.g., CHECKBOX, MULTIPLE_CHOICE, DROPDOWN)
-  const options = question.options ? JSON.parse(question.options) : [];
+  const options = Array.isArray(question.options) ? question.options : [];
 
   switch (question.type) {
     case "SINGLE_LINE":
@@ -14,6 +13,7 @@ const QuestionField = ({ question, value, onChange }) => {
           placeholder={question.title}
           value={value || ""}
           onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
         />
       );
 
@@ -25,6 +25,7 @@ const QuestionField = ({ question, value, onChange }) => {
           rows={4}
           value={value || ""}
           onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
         />
       );
 
@@ -36,6 +37,7 @@ const QuestionField = ({ question, value, onChange }) => {
           placeholder={question.title}
           value={value || ""}
           onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
         />
       );
 
@@ -65,7 +67,7 @@ const QuestionField = ({ question, value, onChange }) => {
         </div>
       );
 
-    case "MULTIPLE_CHOICE":
+    case "RADIOBOX":
       return (
         <div className="space-y-2">
           {options.map((option, index) => (
@@ -89,6 +91,7 @@ const QuestionField = ({ question, value, onChange }) => {
           className="border p-2 w-full rounded"
           value={value || ""}
           onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
         >
           <option value="">Select an option</option>
           {options.map((option, index) => (
@@ -97,6 +100,28 @@ const QuestionField = ({ question, value, onChange }) => {
             </option>
           ))}
         </select>
+      );
+
+    case "DATE":
+      return (
+        <input
+          type="date"
+          className="border p-2 w-full rounded"
+          value={value || ""}
+          onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
+        />
+      );
+
+    case "TIME":
+      return (
+        <input
+          type="time"
+          className="border p-2 w-full rounded"
+          value={value || ""}
+          onChange={(e) => onChange(question.id, e.target.value)}
+          required={question.isRequired}
+        />
       );
 
     default:
