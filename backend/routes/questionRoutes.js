@@ -7,8 +7,6 @@ import {
   reorderQuestionsController,
 } from "../controllers/questionController.js";
 import { protect, optionalAuth } from "../middleware/authMiddleware.js";
-//import { checkQuestionAccess, checkQuestionOwnerOrAdmin, checkReorderOwnership } from "../middleware/questionAccessMiddleware.js";
-//import { checkTemplateOwnerOrAdmin } from "../middleware/templateAccessMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
 

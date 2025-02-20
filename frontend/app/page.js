@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "./context/authContext";
+import { useRouter } from "next/navigation";
 
 const HomePage = () => {
   const { isAuthenticated } = useContext(AuthContext);
   const [templates, setTemplates] = useState([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -43,6 +45,7 @@ const HomePage = () => {
           <div
             key={template.id}
             className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+            onClick={() => router.push(`/templates/${template.id}`)}
           >
             <h2 className="font-semibold text-lg">{template.title}</h2>
             <p className="text-gray-500">{template.description}</p>

@@ -95,7 +95,7 @@ model Question {
   description String?
   showInTable Boolean @default(false)
   order Int @default(0)
-  options String?
+  options Json?
   isRequired  Boolean  @default(false)
 
   template   Template @relation(fields: [templateId], references: [id])

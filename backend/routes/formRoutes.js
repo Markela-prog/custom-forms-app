@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createFormController,
   getFormByIdController,
   getFormsByTemplateController,
   getFormsByUserController,
@@ -9,8 +8,6 @@ import {
 import { protect } from "../middleware/authMiddleware.js";
 import { accessControl } from "../middleware/accessControlMiddleware.js";
 const router = express.Router();
-
-//router.post("/:templateId", protect, accessControl("form", "create"), createFormController);
 
 router.get("/template/:templateId", protect, accessControl("templateForms", "read"), getFormsByTemplateController);
 router.get("/user", protect, accessControl("userForms", "getUserForms"), getFormsByUserController);

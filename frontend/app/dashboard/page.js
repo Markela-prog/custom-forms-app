@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState, useContext } from "react";
+import { useRouter } from "next/navigation";
 import { AuthContext } from "../context/authContext";
 import AuthGuard from "../components/AuthGuard";
 
 const DashboardPage = () => {
   const { isAuthenticated } = useContext(AuthContext);
   const [templates, setTemplates] = useState([]);
+  const router = useRouter();
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
