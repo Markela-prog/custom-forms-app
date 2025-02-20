@@ -7,8 +7,10 @@ import {
   batchUpdateQuestionOrders,
 } from "../repositories/questionRepository.js";
 
-export const createQuestionService = async (templateId, questionData) => {
-  return await createQuestion(templateId, questionData);
+export const createQuestionsService = async (templateId, questions) => {
+  return await Promise.all(
+    questions.map((question) => createQuestion(templateId, question))
+  );
 };
 
 export const getQuestionsByTemplateService = async (templateId) => {

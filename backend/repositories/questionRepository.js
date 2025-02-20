@@ -1,20 +1,22 @@
 import prisma from "../prisma/prismaClient.js";
 
-export const createQuestion = async (templateId, questionData) => {
+export const createQuestions = async (templateId, questions) => {
   const highestOrder = await prisma.question.aggregate({
     where: { templateId },
     _max: { order: true },
   });
 
-  const newOrder =
+  let order =
     highestOrder._max.order !== null ? highestOrder._max.order + 1 : 0;
 
-  return prisma.question.create({
-    data: {
-      ...questionData,
-      templateId,
-      order: newOrder,
-    },
+  const questionsWithOrder = questions.map((q) => ({
+    ...q,
+    templateId,
+    order: order++,
+  }));
+
+  return prisma.question.createMany({
+    data: questionsWithOrder,
   });
 };
 
@@ -25,8 +27,10 @@ export const getQuestionsByTemplateId = async (templateId) => {
   });
 };
 
-
-export const getQuestionIdsByTemplate = async (templateId, requiredOnly = false) => {
+export const getQuestionIdsByTemplate = async (
+  templateId,
+  requiredOnly = false
+) => {
   const questions = await prisma.question.findMany({
     where: {
       templateId,
@@ -35,9 +39,8 @@ export const getQuestionIdsByTemplate = async (templateId, requiredOnly = false)
     select: { id: true },
   });
 
-  return questions.map(q => q.id);
+  return questions.map((q) => q.id);
 };
-
 
 export const updateQuestion = async (questionId, updateData) => {
   return prisma.question.update({

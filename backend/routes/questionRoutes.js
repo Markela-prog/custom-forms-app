@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  createQuestionController,
+  createQuestionsController,
   getQuestionsByTemplateController,
   updateQuestionController,
   deleteQuestionController,
@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.put("/reorder", protect, accessControl("question", "reorder"), reorderQuestionsController);
 router.get("/:templateId", optionalAuth, accessControl("question", "read"), getQuestionsByTemplateController);
-router.post("/:templateId", protect, accessControl("question", "create"), createQuestionController);
+router.post("/:templateId", protect, accessControl("question", "create"), createQuestionsController);
 router.put("/:questionId", protect, accessControl("question", "update"), updateQuestionController);
 router.delete("/:questionId", protect, accessControl("question", "delete"), deleteQuestionController);
 

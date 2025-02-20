@@ -10,14 +10,21 @@ import {
   getQuestionsByIds,
 } from "../repositories/questionRepository.js";
 
-export const createQuestionController = async (req, res) => {
+export const createQuestionsController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const question = await createQuestionService(templateId, req.body);
-    res.status(201).json(question);
+    const { questions } = req.body; // Expecting an array of questions
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: "Invalid input format" });
+    }
+
+    const createdQuestions = await createQuestionsService(templateId, questions);
+
+    res.status(201).json(createdQuestions);
   } catch (error) {
-    console.error("Error creating question:", error);
-    res.status(403).json({ message: error.message });
+    console.error("Error creating questions:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
