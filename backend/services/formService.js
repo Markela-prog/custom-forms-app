@@ -32,12 +32,4 @@ export const deleteFormService = async (formId, user) => {
   return await deleteForm(formId, user);
 };
 
-export const getFormsByUserAndTemplate = async (userId, templateId) => {
-  return await prisma.form.findFirst({
-    where: {
-      userId,
-      templateId,
-      isFinalized: true,
-    },
-  });
-};
+

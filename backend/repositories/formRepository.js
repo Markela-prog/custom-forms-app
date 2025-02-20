@@ -37,8 +37,12 @@ export const getFormsByUser = async (userId) => {
 };
 
 export const getFormsByUserAndTemplate = async (userId, templateId) => {
-  return prisma.form.findFirst({
-    where: { userId, templateId },
+  return await prisma.form.findFirst({
+    where: {
+      userId,
+      templateId,
+      isFinalized: true,
+    },
   });
 };
 
