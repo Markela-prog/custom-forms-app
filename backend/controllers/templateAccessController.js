@@ -1,35 +1,42 @@
 import {
-  addUserToTemplateAccessService,
-  removeUserFromTemplateAccessService,
+  addUsersToTemplateAccessService,
+  removeUsersFromTemplateAccessService,
   getTemplateAccessUsersService,
 } from "../services/templateAccessService.js";
 
-export const addUserToTemplateAccessController = async (req, res) => {
+export const addUsersToTemplateAccessController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const { userId } = req.body;
+    const { userIds } = req.body; // Accept multiple userIds
 
-    if (!userId)
-      return res.status(400).json({ message: "User ID is required" });
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "User IDs must be a non-empty array" });
+    }
 
-    const result = await addUserToTemplateAccessService(templateId, userId);
-    res.status(201).json(result);
+    const result = await addUsersToTemplateAccessService(templateId, userIds);
+    res
+      .status(201)
+      .json({ message: "Users granted access successfully", result });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ✅ Remove User from Template Access
-export const removeUserFromTemplateAccessController = async (req, res) => {
+export const removeUsersFromTemplateAccessController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const { userId } = req.body;
+    const { userIds } = req.body; // Accept multiple userIds
 
-    if (!userId)
-      return res.status(400).json({ message: "User ID is required" });
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "User IDs must be a non-empty array" });
+    }
 
-    await removeUserFromTemplateAccessService(templateId, userId);
-    res.json({ message: "User removed from template access" });
+    await removeUsersFromTemplateAccessService(templateId, userIds);
+    res.json({ message: "Users removed from template access" });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

@@ -4,12 +4,12 @@ import {
   getTemplateAccessUsers,
 } from "../repositories/templateAccessRepository.js";
 
-export const addUserToTemplateAccessService = async (templateId, userId) => {
-  return await addUserToTemplateAccess(templateId, userId);
+export const addUsersToTemplateAccessService = async (templateId, userIds) => {
+  return await addUserToTemplateAccess(templateId, userIds);
 };
 
-export const removeUserFromTemplateAccessService = async (templateId, userId) => {
-  return await removeUserFromTemplateAccess(templateId, userId);
+export const removeUsersFromTemplateAccessService = async (templateId, userIds) => {
+  return await removeUserFromTemplateAccess(templateId, userIds);
 };
 
 export const getTemplateAccessUsersService = async (templateId) => {

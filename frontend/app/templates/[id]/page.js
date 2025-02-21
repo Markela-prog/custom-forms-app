@@ -6,6 +6,7 @@ import TemplateView from "@/app/components/TemplateView";
 import TemplateFormsList from "@/app/components/TemplateFormsList";
 import QuestionnaireForm from "@/app/components/QuestionnaireForm";
 import EditTemplateForm from "@/app/components/EditTemplateForm";
+import UserPermissionTable from "@/app/components/UserPermissionTable";
 
 const TemplatePage = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
@@ -16,7 +17,7 @@ const TemplatePage = () => {
   const [loadingTemplate, setLoadingTemplate] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("questions"); // 🔹 Track active tab
+  const [activeTab, setActiveTab] = useState("questions");
   const [submittedForms, setSubmittedForms] = useState([]);
 
   // ✅ Set template ID from URL params
@@ -124,7 +125,23 @@ const TemplatePage = () => {
           >
             Answers
           </button>
+          {template?.isPublic === false && (
+            <button
+              className={`px-4 py-2 text-lg font-semibold ${
+                activeTab === "permissions"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500"
+              }`}
+              onClick={() => setActiveTab("permissions")}
+            >
+              Permissions
+            </button>
+          )}
         </div>
+      )}
+
+      {activeTab === "permissions" && (
+        <UserPermissionTable templateId={templateId} />
       )}
 
       {/* 🔹 Show Edit Button (Only in Questions Tab) */}

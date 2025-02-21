@@ -1,18 +1,32 @@
 import prisma from "../prisma/prismaClient.js";
 
-export const addUserToTemplateAccess = async (templateId, userId) => {
-  return await prisma.templateAccess.create({
-    data: { templateId, userId },
+export const addUsersToTemplateAccess = async (templateId, userIds) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new Error("User IDs must be a non-empty array");
+  }
+
+  return await prisma.templateAccess.createMany({
+    data: userIds.map((userId) => ({
+      templateId,
+      userId,
+    })),
+    skipDuplicates: true,
   });
 };
 
-export const removeUserFromTemplateAccess = async (templateId, userId) => {
-  return await prisma.templateAccess.delete({
+export const removeUsersFromTemplateAccess = async (templateId, userIds) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new Error("User IDs must be a non-empty array");
+  }
+
+  return await prisma.templateAccess.deleteMany({
     where: {
-      templateId_userId: { templateId, userId },
+      templateId,
+      userId: { in: userIds },
     },
   });
 };
+
 
 export const getTemplateAccessUsers = async (templateId) => {
   return await prisma.templateAccess.findMany({
