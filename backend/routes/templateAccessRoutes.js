@@ -10,7 +10,7 @@ import { accessControl } from "../middleware/accessControlMiddleware.js";
 
 const router = express.Router();
 
-router.get("/non-admin-users", protect, accessControl("user", "fetch_non_admin"), getNonAdminUsersController);
+router.get("/non-admin-users", protect, accessControl("template", "manage_access"), getNonAdminUsersController);
 
 router.post("/:templateId/access", protect, accessControl("template", "manage_access"), addUsersToTemplateAccessController);
 

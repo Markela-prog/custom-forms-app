@@ -19,6 +19,31 @@ export const checkAccess = async ({
   let templateOwnerId = null;
   let accessControl = null;
 
+  // ✅ SPECIAL CASE: Fetching Non-Admin Users
+  if (resource === "template" && action === "manage_access" && !resourceId) {
+    // ✅ Allow if user is ADMIN
+    if (user?.role === "ADMIN") {
+      console.log(`[AccessControl] ✅ Admin allowed to fetch non-admin users.`);
+      return { access: true, role: "admin" };
+    }
+
+    // ✅ Allow if user is a Template Owner
+    const ownedTemplates = await prisma.template.findMany({
+      where: { ownerId: user?.id },
+      select: { id: true },
+    });
+
+    if (ownedTemplates.length > 0) {
+      console.log(`[AccessControl] ✅ User ${user.id} is a template owner.`);
+      return { access: true, role: "owner" };
+    }
+
+    return {
+      access: false,
+      reason: "Only template owners or admins can fetch non-admin users",
+    };
+  }
+
   // ✅ SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
   if (resource === "template" && action === "read") {
     const template = await prisma.template.findUnique({
@@ -63,16 +88,6 @@ export const checkAccess = async ({
       return { access: true, role: "authenticated" };
     }
     return { access: false, reason: "Unauthorized" };
-  }
-
-  // 🛡️ Special Case: Fetching non-admin users does NOT require a resource ID
-  if (resource === "user" && action === "fetch_non_admin") {
-    if (allowedRoles.includes(user?.role)) {
-      console.log(`[AccessControl] ✅ User ${user.id} allowed to fetch non-admin users.`);
-      return next();
-    } else {
-      return res.status(403).json({ message: "Access denied" });
-    }
   }
 
   // 🟡 Special Handling for QUESTION Reorder

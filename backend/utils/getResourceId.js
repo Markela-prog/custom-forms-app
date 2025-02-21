@@ -3,8 +3,9 @@ export const getResourceId = (resource, action, req) => {
   switch (resource) {
     /** TEMPLATE CASES **/
     case "template":
-      // - Create: No resource ID needed (just user)
-      // - General template actions: Use templateId
+        if (action === "manage_access" && !req.params.templateId) {
+            return null; // This allows fetching non-admin users
+          }
       return action === "create" ? null : req.params.templateId || null;
 
     /** TEMPLATE FORMS (New) **/
