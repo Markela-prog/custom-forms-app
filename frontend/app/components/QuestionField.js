@@ -1,8 +1,11 @@
-"use client";
-import { useState } from "react";
 
-const QuestionField = ({ question, value, onChange }) => {
+const QuestionField = ({ question, value, onChange, disabled = false }) => {
+  if (!question) {
+    return <p className="text-red-500">⚠️ Question data is missing!</p>;
+  }
+
   const options = Array.isArray(question.options) ? question.options : [];
+  const parsedValue = Array.isArray(value) ? value : value?.split(", ") || [];
 
   switch (question.type) {
     case "SINGLE_LINE":
@@ -12,8 +15,9 @@ const QuestionField = ({ question, value, onChange }) => {
           className="border p-2 w-full rounded"
           placeholder={question.title}
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
+          onChange={(e) => onChange && onChange(question.id, e.target.value)}
           required={question.isRequired}
+          disabled={disabled}
         />
       );
 
@@ -24,8 +28,9 @@ const QuestionField = ({ question, value, onChange }) => {
           placeholder={question.title}
           rows={4}
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
+          onChange={(e) => onChange && onChange(question.id, e.target.value)}
           required={question.isRequired}
+          disabled={disabled}
         />
       );
 
@@ -36,52 +41,64 @@ const QuestionField = ({ question, value, onChange }) => {
           className="border p-2 w-full rounded"
           placeholder={question.title}
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
+          onChange={(e) => onChange && onChange(question.id, e.target.value)}
           required={question.isRequired}
+          disabled={disabled}
         />
       );
 
     case "CHECKBOX":
       return (
         <div className="space-y-2">
-          {options.map((option, index) => (
-            <label key={index} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                value={option}
-                checked={value?.includes(option) || false}
-                onChange={(e) => {
-                  const updatedValues = value ? [...value] : [];
-                  if (e.target.checked) {
-                    updatedValues.push(option);
-                  } else {
-                    const index = updatedValues.indexOf(option);
-                    if (index !== -1) updatedValues.splice(index, 1);
-                  }
-                  onChange(question.id, updatedValues);
-                }}
-              />
-              <span>{option}</span>
-            </label>
-          ))}
+          {options.length > 0 ? (
+            options.map((option, index) => (
+              <label key={index} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  value={option}
+                  checked={parsedValue.includes(option)}
+                  onChange={(e) => {
+                    if (disabled) return;
+                    const newValue = e.target.checked
+                      ? [...parsedValue, option]
+                      : parsedValue.filter((v) => v !== option);
+                    onChange && onChange(question.id, newValue);
+                  }}
+                  disabled={disabled}
+                />
+                <span>{option}</span>
+              </label>
+            ))
+          ) : (
+            <p className="text-gray-500">No options available.</p>
+          )}
         </div>
       );
 
     case "RADIOBOX":
       return (
         <div className="space-y-2">
-          {options.map((option, index) => (
-            <label key={index} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name={`question-${question.id}`}
-                value={option}
-                checked={value === option}
-                onChange={() => onChange(question.id, option)}
-              />
-              <span>{option}</span>
-            </label>
-          ))}
+          {options.length > 0 ? (
+            options.map((option, index) => (
+              <label key={index} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name={`question-${question.id}`}
+                  value={option}
+                  checked={value === option}
+                  onChange={(e) =>
+                    !disabled &&
+                    onChange &&
+                    onChange(question.id, e.target.value)
+                  }
+                  disabled={disabled}
+                />
+                <span>{option}</span>
+              </label>
+            ))
+          ) : (
+            <p className="text-gray-500">No options available.</p>
+          )}
         </div>
       );
 
@@ -90,15 +107,22 @@ const QuestionField = ({ question, value, onChange }) => {
         <select
           className="border p-2 w-full rounded"
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
           required={question.isRequired}
+          onChange={(e) =>
+            !disabled && onChange && onChange(question.id, e.target.value)
+          }
+          disabled={disabled}
         >
           <option value="">Select an option</option>
-          {options.map((option, index) => (
-            <option key={index} value={option}>
-              {option}
-            </option>
-          ))}
+          {options.length > 0 ? (
+            options.map((option, index) => (
+              <option key={index} value={option}>
+                {option}
+              </option>
+            ))
+          ) : (
+            <option disabled>No options available</option>
+          )}
         </select>
       );
 
@@ -108,8 +132,11 @@ const QuestionField = ({ question, value, onChange }) => {
           type="date"
           className="border p-2 w-full rounded"
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
+          onChange={(e) =>
+            !disabled && onChange && onChange(question.id, e.target.value)
+          }
           required={question.isRequired}
+          disabled={disabled}
         />
       );
 
@@ -119,15 +146,16 @@ const QuestionField = ({ question, value, onChange }) => {
           type="time"
           className="border p-2 w-full rounded"
           value={value || ""}
-          onChange={(e) => onChange(question.id, e.target.value)}
+          onChange={(e) =>
+            !disabled && onChange && onChange(question.id, e.target.value)
+          }
           required={question.isRequired}
+          disabled={disabled}
         />
       );
 
     default:
-      return (
-        <p className="text-red-500">Unknown question type: {question.type}</p>
-      );
+      return <p className="text-red-500">Unknown question type: {question.type}</p>;
   }
 };
 

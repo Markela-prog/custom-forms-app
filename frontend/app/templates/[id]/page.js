@@ -16,6 +16,8 @@ const TemplatePage = () => {
   const [loadingTemplate, setLoadingTemplate] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("questions"); // 🔹 Track active tab
+  const [submittedForms, setSubmittedForms] = useState([]);
 
   // ✅ Set template ID from URL params
   useEffect(() => {
@@ -23,6 +25,17 @@ const TemplatePage = () => {
       setTemplateId(params.id);
     }
   }, [params]);
+
+  // ✅ Define user permissions (Move this above useEffect)
+  const isOwnerOrAdmin =
+    user?.role === "ADMIN" || template?.ownerId === user?.id;
+
+  const hasACLAccess = template?.accessControl?.some(
+    (ac) => ac.userId === user?.id
+  );
+
+  const canSubmitForm =
+    isAuthenticated && (template?.isPublic || hasACLAccess || isOwnerOrAdmin);
 
   // ✅ Fetch template details
   useEffect(() => {
@@ -53,24 +66,69 @@ const TemplatePage = () => {
     fetchTemplate();
   }, [templateId, isAuthenticated]);
 
+  // ✅ Fetch submitted forms when in "Answers" tab
+  useEffect(() => {
+    if (!isOwnerOrAdmin || activeTab !== "answers" || !templateId) return;
+
+    const fetchSubmittedForms = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/forms/template/${templateId}`,
+          { headers }
+        );
+
+        if (!response.ok) throw new Error("Failed to load submitted forms");
+
+        const data = await response.json();
+        setSubmittedForms(data);
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    fetchSubmittedForms();
+  }, [activeTab, templateId, isOwnerOrAdmin, isAuthenticated]);
+
   if (loadingTemplate) return <p>Loading template...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
-  const isOwnerOrAdmin =
-    user?.role === "ADMIN" || template?.ownerId === user?.id;
-  const hasACLAccess = template?.accessControl?.some(
-    (ac) => ac.userId === user?.id
-  );
-  const canSubmitForm =
-    isAuthenticated && (template?.isPublic || hasACLAccess || isOwnerOrAdmin);
-
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* 🔹 Top Bar with Title */}
       <h1 className="text-3xl font-bold text-center">{template?.title}</h1>
       <p className="text-gray-600 text-center mb-2">{template?.description}</p>
 
-      {/* 🔹 Single Edit Button at the Top */}
+      {/* 🔹 Navigation Tabs (Only for Owners/Admins) */}
       {isOwnerOrAdmin && (
+        <div className="flex justify-center border-b mb-4">
+          <button
+            className={`px-4 py-2 text-lg font-semibold ${
+              activeTab === "questions"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("questions")}
+          >
+            Questions
+          </button>
+          <button
+            className={`px-4 py-2 text-lg font-semibold ${
+              activeTab === "answers"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("answers")}
+          >
+            Answers
+          </button>
+        </div>
+      )}
+
+      {/* 🔹 Show Edit Button (Only in Questions Tab) */}
+      {isOwnerOrAdmin && activeTab === "questions" && (
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded mt-2 mb-2"
           onClick={() => setIsEditing(!isEditing)}
@@ -84,18 +142,39 @@ const TemplatePage = () => {
         <EditTemplateForm templateId={templateId} />
       ) : (
         <>
-          {/* 🔹 Form Submission */}
-          {canSubmitForm && <QuestionnaireForm templateId={templateId} />}
-
-          {/* 🔹 Admin/Owner Management Features */}
-          {isOwnerOrAdmin && (
+          {/* 🔹 Show Questions Tab */}
+          {activeTab === "questions" && (
             <>
-              
-              <div className="mt-6">
-                <h2 className="text-2xl font-semibold">Submitted Forms</h2>
-                <TemplateFormsList templateId={templateId} />
-              </div>
+              {canSubmitForm && <QuestionnaireForm templateId={templateId} />}
             </>
+          )}
+
+          {/* 🔹 Show Answers Tab */}
+          {activeTab === "answers" && isOwnerOrAdmin && (
+            <div className="mt-6">
+              <h2 className="text-2xl font-semibold">Submitted Forms</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {submittedForms.length === 0 ? (
+                  <p className="text-gray-500">No forms submitted yet.</p>
+                ) : (
+                  submittedForms.map((form) => (
+                    <div
+                      key={form.id}
+                      className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+                      onClick={() => router.push(`/forms/${form.id}`)}
+                    >
+                      <h3 className="font-semibold">
+                        Submitted by: {form.user?.name || "Anonymous"}
+                      </h3>
+                      <p className="text-gray-500">
+                        Submitted on:{" "}
+                        {new Date(form.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           )}
         </>
       )}

@@ -18,7 +18,6 @@ export const checkAccess = async ({
   let resourceData = null;
   let templateOwnerId = null;
   let accessControl = null;
-  let accessRole = "undefined";
 
   // ✅ SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
   if (resource === "template" && action === "read") {
@@ -228,7 +227,7 @@ export const checkAccess = async ({
   if (resource === "form" && ["read", "delete"].includes(action)) {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
-      select: { userId: true }, // Ensure we get the form owner
+      include: { template: { select: { ownerId: true } } }, // ✅ Fetch related template owner
     });
 
     if (!form) {
@@ -237,21 +236,32 @@ export const checkAccess = async ({
 
     resourceData = form; // ✅ Now resourceData is set correctly
 
-    // ✅ Admins can delete any form
+    // ✅ Admins can view or delete any form
     if (user?.role === "ADMIN") {
-      console.log(`[AccessControl] ✅ Admin deleting form ${resourceId}`);
+      console.log(`[AccessControl] ✅ Admin accessing form ${resourceId}`);
       return { access: true, role: "admin" };
     }
 
-    // ✅ Form owners can delete their own forms
+    // ✅ Form owners can VIEW and DELETE their own forms
     if (user?.id === form.userId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
       return { access: true, role: "owner" };
     }
 
+    // ✅ Template owners can ONLY VIEW forms related to their template
+    if (user?.id === form.template.ownerId && action === "read") {
+      console.log(
+        `[AccessControl] ✅ User ${user.id} is the template owner, granting READ access.`
+      );
+      return { access: true, role: "template_owner" };
+    }
+
     return {
       access: false,
-      reason: "Only the form owner or admin can delete this form",
+      reason:
+        action === "delete"
+          ? "Only the form owner or admin can delete this form"
+          : "Only the form owner, template owner, or admin can view this form",
     };
   }
 

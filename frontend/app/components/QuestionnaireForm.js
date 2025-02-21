@@ -14,7 +14,7 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // ✅ Fetch form submission status for the user
+  // ✅ Check if the user already submitted the form
   useEffect(() => {
     const checkFormSubmission = async () => {
       try {
@@ -30,11 +30,9 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
         if (response.ok) {
           const data = await response.json();
           setHasSubmitted(data.hasSubmitted);
-        } else {
-          console.warn("Failed to check form submission status.");
         }
       } catch (err) {
-        console.error("Error checking form submission status:", err.message);
+        console.error("Error checking form submission:", err.message);
       }
     };
 
@@ -43,9 +41,9 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
 
   // ✅ Fetch questions only if the user has NOT submitted the form
   useEffect(() => {
-    const fetchQuestions = async () => {
-      if (hasSubmitted) return;
+    if (hasSubmitted) return;
 
+    const fetchQuestions = async () => {
       try {
         const token = localStorage.getItem("accessToken");
         const headers =
@@ -83,11 +81,10 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
     setStatusMessage(null);
 
     try {
-      // 🔹 Ensure answers are in correct format: [{ questionId, value }]
       const formattedAnswers = Object.entries(answers).map(
         ([questionId, value]) => ({
           questionId,
-          value: Array.isArray(value) ? value.join(", ") : value, // ✅ Convert array to string if needed
+          value: Array.isArray(value) ? value.join(", ") : value,
         })
       );
 
@@ -127,17 +124,6 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
   if (loading) return <p>Loading questions...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
-  // ✅ If user has already submitted, show a message instead of the form
-  if (hasSubmitted) {
-    return (
-      <div className="mx-auto p-6 border rounded-lg shadow bg-white text-center">
-        <h2 className="text-2xl font-bold text-gray-700">
-          You have already submitted this form.
-        </h2>
-      </div>
-    );
-  }
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -155,6 +141,7 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
             question={question}
             value={answers[question.id] || ""}
             onChange={handleAnswerChange}
+            disabled={!isAuthenticated || hasSubmitted} // ✅ Allow editing only if user is authenticated and hasn't submitted
           />
         </div>
       ))}
@@ -167,17 +154,25 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
         />
       )}
 
-      <button
-        type="submit"
-        className={`mt-4 w-full px-4 py-2 rounded-lg text-white ${
-          submitting
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
-        disabled={submitting}
-      >
-        {submitting ? "Submitting..." : "Submit"}
-      </button>
+      {!hasSubmitted && isAuthenticated && (
+        <button
+          type="submit"
+          className={`mt-4 w-full px-4 py-2 rounded-lg text-white ${
+            submitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+          disabled={submitting}
+        >
+          {submitting ? "Submitting..." : "Submit"}
+        </button>
+      )}
+
+      {hasSubmitted && (
+        <p className="text-green-500 text-center mt-4">
+          ✅ You have already submitted this form.
+        </p>
+      )}
     </form>
   );
 };
