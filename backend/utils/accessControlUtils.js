@@ -65,6 +65,16 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized" };
   }
 
+  // 🛡️ Special Case: Fetching non-admin users does NOT require a resource ID
+  if (resource === "user" && action === "fetch_non_admin") {
+    if (allowedRoles.includes(user?.role)) {
+      console.log(`[AccessControl] ✅ User ${user.id} allowed to fetch non-admin users.`);
+      return next();
+    } else {
+      return res.status(403).json({ message: "Access denied" });
+    }
+  }
+
   // 🟡 Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
     const targetTemplateId = templateId || questions[0]?.templateId;

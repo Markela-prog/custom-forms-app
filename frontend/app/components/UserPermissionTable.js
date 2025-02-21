@@ -27,7 +27,7 @@ export default function UserPermissionTable({ templateId }) {
 
       // ✅ Fetch all non-admin users
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/non-admin`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/non-admin-users`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

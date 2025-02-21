@@ -39,4 +39,7 @@ export const permissionsMatrix = {
     delete: ["admin", "owner"],
     read: ["admin", "owner"],
   },
+  user: {
+    fetch_non_admin: ["owner", "admin"],
+  },
 };
