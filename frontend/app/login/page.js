@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
+import { AiOutlineLoading3Quarters } from "react-icons/ai"; // Loading spinner icon
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -11,12 +12,14 @@ const LoginPage = () => {
   const [success, setSuccess] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Loading state
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsLoading(true);
 
     try {
       const response = await fetch(
@@ -41,6 +44,8 @@ const LoginPage = () => {
       }
     } catch (error) {
       setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,9 +53,11 @@ const LoginPage = () => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsLoading(true);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
@@ -77,17 +84,16 @@ const LoginPage = () => {
       }
     } catch (error) {
       setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleOAuthLogin = (provider) => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsLoading(true);
 
     try {
       const response = await fetch(
@@ -100,14 +106,19 @@ const LoginPage = () => {
       );
 
       const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to send reset email");
+      if (!response.ok) throw new Error(data.message || "Failed to send reset email");
 
       setSuccess("Password reset email sent. Check your inbox.");
       setIsForgotPassword(false);
     } catch (error) {
       setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleOAuthLogin = (provider) => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${provider}`;
   };
 
   return (
@@ -121,7 +132,7 @@ const LoginPage = () => {
         />
         <a
           href="/"
-          className="absolute inset-0 flex items-center justify-center text-white text-lg font-bold bg-black/40  transition-all duration-300 rounded-md p-2"
+          className="absolute inset-0 flex items-center justify-center text-white text-lg font-bold bg-black/40 rounded-md p-2"
         >
           Go to home page
         </a>
@@ -139,7 +150,7 @@ const LoginPage = () => {
           </h1>
           <p className="text-sm font-semibold mb-6 text-gray-500 text-center">
             {isRegistering
-              ? "Join to Our Community with all-time access and free"
+              ? "Join our community with all-time access for free"
               : "Sign in to continue"}
           </p>
 
@@ -147,14 +158,14 @@ const LoginPage = () => {
           {!isForgotPassword && (
             <div className="mt-4 flex flex-col lg:flex-row items-center justify-between">
               <button
-                className="w-full lg:w-1/2 mb-2 lg:mb-0 flex justify-center items-center gap-2 bg-white text-sm text-gray-600 p-2 rounded-md hover:bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors duration-300"
+                className="w-full lg:w-1/2 flex justify-center items-center gap-2 bg-white text-sm text-gray-600 p-2 rounded-md hover:bg-gray-50 border border-gray-200"
                 onClick={() => handleOAuthLogin("Google")}
               >
                 <FaGoogle />
                 Sign in with Google
               </button>
               <button
-                className="w-full lg:w-1/2 ml-0 lg:ml-2 flex justify-center items-center gap-2 bg-white text-sm text-gray-600 p-2 rounded-md hover:bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors duration-300"
+                className="w-full lg:w-1/2 ml-0 lg:ml-2 flex justify-center items-center gap-2 bg-white text-sm text-gray-600 p-2 rounded-md hover:bg-gray-50 border border-gray-200"
                 onClick={() => handleOAuthLogin("Github")}
               >
                 <FaGithub />
@@ -181,61 +192,57 @@ const LoginPage = () => {
             }
             className="space-y-4"
           >
-            {/* Email Input */}
-            <div>
+            <input
+              type="email"
+              placeholder="Email"
+              className="p-2 w-full border rounded-md"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            {!isForgotPassword && (
               <input
-                type="email"
-                placeholder="Email"
-                className="mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="password"
+                placeholder="Password"
+                className="p-2 w-full border rounded-md"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-
-            {/* Password Input */}
-            {!isForgotPassword && (
-              <div>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
             )}
 
-            {/* Confirm Password (Register only) */}
             {isRegistering && (
-              <div>
-                <input
-                  type="password"
-                  placeholder="Confirm Password"
-                  className="mt-1 p-2 w-full border rounded-md focus:border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors duration-300"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                className="p-2 w-full border rounded-md"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
             )}
 
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-md hover:bg-gray-800 transition-colors duration-300"
+              className="w-full flex justify-center items-center bg-black text-white p-2 rounded-md hover:bg-gray-800"
+              disabled={isLoading}
             >
-              {isRegistering
-                ? "Sign Up"
-                : isForgotPassword
-                ? "Send Reset Email"
-                : "Login"}
+              {isLoading ? (
+                <AiOutlineLoading3Quarters className="animate-spin" />
+              ) : isRegistering ? (
+                "Sign Up"
+              ) : isForgotPassword ? (
+                "Send Reset Email"
+              ) : (
+                "Login"
+              )}
             </button>
 
             {isForgotPassword && (
               <button
                 type="button"
-                className="w-full bg-gray-200 text-black p-2 rounded-md hover:bg-gray-300 transition-colors duration-300"
+                className="w-full bg-gray-200 text-black p-2 rounded-md hover:bg-gray-300"
                 onClick={() => setIsForgotPassword(false)}
               >
                 Back to Login
@@ -249,7 +256,10 @@ const LoginPage = () => {
               <>
                 <p
                   className="cursor-pointer hover:text-blue-500 transition"
-                  onClick={() => setIsForgotPassword(true)}
+                  onClick={() => {
+                    setIsForgotPassword(true);
+                    setIsRegistering(false);
+                  }}
                 >
                   Forgot Password?
                 </p>
@@ -258,20 +268,14 @@ const LoginPage = () => {
                   {isRegistering ? (
                     <>
                       Already have an account?{" "}
-                      <span
-                        className="cursor-pointer text-blue-500 hover:underline"
-                        onClick={() => setIsRegistering(false)}
-                      >
+                      <span className="cursor-pointer text-blue-500 hover:underline" onClick={() => setIsRegistering(false)}>
                         Login
                       </span>
                     </>
                   ) : (
                     <>
                       Don't have an account?{" "}
-                      <span
-                        className="cursor-pointer text-blue-500 hover:underline"
-                        onClick={() => setIsRegistering(true)}
-                      >
+                      <span className="cursor-pointer text-blue-500 hover:underline" onClick={() => setIsRegistering(true)}>
                         Register
                       </span>
                     </>

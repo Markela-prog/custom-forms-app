@@ -38,7 +38,7 @@ export default function UserPermissionTable({ templateId }) {
 
       // ✅ Fetch users with access
       const accessResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/${templateId}/access`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -58,6 +58,16 @@ export default function UserPermissionTable({ templateId }) {
     }
   };
 
+  const showStatusMessage = (message) => {
+    setStatusMessage(message);
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  const handleSelectAll = (isChecked) => {
+    const allUserIds = isChecked ? users.map((user) => user.id) : [];
+    setSelectedUsers(new Set(allUserIds));
+  };
+
   const handleSelectSingle = (userId) => {
     setSelectedUsers((prev) =>
       prev.has(userId)
@@ -72,7 +82,7 @@ export default function UserPermissionTable({ templateId }) {
     try {
       const token = localStorage.getItem("accessToken");
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/${templateId}/access`,
         {
           method: "POST",
           headers: {
@@ -88,9 +98,11 @@ export default function UserPermissionTable({ templateId }) {
           selectedUsers.has(user.id) ? { ...user, hasAccess: true } : user
         )
       );
+      showStatusMessage("✅ Access granted successfully!");
       setSelectedUsers(new Set());
     } catch (error) {
       console.error("Error granting access:", error.message);
+      showStatusMessage("❌ Error granting access");
     }
   };
 
@@ -100,7 +112,7 @@ export default function UserPermissionTable({ templateId }) {
     try {
       const token = localStorage.getItem("accessToken");
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/${templateId}/access`,
         {
           method: "DELETE",
           headers: {
@@ -116,9 +128,11 @@ export default function UserPermissionTable({ templateId }) {
           selectedUsers.has(user.id) ? { ...user, hasAccess: false } : user
         )
       );
+      showStatusMessage("✅ Access removed successfully!");
       setSelectedUsers(new Set());
     } catch (error) {
       console.error("Error removing access:", error.message);
+      showStatusMessage("❌ Error removing access");
     }
   };
 
@@ -139,46 +153,64 @@ export default function UserPermissionTable({ templateId }) {
       />
 
       {/* Action Buttons */}
-      <div className="flex gap-2 mb-4">
-        <ActionButton
-          onClick={handleGrantAccess}
-          label="Grant Access"
-          bgColor="bg-blue-500"
-          hoverColor="bg-blue-600"
-        />
-        <ActionButton
-          onClick={handleRemoveAccess}
-          label="Remove Access"
-          bgColor="bg-red-500"
-          hoverColor="bg-red-600"
-        />
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-2">
+          <ActionButton
+            onClick={handleGrantAccess}
+            label="Grant Access"
+            bgColor="bg-blue-500"
+            hoverColor="bg-blue-600"
+          />
+          <ActionButton
+            onClick={handleRemoveAccess}
+            label="Remove Access"
+            bgColor="bg-red-500"
+            hoverColor="bg-red-600"
+          />
+        </div>
       </div>
 
-      {/* Users With Access Section */}
-      <h2 className="text-lg font-semibold mt-4">✅ Users with Access</h2>
-      <table className="w-full border-collapse border border-gray-300 mb-6">
-        <tbody>
-          {users
-            .filter((user) => user.hasAccess)
-            .map((user) => (
-              <tr key={user.id} className="hover:bg-gray-100">
-                <td className="p-2 border">{user.username || "Anonymous"}</td>
-                <td className="p-2 border">{user.email}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-
-      {/* Users Without Access Section */}
-      <h2 className="text-lg font-semibold mt-4">❌ Users Without Access</h2>
+      {/* User Table */}
       <table className="w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="p-2 border">
+              <input
+                type="checkbox"
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                checked={
+                  selectedUsers.size === users.length && users.length > 0
+                }
+              />
+            </th>
+            <th className="p-2 border">Username</th>
+            <th className="p-2 border">Email</th>
+            <th className="p-2 border">Access</th>
+          </tr>
+        </thead>
         <tbody>
           {users
-            .filter((user) => !user.hasAccess)
+            .filter((user) =>
+              (user.username?.toLowerCase() || "").includes(searchQuery)
+            )
             .map((user) => (
               <tr key={user.id} className="hover:bg-gray-100">
+                <td className="p-2 border text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.has(user.id)}
+                    onChange={() => handleSelectSingle(user.id)}
+                  />
+                </td>
                 <td className="p-2 border">{user.username || "Anonymous"}</td>
                 <td className="p-2 border">{user.email}</td>
+                <td className="p-2 border text-center">
+                  {user.hasAccess ? (
+                    <FaCheck className="text-green-500" />
+                  ) : (
+                    <FaTimes className="text-red-500" />
+                  )}
+                </td>
               </tr>
             ))}
         </tbody>

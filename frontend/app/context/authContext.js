@@ -11,30 +11,39 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("accessToken");
+
       if (!token) {
         setIsAuthenticated(false);
         setUser(null);
-      } else {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          if (!response.ok) throw new Error("Failed to fetch user");
-
-          const userData = await response.json();
-          setUser(userData);
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error("Auth fetch error:", error);
-          setIsAuthenticated(false);
-          setUser(null);
-        }
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.status === 401) {
+          console.warn("Token expired. Logging out...");
+          logout(); // ⬅️ Automatically logout if token is expired
+          return;
+        }
+
+        if (!response.ok) throw new Error("Failed to fetch user");
+
+        const userData = await response.json();
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Auth fetch error:", error);
+        logout();
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuth();
