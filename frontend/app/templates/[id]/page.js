@@ -231,6 +231,10 @@ const TemplatePage = () => {
                       <h3 className="font-semibold">
                         Submitted by: {form.user?.name || "Anonymous"}
                       </h3>
+                      <p className="text-gray-500">
+                        Submitted on:{" "}
+                        {new Date(form.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   ))
                 )}

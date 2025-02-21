@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FaCheck, FaTimes } from "react-icons/fa";
+import { FaCheck, FaTimes, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 
 const ActionButton = ({ onClick, label, bgColor, hoverColor }) => (
   <button
@@ -16,6 +16,8 @@ export default function UserPermissionTable({ templateId }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [statusMessage, setStatusMessage] = useState(null);
+  const [sortBy, setSortBy] = useState(null); // 'asc', 'desc', or null
+  const [filterByAccess, setFilterByAccess] = useState("all"); // 'all', 'granted', 'notGranted'
 
   useEffect(() => {
     fetchUsers();
@@ -136,6 +138,35 @@ export default function UserPermissionTable({ templateId }) {
     }
   };
 
+  const handleSort = () => {
+    setSortBy(sortBy === "asc" ? "desc" : "asc");
+  };
+
+  const filteredAndSortedUsers = users
+    .filter((user) =>
+      searchQuery
+        ? (user.username?.toLowerCase() || "").includes(searchQuery) ||
+          (user.email?.toLowerCase() || "").includes(searchQuery)
+        : true
+    )
+    .filter((user) =>
+      filterByAccess === "granted"
+        ? user.hasAccess
+        : filterByAccess === "notGranted"
+        ? !user.hasAccess
+        : true
+    )
+    .sort((a, b) => {
+      const nameA = a.username ?? "";
+      const nameB = b.username ?? "";
+
+      return sortBy === "asc"
+        ? nameA.localeCompare(nameB)
+        : sortBy === "desc"
+        ? nameB.localeCompare(nameA)
+        : 0;
+    });
+
   return (
     <div>
       {statusMessage && (
@@ -144,13 +175,24 @@ export default function UserPermissionTable({ templateId }) {
         </div>
       )}
 
-      {/* Search Bar */}
-      <input
-        type="text"
-        placeholder="Search user..."
-        className="border p-2 w-full mb-4"
-        onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
-      />
+      {/* Search & Filter Bar */}
+      <div className="flex gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Search by username or email..."
+          className="border p-2 w-full"
+          onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+        />
+
+        <select
+          className="border p-2"
+          onChange={(e) => setFilterByAccess(e.target.value)}
+        >
+          <option value="all">All Users</option>
+          <option value="granted">Access Granted</option>
+          <option value="notGranted">No Access</option>
+        </select>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex justify-between items-center mb-4">
@@ -175,44 +217,35 @@ export default function UserPermissionTable({ templateId }) {
         <thead>
           <tr className="bg-gray-200">
             <th className="p-2 border">
-              <input
-                type="checkbox"
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                checked={
-                  selectedUsers.size === users.length && users.length > 0
-                }
-              />
+              <button onClick={handleSort} className="flex items-center gap-1">
+                Username
+                {sortBy === "asc" ? (
+                  <FaSortUp />
+                ) : sortBy === "desc" ? (
+                  <FaSortDown />
+                ) : (
+                  <FaSort />
+                )}
+              </button>
             </th>
-            <th className="p-2 border">Username</th>
             <th className="p-2 border">Email</th>
             <th className="p-2 border">Access</th>
           </tr>
         </thead>
         <tbody>
-          {users
-            .filter((user) =>
-              (user.username?.toLowerCase() || "").includes(searchQuery)
-            )
-            .map((user) => (
-              <tr key={user.id} className="hover:bg-gray-100">
-                <td className="p-2 border text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.has(user.id)}
-                    onChange={() => handleSelectSingle(user.id)}
-                  />
-                </td>
-                <td className="p-2 border">{user.username || "Anonymous"}</td>
-                <td className="p-2 border">{user.email}</td>
-                <td className="p-2 border text-center">
-                  {user.hasAccess ? (
-                    <FaCheck className="text-green-500" />
-                  ) : (
-                    <FaTimes className="text-red-500" />
-                  )}
-                </td>
-              </tr>
-            ))}
+          {filteredAndSortedUsers.map((user) => (
+            <tr key={user.id} className="hover:bg-gray-100">
+              <td className="p-2 border">{user.username || "Anonymous"}</td>
+              <td className="p-2 border">{user.email}</td>
+              <td className="p-2 border text-center">
+                {user.hasAccess ? (
+                  <FaCheck className="text-green-500" />
+                ) : (
+                  <FaTimes className="text-red-500" />
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
