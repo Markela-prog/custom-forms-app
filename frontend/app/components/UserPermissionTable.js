@@ -13,8 +13,8 @@ const ActionButton = ({ onClick, label, bgColor, hoverColor }) => (
 
 export default function UserPermissionTable({ templateId }) {
   const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
@@ -25,16 +25,18 @@ export default function UserPermissionTable({ templateId }) {
     try {
       const token = localStorage.getItem("accessToken");
 
-      // Fetch all non-admin users
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // ✅ Fetch all non-admin users
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/non-admin`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to fetch users");
       const allUsers = await response.json();
-      const nonAdminUsers = allUsers.filter((user) => user.role !== "ADMIN");
 
-      // Fetch users with access to the template
+      // ✅ Fetch users with access
       const accessResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -44,9 +46,9 @@ export default function UserPermissionTable({ templateId }) {
       const accessUsers = await accessResponse.json();
       const accessUserIds = new Set(accessUsers.map((u) => u.userId));
 
-      // Map users with access information
+      // ✅ Combine data
       setUsers(
-        nonAdminUsers.map((user) => ({
+        allUsers.map((user) => ({
           ...user,
           hasAccess: accessUserIds.has(user.id),
         }))
@@ -54,16 +56,6 @@ export default function UserPermissionTable({ templateId }) {
     } catch (error) {
       console.error("Error fetching users:", error.message);
     }
-  };
-
-  const showStatusMessage = (message) => {
-    setStatusMessage(message);
-    setTimeout(() => setStatusMessage(null), 3000);
-  };
-
-  const handleSelectAll = (isChecked) => {
-    const allUserIds = isChecked ? users.map((user) => user.id) : [];
-    setSelectedUsers(new Set(allUserIds));
   };
 
   const handleSelectSingle = (userId) => {
@@ -79,27 +71,26 @@ export default function UserPermissionTable({ templateId }) {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(
+      await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ userIds: [...selectedUsers] }),
         }
       );
-
-      if (!response.ok) throw new Error("Failed to grant access");
 
       setUsers((prev) =>
         prev.map((user) =>
           selectedUsers.has(user.id) ? { ...user, hasAccess: true } : user
         )
       );
-      showStatusMessage("✅ Access granted successfully!");
       setSelectedUsers(new Set());
     } catch (error) {
       console.error("Error granting access:", error.message);
-      showStatusMessage("❌ Error granting access");
     }
   };
 
@@ -108,27 +99,26 @@ export default function UserPermissionTable({ templateId }) {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(
+      await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/access`,
         {
           method: "DELETE",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ userIds: [...selectedUsers] }),
         }
       );
-
-      if (!response.ok) throw new Error("Failed to remove access");
 
       setUsers((prev) =>
         prev.map((user) =>
           selectedUsers.has(user.id) ? { ...user, hasAccess: false } : user
         )
       );
-      showStatusMessage("✅ Access removed successfully!");
       setSelectedUsers(new Set());
     } catch (error) {
       console.error("Error removing access:", error.message);
-      showStatusMessage("❌ Error removing access");
     }
   };
 
@@ -164,39 +154,31 @@ export default function UserPermissionTable({ templateId }) {
         />
       </div>
 
-      {/* User Table */}
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2 border">
-              <input
-                type="checkbox"
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                checked={selectedUsers.size === users.length && users.length > 0}
-              />
-            </th>
-            <th className="p-2 border">Username</th>
-            <th className="p-2 border">Email</th>
-            <th className="p-2 border">Access</th>
-          </tr>
-        </thead>
+      {/* Users With Access Section */}
+      <h2 className="text-lg font-semibold mt-4">✅ Users with Access</h2>
+      <table className="w-full border-collapse border border-gray-300 mb-6">
         <tbody>
           {users
-            .filter((user) => user.username.toLowerCase().includes(searchQuery))
+            .filter((user) => user.hasAccess)
             .map((user) => (
               <tr key={user.id} className="hover:bg-gray-100">
-                <td className="p-2 border text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.has(user.id)}
-                    onChange={() => handleSelectSingle(user.id)}
-                  />
-                </td>
                 <td className="p-2 border">{user.username || "Anonymous"}</td>
                 <td className="p-2 border">{user.email}</td>
-                <td className="p-2 border text-center">
-                  {user.hasAccess ? <FaCheck className="text-green-500" /> : <FaTimes className="text-red-500" />}
-                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+
+      {/* Users Without Access Section */}
+      <h2 className="text-lg font-semibold mt-4">❌ Users Without Access</h2>
+      <table className="w-full border-collapse border border-gray-300">
+        <tbody>
+          {users
+            .filter((user) => !user.hasAccess)
+            .map((user) => (
+              <tr key={user.id} className="hover:bg-gray-100">
+                <td className="p-2 border">{user.username || "Anonymous"}</td>
+                <td className="p-2 border">{user.email}</td>
               </tr>
             ))}
         </tbody>

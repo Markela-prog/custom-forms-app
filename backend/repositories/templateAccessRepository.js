@@ -34,3 +34,11 @@ export const getTemplateAccessUsers = async (templateId) => {
     include: { user: true },
   });
 };
+
+
+export const getNonAdminUsers = async () => {
+  return await prisma.user.findMany({
+    where: { role: { not: "ADMIN" } },
+    select: { id: true, username: true, email: true },
+  });
+};
