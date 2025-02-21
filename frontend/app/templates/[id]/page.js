@@ -3,7 +3,6 @@ import { useState, useEffect, useContext } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AuthContext } from "../../context/authContext";
 import TemplateView from "@/app/components/TemplateView";
-import TemplateFormsList from "@/app/components/TemplateFormsList";
 import QuestionnaireForm from "@/app/components/QuestionnaireForm";
 import EditTemplateForm from "@/app/components/EditTemplateForm";
 import UserPermissionTable from "@/app/components/UserPermissionTable";
@@ -27,7 +26,7 @@ const TemplatePage = () => {
     }
   }, [params]);
 
-  // ✅ Define user permissions (Move this above useEffect)
+  // ✅ Define user permissions
   const isOwnerOrAdmin =
     user?.role === "ADMIN" || template?.ownerId === user?.id;
 
@@ -93,6 +92,39 @@ const TemplatePage = () => {
     fetchSubmittedForms();
   }, [activeTab, templateId, isOwnerOrAdmin, isAuthenticated]);
 
+  // ✅ Handle Public/Private Toggle
+  const handleToggleVisibility = async () => {
+    if (!isOwnerOrAdmin || !templateId) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const updatedTemplate = { isPublic: !template.isPublic };
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedTemplate),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update template visibility");
+
+      setTemplate((prev) => ({
+        ...prev,
+        isPublic: !prev.isPublic,
+      }));
+    } catch (error) {
+      console.error("Error updating visibility:", error);
+      setError(error.message);
+    }
+  };
+
   if (loadingTemplate) return <p>Loading template...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -101,6 +133,24 @@ const TemplatePage = () => {
       {/* 🔹 Top Bar with Title */}
       <h1 className="text-3xl font-bold text-center">{template?.title}</h1>
       <p className="text-gray-600 text-center mb-2">{template?.description}</p>
+
+      {/* 🔹 Toggle Switch (Only for Owners) */}
+      {isOwnerOrAdmin && (
+        <div className="flex justify-center items-center gap-2 my-4">
+          <span className="text-gray-700 font-semibold">
+            {template?.isPublic ? "Public" : "Private"}
+          </span>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={template?.isPublic}
+              onChange={handleToggleVisibility}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+      )}
 
       {/* 🔹 Navigation Tabs (Only for Owners/Admins) */}
       {isOwnerOrAdmin && (
@@ -125,7 +175,7 @@ const TemplatePage = () => {
           >
             Answers
           </button>
-          {template?.isPublic === false && (
+          {!template?.isPublic && (
             <button
               className={`px-4 py-2 text-lg font-semibold ${
                 activeTab === "permissions"
@@ -140,9 +190,7 @@ const TemplatePage = () => {
         </div>
       )}
 
-      {activeTab === "permissions" && (
-        <UserPermissionTable templateId={templateId} />
-      )}
+      {activeTab === "permissions" && <UserPermissionTable templateId={templateId} />}
 
       {/* 🔹 Show Edit Button (Only in Questions Tab) */}
       {isOwnerOrAdmin && activeTab === "questions" && (
@@ -166,7 +214,7 @@ const TemplatePage = () => {
             </>
           )}
 
-          {/* 🔹 Show Answers Tab */}
+          {/* 🔹 Show Answers Tab (Original Logic) */}
           {activeTab === "answers" && isOwnerOrAdmin && (
             <div className="mt-6">
               <h2 className="text-2xl font-semibold">Submitted Forms</h2>
@@ -183,10 +231,6 @@ const TemplatePage = () => {
                       <h3 className="font-semibold">
                         Submitted by: {form.user?.name || "Anonymous"}
                       </h3>
-                      <p className="text-gray-500">
-                        Submitted on:{" "}
-                        {new Date(form.createdAt).toLocaleDateString()}
-                      </p>
                     </div>
                   ))
                 )}
@@ -194,16 +238,6 @@ const TemplatePage = () => {
             </div>
           )}
         </>
-      )}
-
-      {/* 🔹 Read-Only Mode for Unauthenticated Users */}
-      {!isAuthenticated && template?.isPublic && (
-        <TemplateView template={template} />
-      )}
-
-      {/* 🔹 Access Denied for Unauthenticated Users Trying to Access Private Template */}
-      {!isAuthenticated && !template?.isPublic && (
-        <p className="text-red-500">Access denied. Please log in.</p>
       )}
     </div>
   );
