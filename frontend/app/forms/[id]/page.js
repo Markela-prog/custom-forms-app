@@ -97,7 +97,7 @@ const FormPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* 🔹 Form Title */}
+      {/*  Form Title */}
       <h1 className="text-3xl font-bold text-center">
         {form?.template?.title}
       </h1>
@@ -105,7 +105,7 @@ const FormPage = () => {
         {form?.template?.description}
       </p>
 
-      {/* 🔹 Display Questions and Answers */}
+      {/*  Display Questions and Answers */}
       <div className="mt-6 p-6 border rounded-lg shadow bg-white">
         <h2 className="text-2xl font-semibold mb-4">User's Responses</h2>
 
@@ -123,7 +123,7 @@ const FormPage = () => {
         ))}
       </div>
 
-      {/* 🔹 Back to Template Button */}
+      {/*  Back to Template Button */}
       {isOwnerOrAdmin && (
         <button
           className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

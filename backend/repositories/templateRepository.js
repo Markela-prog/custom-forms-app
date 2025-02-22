@@ -79,8 +79,31 @@ export const updateTemplate = async (templateId, updateData) => {
 };
 
 export const deleteTemplate = async (templateId) => {
-  return prisma.template.update({
-    where: { id: templateId },
-    data: { deletedAt: new Date() },
+  return prisma.$transaction(async (prisma) => {
+    await prisma.answer.deleteMany({
+      where: {
+        question: {
+          templateId: templateId,
+        },
+      },
+    });
+
+    await prisma.question.deleteMany({
+      where: {
+        templateId: templateId,
+      },
+    });
+
+    await prisma.form.deleteMany({
+      where: {
+        templateId: templateId,
+      },
+    });
+
+    await prisma.template.delete({
+      where: {
+        id: templateId,
+      },
+    });
   });
 };

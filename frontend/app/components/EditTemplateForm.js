@@ -9,6 +9,7 @@ import {
 import { AuthContext } from "@/app/context/authContext";
 import QuestionEditor from "@/app/components/QuestionEditor";
 import { PlusCircle } from "lucide-react";
+import { validateQuestions } from "../utils/validateForm";
 
 const EditTemplateForm = ({ templateId }) => {
   const { isAuthenticated } = useContext(AuthContext);
@@ -114,6 +115,12 @@ const EditTemplateForm = ({ templateId }) => {
   const handleSave = async () => {
     if (!isAuthenticated) {
       setStatusMessage("❌ You must be logged in to save changes.");
+      return;
+    }
+
+    const validation = validateQuestions(questions);
+    if (!validation.isValid) {
+      setStatusMessage(validation.message);
       return;
     }
 

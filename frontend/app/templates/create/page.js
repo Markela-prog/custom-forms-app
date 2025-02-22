@@ -9,6 +9,7 @@ import {
 import { AuthContext } from "@/app/context/authContext";
 import QuestionEditor from "@/app/components/QuestionEditor";
 import { PlusCircle } from "lucide-react";
+import { validateTemplate, validateQuestions } from "@/app/utils/validateForm";
 
 const CreateTemplateForm = () => {
   const { isAuthenticated } = useContext(AuthContext);
@@ -63,6 +64,18 @@ const CreateTemplateForm = () => {
   const handleCreateTemplate = async () => {
     if (!isAuthenticated) {
       setStatusMessage("❌ You must be logged in to create a template.");
+      return;
+    }
+
+    const templateValidation = validateTemplate(template);
+    if (!templateValidation.isValid) {
+      setStatusMessage(templateValidation.message);
+      return;
+    }
+
+    const questionValidation = validateQuestions(questions);
+    if (!questionValidation.isValid) {
+      setStatusMessage(questionValidation.message);
       return;
     }
 

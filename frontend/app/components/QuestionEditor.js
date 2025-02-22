@@ -125,6 +125,17 @@ const QuestionEditor = ({ question, onUpdate, onDelete }) => {
         </div>
       )}
 
+      {/* Toggle Required Checkbox */}
+      <div className="flex items-center space-x-2 mt-2">
+        <input
+          type="checkbox"
+          checked={question.isRequired}
+          onChange={(e) => handleFieldChange("isRequired", e.target.checked)}
+          className="h-4 w-4"
+        />
+        <label className="text-sm text-gray-700">Required</label>
+      </div>
+
       {/* Delete Question Button */}
       <button
         onClick={() => onDelete(question.id)}

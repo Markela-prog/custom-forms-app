@@ -120,16 +120,49 @@ const TemplatePage = () => {
     }
   };
 
+  const handleDeleteTemplate = async () => {
+    if (!isOwnerOrAdmin || !templateId) return;
+
+    const confirmDelete = window.confirm(
+      "⚠️ Are you sure you want to delete this template? This action cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("❌ Failed to delete template.");
+
+      alert("✅ Template deleted successfully.");
+      router.push("/");
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      setError(error.message);
+    }
+  };
+
   if (loadingTemplate) return <p>Loading template...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* 🔹 Top Bar with Title */}
+      {/*  Top Bar with Title */}
       <h1 className="text-3xl font-bold text-center">{template?.title}</h1>
       <p className="text-gray-600 text-center mb-2">{template?.description}</p>
 
-      {/* 🔹 Toggle Switch (Only for Owners) */}
+      {/*  Toggle Switch (Only for Owners) */}
       {isOwnerOrAdmin && (
         <div className="flex justify-center items-center gap-2 my-4">
           <span className="text-gray-700 font-semibold">
@@ -147,7 +180,7 @@ const TemplatePage = () => {
         </div>
       )}
 
-      {/* 🔹 Navigation Tabs (Only for Owners/Admins) */}
+      {/* Navigation Tabs (Only for Owners/Admins) */}
       {isOwnerOrAdmin && (
         <div className="flex justify-center border-b mb-4">
           <button
@@ -189,7 +222,7 @@ const TemplatePage = () => {
         <UserPermissionTable templateId={templateId} />
       )}
 
-      {/* 🔹 Show Edit Button (Only in Questions Tab) */}
+      {/* Show Edit Button (Only in Questions Tab) */}
       {isOwnerOrAdmin && activeTab === "questions" && (
         <button
           className="bg-yellow-500 text-white px-4 py-2 rounded mt-2 mb-2"
@@ -199,19 +232,19 @@ const TemplatePage = () => {
         </button>
       )}
 
-      {/* 🔹 Edit Mode */}
+      {/* Edit Mode */}
       {isEditing ? (
         <EditTemplateForm templateId={templateId} />
       ) : (
         <>
-          {/* 🔹 Show Questions Tab */}
+          {/* Show Questions Tab */}
           {activeTab === "questions" && (
             <>
               {canSubmitForm && <QuestionnaireForm templateId={templateId} />}
             </>
           )}
 
-          {/* 🔹 Show Answers Tab (Original Logic) */}
+          {/* Show Answers Tab (Original Logic) */}
           {activeTab === "answers" && isOwnerOrAdmin && (
             <div className="mt-6">
               <h2 className="text-2xl font-semibold">Submitted Forms</h2>
