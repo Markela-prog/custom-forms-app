@@ -1,8 +1,8 @@
 import {
   createQuestionsService,
   getQuestionsByTemplateService,
-  updateQuestionService,
-  deleteQuestionService,
+  updateMultipleQuestionsService,
+  deleteMultipleQuestionsService,
   reorderQuestionsService,
 } from "../services/questionService.js";
 import {
@@ -51,24 +51,26 @@ export const getQuestionsByTemplateController = async (req, res) => {
   }
 };
 
-export const updateQuestionController = async (req, res) => {
+
+export const updateMultipleQuestionsController = async (req, res) => {
   try {
-    const question = await updateQuestionService(
-      req.params.questionId,
-      req.body
-    );
-    res.json(question);
+    const { questions } = req.body;
+    const result = await updateMultipleQuestionsService(questions);
+    res.json(result);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error("❌ Bulk Update Error:", error);
+    res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
 
-export const deleteQuestionController = async (req, res) => {
+export const deleteMultipleQuestionsController = async (req, res) => {
   try {
-    await deleteQuestionService(req.params.questionId);
-    res.json({ message: "Question deleted successfully" });
+    const { questionIds } = req.body;
+    const result = await deleteMultipleQuestionsService(questionIds);
+    res.json(result);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error("❌ Bulk Delete Error:", error);
+    res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
 

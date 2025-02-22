@@ -48,17 +48,24 @@ export const getQuestionIdsByTemplate = async (
   return questions.map((q) => q.id);
 };
 
-export const updateQuestion = async (questionId, updateData) => {
-  return prisma.question.update({
-    where: { id: questionId },
-    data: updateData,
-  });
+export const bulkUpdateQuestions = async (questions) => {
+  const updatePromises = questions.map(({ id, ...updateData }) =>
+    prisma.question.update({
+      where: { id },
+      data: updateData,
+    })
+  );
+
+  await Promise.all(updatePromises);
+  return { message: "Questions updated successfully" };
 };
 
-export const deleteQuestion = async (questionId) => {
-  return prisma.question.delete({
-    where: { id: questionId },
+export const bulkDeleteQuestions = async (questionIds) => {
+  await prisma.question.deleteMany({
+    where: { id: { in: questionIds } },
   });
+
+  return { message: "Questions deleted successfully" };
 };
 
 export const getQuestionsByIds = async (questionIds) => {

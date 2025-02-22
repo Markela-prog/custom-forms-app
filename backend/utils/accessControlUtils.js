@@ -152,21 +152,50 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized" };
   }
 
-  // 🟡 Handle QUESTION Update/Delete
+  // 🟡 Special Handling for Bulk QUESTION Update/Delete
   if (resource === "question" && ["update", "delete"].includes(action)) {
-    const question = await prisma.question.findUnique({
-      where: { id: resourceId },
-      include: {
-        template: {
-          include: { owner: true, accessControl: true },
-        },
-      },
-    });
-    if (!question) return { access: false, reason: "Question not found" };
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return {
+        access: false,
+        reason: "No questions provided for update/delete",
+      };
+    }
 
-    resourceData = question.template;
-    templateOwnerId = question.template.ownerId;
-    accessControl = question.template.accessControl;
+    // ✅ Fetch all affected questions
+    const questionIds = questions.map((q) => q.id);
+    const dbQuestions = await prisma.question.findMany({
+      where: { id: { in: questionIds } },
+      include: { template: { include: { owner: true, accessControl: true } } },
+    });
+
+    if (dbQuestions.length !== questions.length) {
+      return { access: false, reason: "Some questions do not exist" };
+    }
+
+    // ✅ Ensure all questions belong to the same template
+    const uniqueTemplateIds = [
+      ...new Set(dbQuestions.map((q) => q.templateId)),
+    ];
+    if (uniqueTemplateIds.length > 1) {
+      return {
+        access: false,
+        reason: "All questions must belong to the same template",
+      };
+    }
+
+    const template = dbQuestions[0].template;
+    templateOwnerId = template.ownerId;
+    accessControl = template.accessControl;
+
+    // 🟢 ✅ Admin Access
+    if (user?.role === "ADMIN") return { access: true, role: "admin" };
+
+    // 🟢 ✅ Template Owner Access
+    if (user?.id === templateOwnerId) {
+      return { access: true, role: "owner" };
+    }
+
+    return { access: false, reason: "Unauthorized to modify questions" };
   }
 
   // 🟡 Handle TEMPLATE Directly (for read/update/delete)

@@ -1,8 +1,8 @@
 import {
   createQuestions,
   getQuestionsByTemplateId,
-  updateQuestion,
-  deleteQuestion,
+  bulkUpdateQuestions,
+  bulkDeleteQuestions,
   getQuestionsByIds,
   batchUpdateQuestionOrders,
 } from "../repositories/questionRepository.js";
@@ -15,12 +15,22 @@ export const getQuestionsByTemplateService = async (templateId) => {
   return await getQuestionsByTemplateId(templateId);
 };
 
-export const updateQuestionService = async (questionId, updateData) => {
-  return await updateQuestion(questionId, updateData);
+// 🟠 Service for Bulk Updating Questions
+export const updateMultipleQuestionsService = async (questions) => {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new Error("Invalid question update data");
+  }
+
+  return await bulkUpdateQuestions(questions);
 };
 
-export const deleteQuestionService = async (questionId) => {
-  return await deleteQuestion(questionId);
+// 🟠 Service for Bulk Deleting Questions
+export const deleteMultipleQuestionsService = async (questionIds) => {
+  if (!Array.isArray(questionIds) || questionIds.length === 0) {
+    throw new Error("Invalid question delete data");
+  }
+
+  return await bulkDeleteQuestions(questionIds);
 };
 
 export const reorderQuestionsService = async (orderedQuestions, templateId) => {

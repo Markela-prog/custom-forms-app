@@ -1,20 +1,27 @@
 "use client";
-import { useEffect, useContext } from "react";
+import { useEffect, useRef, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "../context/authContext";
 
 const AuthSuccess = () => {
   const router = useRouter();
   const { login } = useContext(AuthContext);
+  const hasRun = useRef(false); // Prevents multiple executions
 
   useEffect(() => {
+    if (hasRun.current) return; // Prevent duplicate runs
+    hasRun.current = true;
+
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
 
     if (token) {
       login(token);
       console.log("✅ OAuth Login Successful, Token Stored:", token);
-      router.push("/");
+
+      setTimeout(() => {
+        router.push("/");
+      }, 100);
     } else {
       console.error("❌ OAuth Login Failed: No Token Found");
       router.push("/login");
