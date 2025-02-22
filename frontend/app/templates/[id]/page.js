@@ -222,14 +222,23 @@ const TemplatePage = () => {
         <UserPermissionTable templateId={templateId} />
       )}
 
-      {/* Show Edit Button (Only in Questions Tab) */}
+      {/* 🔹 Edit & Delete Buttons (Only for Owners/Admins) */}
       {isOwnerOrAdmin && activeTab === "questions" && (
-        <button
-          className="bg-yellow-500 text-white px-4 py-2 rounded mt-2 mb-2"
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          {isEditing ? "Cancel Edit" : "✏️ Edit Template"}
-        </button>
+        <div className="flex gap-4 mt-2 mb-2">
+          <button
+            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? "Cancel Edit" : "✏️ Edit Template"}
+          </button>
+
+          <button
+            className="bg-red-600 text-white px-4 py-2 rounded"
+            onClick={handleDeleteTemplate}
+          >
+            🗑 Delete Template
+          </button>
+        </div>
       )}
 
       {/* Edit Mode */}
