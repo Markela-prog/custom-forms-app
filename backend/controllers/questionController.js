@@ -62,23 +62,6 @@ export const updateMultipleQuestionsController = async (req, res) => {
         .json({ message: "No questions provided for update" });
     }
 
-    // ✅ Extract Question IDs for Access Control
-    const questionIds = questions.map((q) => q.id);
-
-    // ✅ Check Access Before Proceeding
-    const { access, reason } = await checkAccess({
-      resource: "question",
-      resourceId: null, // No single resource ID, using questionIds array
-      user: req.user,
-      action: "update",
-      questionIds, // ✅ Pass question IDs separately to avoid breaking delete logic
-    });
-
-    if (!access) {
-      return res.status(403).json({ message: reason || "Access denied" });
-    }
-
-    // ✅ Perform Update if Access is Allowed
     const result = await updateMultipleQuestionsService(questions);
     res.json(result);
   } catch (error) {
