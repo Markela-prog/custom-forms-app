@@ -152,19 +152,19 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized" };
   }
 
-  // 🟡 Special Handling for Bulk QUESTION Update/Delete
-  if (resource === "question" && ["update", "delete"].includes(action)) {
+  // 🟡 Special Handling for Bulk QUESTION Update
+  if (resource === "question" && action === "update") {
     if (!Array.isArray(questionIds) || questionIds.length === 0) {
       return {
         access: false,
-        reason: "No questions provided for update/delete",
+        reason: "No questions provided for update",
       };
     }
 
     // ✅ Fetch all affected questions from DB
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
-      include: { template: { include: { owner: true, accessControl: true } } },
+      include: { template: { select: { ownerId: true } } }, // ✅ Fetch template ownership
     });
 
     if (dbQuestions.length !== questionIds.length) {
@@ -182,19 +182,56 @@ export const checkAccess = async ({
       };
     }
 
-    const template = dbQuestions[0].template;
-    templateOwnerId = template.ownerId;
-    accessControl = template.accessControl;
+    const templateOwnerId = dbQuestions[0].template.ownerId;
 
-    // ✅ Admin Access
     if (user?.role === "ADMIN") return { access: true, role: "admin" };
 
-    // ✅ Template Owner Access
     if (user?.id === templateOwnerId) {
       return { access: true, role: "owner" };
     }
 
     return { access: false, reason: "Unauthorized to modify questions" };
+  }
+
+  // 🟡 Special Handling for Bulk QUESTION Delete (Remains Unchanged)
+  if (resource === "question" && action === "delete") {
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+      return {
+        access: false,
+        reason: "No questions provided for delete",
+      };
+    }
+
+    // ✅ Fetch all affected questions from DB
+    const dbQuestions = await prisma.question.findMany({
+      where: { id: { in: questionIds } },
+      include: { template: { select: { ownerId: true } } },
+    });
+
+    if (dbQuestions.length !== questionIds.length) {
+      return { access: false, reason: "Some questions do not exist" };
+    }
+
+    // ✅ Ensure all questions belong to the same template
+    const uniqueTemplateIds = [
+      ...new Set(dbQuestions.map((q) => q.templateId)),
+    ];
+    if (uniqueTemplateIds.length > 1) {
+      return {
+        access: false,
+        reason: "All questions must belong to the same template",
+      };
+    }
+
+    const templateOwnerId = dbQuestions[0].template.ownerId;
+
+    if (user?.role === "ADMIN") return { access: true, role: "admin" };
+
+    if (user?.id === templateOwnerId) {
+      return { access: true, role: "owner" };
+    }
+
+    return { access: false, reason: "Unauthorized to delete questions" };
   }
 
   // 🟡 Handle TEMPLATE Directly (for read/update/delete)

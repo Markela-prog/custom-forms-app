@@ -19,6 +19,7 @@ const EditTemplateForm = ({ templateId }) => {
   const [modifiedQuestions, setModifiedQuestions] = useState({});
   const [statusMessage, setStatusMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  
 
   // ✅ Fetch existing questions when component loads
   useEffect(() => {
@@ -71,7 +72,7 @@ const EditTemplateForm = ({ templateId }) => {
           : [],
       isRequired: false,
       order: questions.length,
-      isNew: true, // Mark as new
+      isNew: true,
     };
 
     setQuestions([...questions, newQuestion]);
@@ -146,14 +147,18 @@ const EditTemplateForm = ({ templateId }) => {
           {
             method: "POST",
             headers,
-            body: JSON.stringify({ questions: newQuestions }),
+            body: JSON.stringify({ questions: newQuestions.map(({ isNew, ...q }) => q) }),
           }
         );
         if (!addResponse.ok) throw new Error("❌ Failed to add new questions.");
       }
-
+      console.log("🟠 Update Request Payload:", {
+        questions: Object.values(modifiedQuestions).map(({ isNew, ...q }) => q),
+      });
       // 3️⃣ Update Modified Questions
       if (Object.keys(modifiedQuestions).length > 0) {
+        
+          
         const updateResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/questions/update`,
           {
@@ -163,6 +168,7 @@ const EditTemplateForm = ({ templateId }) => {
               questions: Object.values(modifiedQuestions),
             }),
           }
+          
         );
         if (!updateResponse.ok)
           throw new Error("❌ Failed to update questions.");
@@ -179,7 +185,7 @@ const EditTemplateForm = ({ templateId }) => {
       );
       if (!reorderResponse.ok)
         throw new Error("❌ Failed to reorder questions.");
-
+      setNewQuestions([]);
       setStatusMessage("✅ Changes saved successfully!");
     } catch (error) {
       console.error(error);
