@@ -154,11 +154,11 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for Bulk QUESTION Update
   if (resource === "question" && action === "update") {
-    if (!Array.isArray(questionIds) || questionIds.length === 0) {
-      return {
-        access: false,
-        reason: "No questions provided for update",
-      };
+    const idsToCheck =
+      action === "update" ? questions?.map((q) => q.id) || [] : questionIds;
+
+    if (!Array.isArray(idsToCheck) || idsToCheck.length === 0) {
+      return { access: false, reason: `No questions provided for ${action}` };
     }
 
     // ✅ Fetch all affected questions from DB

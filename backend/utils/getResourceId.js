@@ -2,9 +2,9 @@ export const getResourceId = (resource, action, req) => {
   switch (resource) {
     /** TEMPLATE CASES **/
     case "template":
-        if (action === "manage_access" && !req.params.templateId) {
-            return null; // This allows fetching non-admin users
-          }
+      if (action === "manage_access" && !req.params.templateId) {
+        return null; // This allows fetching non-admin users
+      }
       return action === "create" ? null : req.params.templateId || null;
 
     /** TEMPLATE FORMS (New) **/
@@ -41,7 +41,11 @@ export const getResourceId = (resource, action, req) => {
       if (["create", "read"].includes(action)) {
         return req.params.templateId || null;
       }
-      if (["update", "delete"].includes(action)) {
+      if (["update"].includes(action)) {
+        return req.body.questions?.[0]?.id || null;
+      }
+
+      if (["delete"].includes(action)) {
         return req.body.questionIds?.[0] || null;
       }
       break;

@@ -30,8 +30,8 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     user,
     action,
     templateId: req.body.templateId,
-    questions: req.body.questions || [],
-    questionIds: req.body.questionIds || [],
+    questions: action === "update" ? req.body.questions || [] : [],
+    questionIds: action === "delete" ? req.body.questionIds || [] : req.body.questions?.map(q => q.id) || [],
   });
 
   console.log(
