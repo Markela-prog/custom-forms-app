@@ -21,7 +21,6 @@ const FormPage = () => {
     }
   }, [params]);
 
-  // ✅ Fetch form details (Allowing template owners to access any submitted form)
   useEffect(() => {
     if (!formId) return;
 
@@ -39,7 +38,7 @@ const FormPage = () => {
 
         const data = await response.json();
         setForm(data);
-        setTemplateOwnerId(data?.template?.ownerId); // ✅ Save template owner ID
+        setTemplateOwnerId(data?.template?.ownerId);
       } catch (error) {
         setError(error.message);
       }
@@ -48,7 +47,6 @@ const FormPage = () => {
     fetchForm();
   }, [formId, isAuthenticated]);
 
-  // ✅ Fetch questions related to the template
   useEffect(() => {
     if (!form?.templateId) return;
 
@@ -65,7 +63,7 @@ const FormPage = () => {
         if (!response.ok) throw new Error("Failed to fetch questions");
 
         const data = await response.json();
-        setQuestions(data.sort((a, b) => a.order - b.order)); // ✅ Sort questions by order
+        setQuestions(data.sort((a, b) => a.order - b.order));
       } catch (error) {
         console.error("Error fetching questions:", error.message);
       } finally {
@@ -79,7 +77,6 @@ const FormPage = () => {
   if (loading) return <p>Loading form...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
-  // ✅ Allow template owners to see all submitted forms
   const isOwnerOrAdmin =
     user?.role === "ADMIN" ||
     form?.userId === user?.id ||
@@ -93,10 +90,9 @@ const FormPage = () => {
     );
   }
 
-  // ✅ Merge answers with questions while maintaining order
   const enrichedQuestions = questions.map((question) => {
     const answer = form?.answers.find((a) => a.questionId === question.id);
-    return { ...question, value: answer?.value || "" }; // ✅ Display answer or empty value
+    return { ...question, value: answer?.value || "" };
   });
 
   return (

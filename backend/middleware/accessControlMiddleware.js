@@ -1,4 +1,3 @@
-// src/middleware/accessControlMiddleware.js
 import { permissionsMatrix } from "../permissions/permissionsMatrix.js";
 import { checkAccess } from "../utils/accessControlUtils.js";
 import { getResourceId } from "../utils/getResourceId.js";
@@ -20,10 +19,8 @@ export const accessControl = (resource, action) => async (req, res, next) => {
       .json({ message: "Invalid permissions configuration" });
   }
 
-  // ✅ Admin Override
   if (user?.role === "ADMIN") return next();
 
-  // 🛡️ Perform Access Check
   const { access, role, reason } = await checkAccess({
     resource,
     resourceId,
@@ -31,7 +28,10 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     action,
     templateId: req.body.templateId,
     questions: action === "update" ? req.body.questions || [] : [],
-    questionIds: action === "delete" ? req.body.questionIds || [] : req.body.questions?.map(q => q.id) || [],
+    questionIds:
+      action === "delete"
+        ? req.body.questionIds || []
+        : req.body.questions?.map((q) => q.id) || [],
   });
 
   console.log(

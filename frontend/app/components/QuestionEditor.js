@@ -7,7 +7,6 @@ import { Trash2, GripVertical, PlusCircle, ChevronDown } from "lucide-react";
 const QuestionEditor = ({ question, onUpdate, onDelete }) => {
   const [options, setOptions] = useState(question.options || []);
 
-  // ✅ Enable Dragging with useSortable
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: question.id });
 
@@ -16,12 +15,10 @@ const QuestionEditor = ({ question, onUpdate, onDelete }) => {
     transition,
   };
 
-  // ✅ Handle input field changes
   const handleFieldChange = (field, value) => {
     onUpdate(question.id, { ...question, [field]: value });
   };
 
-  // ✅ Handle adding/removing options for select-type questions
   const handleAddOption = () => {
     const newOptions = [...options, ""];
     setOptions(newOptions);

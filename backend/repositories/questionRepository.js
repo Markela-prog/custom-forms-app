@@ -5,7 +5,7 @@ export const createQuestions = async (templateId, questions) => {
     throw new Error("Invalid data: questions must be an array");
   }
 
-  console.log("📌 Creating Questions:", questions); // Debugging log
+  console.log("📌 Creating Questions:", questions);
 
   const highestOrder = await prisma.question.aggregate({
     where: { templateId },
@@ -15,14 +15,12 @@ export const createQuestions = async (templateId, questions) => {
   let order =
     highestOrder._max.order !== null ? highestOrder._max.order + 1 : 0;
 
-  // ✅ Remove temporary IDs and ensure required fields are passed
   const formattedQuestions = questions.map(({ id, isNew, ...q }) => ({
     ...q,
     templateId,
     order: order++,
   }));
 
-  // ✅ Insert and return created questions
   const createdQuestions = await prisma.$transaction(
     formattedQuestions.map((question) =>
       prisma.question.create({
@@ -31,7 +29,7 @@ export const createQuestions = async (templateId, questions) => {
     )
   );
 
-  return createdQuestions; // ✅ Return created questions with real IDs
+  return createdQuestions;
 };
 
 export const getQuestionsByTemplateId = async (templateId) => {
@@ -69,14 +67,12 @@ export const bulkUpdateQuestions = async (questions) => {
 };
 
 export const bulkDeleteQuestions = async (questionIds) => {
-  // ✅ Step 1: Delete all related answers first
   await prisma.answer.deleteMany({
     where: {
       questionId: { in: questionIds },
     },
   });
 
-  // ✅ Step 2: Now delete the questions
   await prisma.question.deleteMany({
     where: { id: { in: questionIds } },
   });

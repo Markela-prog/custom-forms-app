@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
-import { AiOutlineLoading3Quarters } from "react-icons/ai"; // Loading spinner icon
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -12,7 +12,7 @@ const LoginPage = () => {
   const [success, setSuccess] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e) => {
@@ -106,7 +106,8 @@ const LoginPage = () => {
       );
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to send reset email");
+      if (!response.ok)
+        throw new Error(data.message || "Failed to send reset email");
 
       setSuccess("Password reset email sent. Check your inbox.");
       setIsForgotPassword(false);
@@ -268,14 +269,20 @@ const LoginPage = () => {
                   {isRegistering ? (
                     <>
                       Already have an account?{" "}
-                      <span className="cursor-pointer text-blue-500 hover:underline" onClick={() => setIsRegistering(false)}>
+                      <span
+                        className="cursor-pointer text-blue-500 hover:underline"
+                        onClick={() => setIsRegistering(false)}
+                      >
                         Login
                       </span>
                     </>
                   ) : (
                     <>
                       Don't have an account?{" "}
-                      <span className="cursor-pointer text-blue-500 hover:underline" onClick={() => setIsRegistering(true)}>
+                      <span
+                        className="cursor-pointer text-blue-500 hover:underline"
+                        onClick={() => setIsRegistering(true)}
+                      >
                         Register
                       </span>
                     </>

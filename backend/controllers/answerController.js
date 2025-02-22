@@ -1,4 +1,8 @@
-import { submitAnswersService, updateAnswerService, deleteAnswerService } from "../services/answerService.js";
+import {
+  submitAnswersService,
+  updateAnswerService,
+  deleteAnswerService,
+} from "../services/answerService.js";
 
 export const submitAnswersController = async (req, res) => {
   try {
@@ -27,21 +31,24 @@ export const submitAnswersController = async (req, res) => {
   }
 };
 
-// ✅ Update Answer Controller
 export const updateAnswerController = async (req, res) => {
   try {
     const { formId, answerId } = req.params;
     const { value } = req.body;
     const user = req.user;
 
-    const updatedAnswer = await updateAnswerService(formId, answerId, value, user);
+    const updatedAnswer = await updateAnswerService(
+      formId,
+      answerId,
+      value,
+      user
+    );
     res.status(200).json(updatedAnswer);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ✅ Delete Answer Controller
 export const deleteAnswerController = async (req, res) => {
   try {
     const { formId, answerId } = req.params;

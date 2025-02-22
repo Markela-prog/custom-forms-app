@@ -20,7 +20,6 @@ const EditTemplateForm = ({ templateId }) => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch existing questions when component loads
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -36,7 +35,7 @@ const EditTemplateForm = ({ templateId }) => {
 
         const data = await response.json();
         setQuestions(data);
-        setOriginalQuestions(data); // Store original for tracking changes
+        setOriginalQuestions(data);
       } catch (error) {
         console.error(error);
         setStatusMessage("❌ Failed to load questions.");
@@ -46,7 +45,6 @@ const EditTemplateForm = ({ templateId }) => {
     fetchQuestions();
   }, [templateId]);
 
-  // ✅ Handle Drag & Drop Reordering
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -58,10 +56,9 @@ const EditTemplateForm = ({ templateId }) => {
     setQuestions(updatedQuestions.map((q, index) => ({ ...q, order: index })));
   };
 
-  // ✅ Handle Adding New Questions
   const handleAddQuestion = (type) => {
     const newQuestion = {
-      id: Date.now().toString(), // Temporary ID
+      id: Date.now().toString(),
       title: "",
       description: "",
       type,
@@ -78,7 +75,6 @@ const EditTemplateForm = ({ templateId }) => {
     setNewQuestions([...newQuestions, newQuestion]);
   };
 
-  // ✅ Handle Deleting Questions
   const handleDeleteQuestion = (questionId) => {
     setQuestions(questions.filter((q) => q.id !== questionId));
 
@@ -94,10 +90,15 @@ const EditTemplateForm = ({ templateId }) => {
     });
   };
 
-  // ✅ Handle Updating Questions
   const handleFieldChange = (questionId, updatedData) => {
     setQuestions((prevQuestions) =>
       prevQuestions.map((q) =>
+        q.id === questionId ? { ...q, ...updatedData } : q
+      )
+    );
+
+    setNewQuestions((prevNewQuestions) =>
+      prevNewQuestions.map((q) =>
         q.id === questionId ? { ...q, ...updatedData } : q
       )
     );
@@ -110,7 +111,6 @@ const EditTemplateForm = ({ templateId }) => {
     }
   };
 
-  // ✅ Handle Saving Changes
   const handleSave = async () => {
     if (!isAuthenticated) {
       setStatusMessage("❌ You must be logged in to save changes.");
@@ -125,8 +125,73 @@ const EditTemplateForm = ({ templateId }) => {
         ...(token && { Authorization: `Bearer ${token}` }),
       };
 
-      // 1️⃣ Delete Removed Questions
+      let createdQuestions = [];
+      let questionIdMap = {};
+
+      /* Create New Questions */
+      if (newQuestions.length > 0) {
+        console.log("🟢 Creating new questions:", newQuestions);
+
+        const formattedNewQuestions = newQuestions.map(
+          ({ id, isNew, ...q }) => ({
+            title: q.title.trim(),
+            description: q.description.trim(),
+            type: q.type,
+            options: Array.isArray(q.options) ? q.options : [],
+            isRequired: q.isRequired || false,
+            order: q.order,
+          })
+        );
+
+        const addResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/questions/${templateId}`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ questions: formattedNewQuestions }),
+          }
+        );
+        if (!addResponse.ok) throw new Error("❌ Failed to add new questions.");
+        createdQuestions = await addResponse.json();
+
+        createdQuestions.forEach((q, index) => {
+          questionIdMap[newQuestions[index].id] = q.id;
+        });
+
+        setQuestions((prev) =>
+          prev.map((q) =>
+            q.isNew ? { ...q, id: questionIdMap[q.id], isNew: false } : q
+          )
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        setNewQuestions([]);
+      }
+
+      /* Update Existing Questions */
+      if (Object.keys(modifiedQuestions).length > 0) {
+        console.log("🟡 Updating modified questions:", modifiedQuestions);
+
+        const filteredModifiedQuestions = Object.values(modifiedQuestions).map(
+          ({ isNew, ...q }) => q
+        );
+
+        const updateResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/questions/update`,
+          {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({ questions: filteredModifiedQuestions }),
+          }
+        );
+        if (!updateResponse.ok)
+          throw new Error("❌ Failed to update questions.");
+      }
+
+      /* Delete Removed Questions */
       if (deletedQuestions.size > 0) {
+        console.log("🔴 Deleting removed questions:", deletedQuestions);
         const deleteResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/questions/delete`,
           {
@@ -139,67 +204,31 @@ const EditTemplateForm = ({ templateId }) => {
           throw new Error("❌ Failed to delete questions.");
       }
 
-      // 2️⃣ Add New Questions
-      if (newQuestions.length > 0) {
-        const addResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/questions/${templateId}`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              questions: newQuestions.map(({ isNew, ...q }) => q),
-            }),
-          }
-        );
+      /* Reorder Questions (Always Last) */
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-        if (!addResponse.ok) throw new Error("❌ Failed to add new questions.");
+      const updatedQuestions = questions.map((q) => ({
+        id: questionIdMap[q.id] || q.id,
+        order: q.order,
+      }));
 
-        const createdQuestions = await addResponse.json(); // ✅ Get real IDs
-        console.log("🟢 New Questions Created:", createdQuestions);
+      const reorderPayload = {
+        templateId,
+        questions: updatedQuestions.filter((q) => q.id),
+      };
 
-        // ✅ Replace temporary IDs with real database IDs
-        setQuestions((prev) =>
-          prev.map((q) =>
-            q.isNew
-              ? createdQuestions.find((newQ) => newQ.title === q.title) || q
-              : q
-          )
-        );
-
-        setNewQuestions([]); // ✅ Clear new questions list
-      }
-
-      console.log("🟠 Update Request Payload:", {
-        questions: Object.values(modifiedQuestions).map(({ isNew, ...q }) => q),
-      });
-      // 3️⃣ Update Modified Questions
-      if (Object.keys(modifiedQuestions).length > 0) {
-        const updateResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/questions/update`,
-          {
-            method: "PUT",
-            headers,
-            body: JSON.stringify({
-              questions: Object.values(modifiedQuestions),
-            }),
-          }
-        );
-        if (!updateResponse.ok)
-          throw new Error("❌ Failed to update questions.");
-      }
-
-      // 4️⃣ Reorder Questions
+      console.log("🔵 Reorder Request Payload:", reorderPayload);
       const reorderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/questions/reorder`,
         {
           method: "PUT",
           headers,
-          body: JSON.stringify({ questions, templateId }),
+          body: JSON.stringify(reorderPayload),
         }
       );
       if (!reorderResponse.ok)
         throw new Error("❌ Failed to reorder questions.");
-      setNewQuestions([]);
+
       setStatusMessage("✅ Changes saved successfully!");
     } catch (error) {
       console.error(error);
@@ -229,7 +258,7 @@ const EditTemplateForm = ({ templateId }) => {
         </SortableContext>
       </DndContext>
 
-      {/* 🔹 Add New Question Button */}
+      {/* Add New Question Button */}
       <button
         onClick={() => handleAddQuestion("SINGLE_LINE")}
         className="flex items-center text-blue-600 mt-4"
@@ -237,7 +266,7 @@ const EditTemplateForm = ({ templateId }) => {
         <PlusCircle size={18} className="mr-1" /> Add Question
       </button>
 
-      {/* 🔹 Save Changes Button */}
+      {/* Save Changes Button */}
       <button
         onClick={handleSave}
         className={`bg-blue-500 text-white px-4 py-2 rounded mt-4 ${

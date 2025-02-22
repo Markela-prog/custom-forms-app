@@ -155,7 +155,12 @@ const ProfilePage = () => {
             </div>
 
             {/* Change Password Form Modal */}
-            {changingPassword && <ChangePasswordForm onClose={() => setChangingPassword(false)} onStatusMessage={setStatusMessage} />}
+            {changingPassword && (
+              <ChangePasswordForm
+                onClose={() => setChangingPassword(false)}
+                onStatusMessage={setStatusMessage}
+              />
+            )}
           </div>
         ) : (
           <p className="text-center text-gray-500">No user data found.</p>

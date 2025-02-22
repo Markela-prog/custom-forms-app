@@ -4,7 +4,7 @@ import {
   getAllUsers,
   promoteUsers,
   deleteUsers,
-  demoteUsers
+  demoteUsers,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -15,4 +15,3 @@ router.post("/demote", protect, isAdmin, demoteUsers);
 router.delete("/delete", protect, isAdmin, deleteUsers);
 
 export default router;
-

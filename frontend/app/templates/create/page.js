@@ -57,7 +57,6 @@ const CreateTemplateForm = () => {
     const newIndex = questions.findIndex((q) => q.id === over.id);
     const newOrder = arrayMove(questions, oldIndex, newIndex);
 
-    // Update question order numbers
     setQuestions(newOrder.map((q, index) => ({ ...q, order: index })));
   };
 
@@ -76,7 +75,6 @@ const CreateTemplateForm = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      // ✅ Create the template
       const templateResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/templates`,
         {
@@ -93,10 +91,9 @@ const CreateTemplateForm = () => {
       const templateData = await templateResponse.json();
       const templateId = templateData.id;
 
-      // ✅ Add questions to the template (if any)
       if (questions.length > 0) {
         const questionResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/questions`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/questions/${templateId}`,
           {
             method: "POST",
             headers,

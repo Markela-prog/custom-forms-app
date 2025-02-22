@@ -14,7 +14,6 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
   const [statusMessage, setStatusMessage] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // ✅ Check if the user already submitted the form
   useEffect(() => {
     const checkFormSubmission = async () => {
       try {
@@ -39,7 +38,6 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
     checkFormSubmission();
   }, [templateId, isAuthenticated]);
 
-  // ✅ Fetch questions only if the user has NOT submitted the form
   useEffect(() => {
     if (hasSubmitted) return;
 
@@ -68,12 +66,10 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
     fetchQuestions();
   }, [templateId, isAuthenticated, hasSubmitted]);
 
-  // ✅ Handle changes in answers
   const handleAnswerChange = (questionId, value) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -141,7 +137,7 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
             question={question}
             value={answers[question.id] || ""}
             onChange={handleAnswerChange}
-            disabled={!isAuthenticated || hasSubmitted} // ✅ Allow editing only if user is authenticated and hasn't submitted
+            disabled={!isAuthenticated || hasSubmitted}
           />
         </div>
       ))}

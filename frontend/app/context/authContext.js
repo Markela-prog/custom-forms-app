@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
         if (response.status === 401) {
           console.warn("Token expired. Logging out...");
-          logout(); // ⬅️ Automatically logout if token is expired
+          logout();
           return;
         }
 

@@ -8,7 +8,12 @@ const Header = () => {
   const router = useRouter();
   const { isAuthenticated, user, logout, loading } = useContext(AuthContext);
 
-  if (pathname === "/login" || pathname === "/register" || pathname === "/reset-password") return null;
+  if (
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/reset-password"
+  )
+    return null;
   if (loading) return null;
 
   return (

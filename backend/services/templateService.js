@@ -4,7 +4,7 @@ import {
   getAllTemplates,
   updateTemplate,
   deleteTemplate,
-  getTemplatesByUser
+  getTemplatesByUser,
 } from "../repositories/templateRepository.js";
 
 export const createTemplateService = async (ownerId, templateData) => {
@@ -15,7 +15,12 @@ export const getTemplateByIdService = async (templateId) => {
   return await getTemplateById(templateId);
 };
 
-export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) => {
+export const getAllTemplatesService = async (
+  page,
+  pageSize,
+  userId,
+  isAdmin
+) => {
   return await getAllTemplates(page, pageSize, userId, isAdmin);
 };
 

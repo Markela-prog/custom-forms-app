@@ -6,7 +6,7 @@ export const permissionsMatrix = {
     read: ["owner", "admin"],
   },
   userTemplates: {
-    getUserTemplates: ["authenticated"], 
+    getUserTemplates: ["authenticated"],
   },
   template: {
     create: ["authenticated"],

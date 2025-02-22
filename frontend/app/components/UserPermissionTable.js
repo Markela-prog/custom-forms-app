@@ -16,8 +16,8 @@ export default function UserPermissionTable({ templateId }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [statusMessage, setStatusMessage] = useState(null);
-  const [sortBy, setSortBy] = useState(null); // 'asc', 'desc', or null
-  const [filterByAccess, setFilterByAccess] = useState("all"); // 'all', 'granted', 'notGranted'
+  const [sortBy, setSortBy] = useState(null);
+  const [filterByAccess, setFilterByAccess] = useState("all");
 
   useEffect(() => {
     fetchUsers();
@@ -27,7 +27,6 @@ export default function UserPermissionTable({ templateId }) {
     try {
       const token = localStorage.getItem("accessToken");
 
-      // ✅ Fetch all non-admin users
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/non-admin-users`,
         {
@@ -38,7 +37,6 @@ export default function UserPermissionTable({ templateId }) {
       if (!response.ok) throw new Error("Failed to fetch users");
       const allUsers = await response.json();
 
-      // ✅ Fetch users with access
       const accessResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/template-access/${templateId}/access`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -48,7 +46,6 @@ export default function UserPermissionTable({ templateId }) {
       const accessUsers = await accessResponse.json();
       const accessUserIds = new Set(accessUsers.map((u) => u.userId));
 
-      // ✅ Combine data
       setUsers(
         allUsers.map((user) => ({
           ...user,

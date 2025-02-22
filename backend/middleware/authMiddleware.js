@@ -5,7 +5,7 @@ import { handleError } from "../utils/errorHandler.js";
 export const protect = async (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
 
-  console.log("Received Token in Backend:", token); // Debugging
+  console.log("Received Token in Backend:", token);
 
   if (!token) {
     return handleError(res, "No access token provided", 401);
@@ -15,8 +15,8 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
-    console.log("Decoded Token:", decoded); // Debugging
-    console.log("User Found in DB:", req.user); // Debugging
+    console.log("Decoded Token:", decoded);
+    console.log("User Found in DB:", req.user);
 
     if (!req.user) return handleError(res, "User not found", 404);
 

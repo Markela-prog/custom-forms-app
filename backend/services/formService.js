@@ -7,7 +7,11 @@ import {
   deleteForm,
 } from "../repositories/formRepository.js";
 
-export const createFormService = async (templateId, userId, emailCopyRequested) => {
+export const createFormService = async (
+  templateId,
+  userId,
+  emailCopyRequested
+) => {
   const existingForm = await getFormsByUserAndTemplate(userId, templateId);
   if (existingForm) {
     throw new Error("You have already filled out this template");
@@ -31,5 +35,3 @@ export const getFormsByUserService = async (userId) => {
 export const deleteFormService = async (formId, user) => {
   return await deleteForm(formId, user);
 };
-
-

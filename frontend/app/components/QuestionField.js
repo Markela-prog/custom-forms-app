@@ -1,4 +1,3 @@
-
 const QuestionField = ({ question, value, onChange, disabled = false }) => {
   if (!question) {
     return <p className="text-red-500">⚠️ Question data is missing!</p>;
@@ -155,7 +154,9 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
       );
 
     default:
-      return <p className="text-red-500">Unknown question type: {question.type}</p>;
+      return (
+        <p className="text-red-500">Unknown question type: {question.type}</p>
+      );
   }
 };
 

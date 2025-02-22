@@ -14,7 +14,17 @@ router.post(
   accessControl("template", "create"),
   submitAnswersController
 );
-router.put("/:formId/:answerId", protect, accessControl("answer", "update"), updateAnswerController);
-router.delete("/:formId/:answerId", protect, accessControl("answer", "delete"), deleteAnswerController);
+router.put(
+  "/:formId/:answerId",
+  protect,
+  accessControl("answer", "update"),
+  updateAnswerController
+);
+router.delete(
+  "/:formId/:answerId",
+  protect,
+  accessControl("answer", "delete"),
+  deleteAnswerController
+);
 
 export default router;

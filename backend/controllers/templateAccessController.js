@@ -2,7 +2,7 @@ import {
   addUsersToTemplateAccessService,
   removeUsersFromTemplateAccessService,
   getTemplateAccessUsersService,
-  getNonAdminUsersService
+  getNonAdminUsersService,
 } from "../services/templateAccessService.js";
 
 export const addUsersToTemplateAccessController = async (req, res) => {
@@ -28,7 +28,7 @@ export const addUsersToTemplateAccessController = async (req, res) => {
 export const removeUsersFromTemplateAccessController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const { userIds } = req.body; // Accept multiple userIds
+    const { userIds } = req.body;
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return res
@@ -43,7 +43,6 @@ export const removeUsersFromTemplateAccessController = async (req, res) => {
   }
 };
 
-// ✅ Get Users with Template Access
 export const getTemplateAccessUsersController = async (req, res) => {
   try {
     const { templateId } = req.params;

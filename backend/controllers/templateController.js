@@ -56,7 +56,7 @@ export const getAllTemplatesController = async (req, res) => {
 
 export const getTemplatesByUserController = async (req, res) => {
   try {
-    const userId = req.user.id; // Extract user ID from token
+    const userId = req.user.id;
     console.log(`Fetching templates for user: ${userId}`);
 
     const templates = await getTemplatesByUserService(userId);

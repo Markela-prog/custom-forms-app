@@ -3,7 +3,7 @@ import {
   getFormByIdService,
   getFormsByTemplateService,
   getFormsByUserService,
-  deleteFormService
+  deleteFormService,
 } from "../services/formService.js";
 import { getFormsByUserAndTemplate } from "../repositories/formRepository.js";
 
@@ -84,5 +84,3 @@ export const checkFormSubmissionController = async (req, res) => {
     res.status(500).json({ message: "Server error checking form submission" });
   }
 };
-
-

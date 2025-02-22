@@ -6,10 +6,10 @@ import { AuthContext } from "../context/authContext";
 const AuthSuccess = () => {
   const router = useRouter();
   const { login } = useContext(AuthContext);
-  const hasRun = useRef(false); // Prevents multiple executions
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return; // Prevent duplicate runs
+    if (hasRun.current) return;
     hasRun.current = true;
 
     const urlParams = new URLSearchParams(window.location.search);

@@ -23,7 +23,7 @@ export const uploadImage = (fileBuffer, fileType) => {
             reject("Image upload failed");
           } else {
             console.log("✅ Cloudinary Upload Success:", result);
-            resolve(result.secure_url); // ✅ Resolve with just the URL
+            resolve(result.secure_url);
           }
         }
       )
@@ -35,8 +35,7 @@ export const deleteImage = async (imageUrl) => {
   if (!imageUrl) return;
 
   try {
-    // Extract full public_id from Cloudinary URL
-    const regex = /\/user-profile-pictures\/([^/]+)\./; // Match entire name including suffix
+    const regex = /\/user-profile-pictures\/([^/]+)\./;
     const match = imageUrl.match(regex);
 
     if (!match || !match[1]) {
@@ -46,7 +45,6 @@ export const deleteImage = async (imageUrl) => {
     const publicId = `user-profile-pictures/${match[1]}`;
     console.log(`🗑 Deleting old profile picture: ${publicId}`);
 
-    // Call Cloudinary API to delete the image
     const result = await cloudinary.v2.uploader.destroy(publicId);
 
     if (result.result !== "ok") {

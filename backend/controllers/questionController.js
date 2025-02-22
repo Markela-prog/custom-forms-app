@@ -15,7 +15,7 @@ export const createQuestionsController = async (req, res) => {
     const { templateId } = req.params;
     const { questions } = req.body;
 
-    console.log("📌 Received Body:", req.body); // Debugging log
+    console.log("📌 Received Body:", req.body);
 
     if (!Array.isArray(questions)) {
       return res.status(400).json({ message: "questions must be an array" });
@@ -54,7 +54,7 @@ export const getQuestionsByTemplateController = async (req, res) => {
 
 export const updateMultipleQuestionsController = async (req, res) => {
   try {
-    console.log("📌 Received Update Body:", req.body); // Debugging log
+    console.log("📌 Received Update Body:", req.body);
 
     const { questions } = req.body;
     if (!Array.isArray(questions) || questions.length === 0) {
@@ -84,7 +84,6 @@ export const deleteMultipleQuestionsController = async (req, res) => {
         .json({ message: "No questions provided for delete" });
     }
 
-    // Call the updated service that also deletes answers
     const result = await deleteMultipleQuestionsService(questionIds);
     res.json(result);
   } catch (error) {
@@ -107,7 +106,6 @@ export const reorderQuestionsController = async (req, res) => {
       });
     }
 
-    // 🟠 Validate Questions from Repository
     const dbQuestions = await getQuestionsByIds(questions.map((q) => q.id));
     if (dbQuestions.length !== questions.length) {
       return res.status(400).json({
@@ -115,7 +113,6 @@ export const reorderQuestionsController = async (req, res) => {
       });
     }
 
-    // 🟠 Validate Single Template Ownership
     const sameTemplate = dbQuestions.every((q) => q.templateId === templateId);
     if (!sameTemplate) {
       return res.status(400).json({
@@ -123,7 +120,6 @@ export const reorderQuestionsController = async (req, res) => {
       });
     }
 
-    // 🟠 Ensure All Questions of Template Are Provided
     const allTemplateQuestions = await getQuestionsByTemplateId(templateId);
     const allQuestionIds = allTemplateQuestions.map((q) => q.id);
     const providedIds = questions.map((q) => q.id);
@@ -134,7 +130,6 @@ export const reorderQuestionsController = async (req, res) => {
       });
     }
 
-    // 🟠 Perform Reorder
     const result = await reorderQuestionsService(questions, templateId);
     res.status(200).json(result);
   } catch (error) {
@@ -146,7 +141,6 @@ export const reorderQuestionsController = async (req, res) => {
   }
 };
 
-// ✅ Utility Function: Ensure All Questions Are Provided
 const areAllQuestionsProvided = (allQuestionIds, providedIds) => {
   return (
     allQuestionIds.length === providedIds.length &&

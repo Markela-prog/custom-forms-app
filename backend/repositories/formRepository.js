@@ -47,7 +47,6 @@ export const getFormsByUserAndTemplate = async (userId, templateId) => {
 };
 
 export const deleteForm = async (formId, user) => {
-
   const form = await prisma.form.findUnique({
     where: { id: formId },
     select: { userId: true },
@@ -57,7 +56,6 @@ export const deleteForm = async (formId, user) => {
     throw new Error("Form not found");
   }
 
-  // 🛡️ Allow only Admins or Form Owners to delete
   if (user.role !== "ADMIN" && user.id !== form.userId) {
     throw new Error("Only the form owner or admin can delete this form");
   }

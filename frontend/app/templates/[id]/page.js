@@ -19,14 +19,12 @@ const TemplatePage = () => {
   const [activeTab, setActiveTab] = useState("questions");
   const [submittedForms, setSubmittedForms] = useState([]);
 
-  // ✅ Set template ID from URL params
   useEffect(() => {
     if (params?.id) {
       setTemplateId(params.id);
     }
   }, [params]);
 
-  // ✅ Define user permissions
   const isOwnerOrAdmin =
     user?.role === "ADMIN" || template?.ownerId === user?.id;
 
@@ -37,7 +35,6 @@ const TemplatePage = () => {
   const canSubmitForm =
     isAuthenticated && (template?.isPublic || hasACLAccess || isOwnerOrAdmin);
 
-  // ✅ Fetch template details
   useEffect(() => {
     if (!templateId) return;
 
@@ -66,7 +63,6 @@ const TemplatePage = () => {
     fetchTemplate();
   }, [templateId, isAuthenticated]);
 
-  // ✅ Fetch submitted forms when in "Answers" tab
   useEffect(() => {
     if (!isOwnerOrAdmin || activeTab !== "answers" || !templateId) return;
 
@@ -92,7 +88,6 @@ const TemplatePage = () => {
     fetchSubmittedForms();
   }, [activeTab, templateId, isOwnerOrAdmin, isAuthenticated]);
 
-  // ✅ Handle Public/Private Toggle
   const handleToggleVisibility = async () => {
     if (!isOwnerOrAdmin || !templateId) return;
 
@@ -190,7 +185,9 @@ const TemplatePage = () => {
         </div>
       )}
 
-      {activeTab === "permissions" && <UserPermissionTable templateId={templateId} />}
+      {activeTab === "permissions" && (
+        <UserPermissionTable templateId={templateId} />
+      )}
 
       {/* 🔹 Show Edit Button (Only in Questions Tab) */}
       {isOwnerOrAdmin && activeTab === "questions" && (

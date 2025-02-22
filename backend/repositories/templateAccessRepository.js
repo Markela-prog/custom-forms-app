@@ -27,14 +27,12 @@ export const removeUsersFromTemplateAccess = async (templateId, userIds) => {
   });
 };
 
-
 export const getTemplateAccessUsers = async (templateId) => {
   return await prisma.templateAccess.findMany({
     where: { templateId },
     include: { user: true },
   });
 };
-
 
 export const getNonAdminUsers = async () => {
   return await prisma.user.findMany({

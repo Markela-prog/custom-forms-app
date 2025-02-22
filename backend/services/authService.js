@@ -100,7 +100,9 @@ export const setPassword = async (userId, password) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   return updateUserById(userId, {
     password: hashedPassword,
-    authProvider: user.authProvider.includes("CREDENTIALS") ? user.authProvider : [...user.authProvider, "CREDENTIALS"],
+    authProvider: user.authProvider.includes("CREDENTIALS")
+      ? user.authProvider
+      : [...user.authProvider, "CREDENTIALS"],
   });
 };
 
