@@ -29,6 +29,7 @@ export const createQuestionsController = async (req, res) => {
       templateId,
       questions
     );
+    console.log("✅ Created Questions:", createdQuestions);
     res.status(201).json(createdQuestions);
   } catch (error) {
     console.error("❌ Error creating questions:", error);

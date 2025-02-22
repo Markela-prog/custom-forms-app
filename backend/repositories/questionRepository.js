@@ -15,15 +15,23 @@ export const createQuestions = async (templateId, questions) => {
   let order =
     highestOrder._max.order !== null ? highestOrder._max.order + 1 : 0;
 
-  const questionsWithOrder = questions.map((q) => ({
+  // ✅ Remove temporary IDs and ensure required fields are passed
+  const formattedQuestions = questions.map(({ id, isNew, ...q }) => ({
     ...q,
     templateId,
     order: order++,
   }));
 
-  return prisma.question.createMany({
-    data: questionsWithOrder,
-  });
+  // ✅ Insert and return created questions
+  const createdQuestions = await prisma.$transaction(
+    formattedQuestions.map((question) =>
+      prisma.question.create({
+        data: question,
+      })
+    )
+  );
+
+  return createdQuestions; // ✅ Return created questions with real IDs
 };
 
 export const getQuestionsByTemplateId = async (templateId) => {
