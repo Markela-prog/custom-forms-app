@@ -75,6 +75,7 @@ export const deleteMultipleQuestionsController = async (req, res) => {
         .json({ message: "No questions provided for delete" });
     }
 
+    // Call the updated service that also deletes answers
     const result = await deleteMultipleQuestionsService(questionIds);
     res.json(result);
   } catch (error) {

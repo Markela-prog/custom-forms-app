@@ -61,11 +61,19 @@ export const bulkUpdateQuestions = async (questions) => {
 };
 
 export const bulkDeleteQuestions = async (questionIds) => {
+  // ✅ Step 1: Delete all related answers first
+  await prisma.answer.deleteMany({
+    where: {
+      questionId: { in: questionIds },
+    },
+  });
+
+  // ✅ Step 2: Now delete the questions
   await prisma.question.deleteMany({
     where: { id: { in: questionIds } },
   });
 
-  return { message: "Questions deleted successfully" };
+  return { message: "Questions and related answers deleted successfully" };
 };
 
 export const getQuestionsByIds = async (questionIds) => {
