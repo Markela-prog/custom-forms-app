@@ -2,7 +2,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AuthContext } from "../../context/authContext";
-import TemplateView from "@/app/components/TemplateView";
 import QuestionnaireForm from "@/app/components/QuestionnaireForm";
 import EditTemplateForm from "@/app/components/EditTemplateForm";
 import UserPermissionTable from "@/app/components/UserPermissionTable";

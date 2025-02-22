@@ -237,6 +237,7 @@ const EditTemplateForm = ({ templateId }) => {
         throw new Error("❌ Failed to reorder questions.");
 
       setStatusMessage("✅ Changes saved successfully!");
+      router.push(`/${templateId}`);
     } catch (error) {
       console.error(error);
       setStatusMessage(error.message || "❌ Error saving changes.");

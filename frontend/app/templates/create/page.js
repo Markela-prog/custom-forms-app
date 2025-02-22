@@ -10,6 +10,7 @@ import { AuthContext } from "@/app/context/authContext";
 import QuestionEditor from "@/app/components/QuestionEditor";
 import { PlusCircle } from "lucide-react";
 import { validateTemplate, validateQuestions } from "@/app/utils/validateForm";
+import { useRouter } from "next/navigation";
 
 const CreateTemplateForm = () => {
   const { isAuthenticated } = useContext(AuthContext);
@@ -22,6 +23,7 @@ const CreateTemplateForm = () => {
   });
   const [questions, setQuestions] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
+  const router = useRouter();
 
   const handleAddQuestion = (type) => {
     const newQuestion = {
@@ -128,6 +130,7 @@ const CreateTemplateForm = () => {
         isPublic: true,
       });
       setQuestions([]);
+      router.push("/dashboard")
     } catch (error) {
       console.error("Error:", error);
       setStatusMessage(error.message || "❌ Error creating template");
