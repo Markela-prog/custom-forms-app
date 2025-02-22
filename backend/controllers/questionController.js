@@ -51,7 +51,6 @@ export const getQuestionsByTemplateController = async (req, res) => {
   }
 };
 
-
 export const updateMultipleQuestionsController = async (req, res) => {
   try {
     const { questions } = req.body;
@@ -65,7 +64,17 @@ export const updateMultipleQuestionsController = async (req, res) => {
 
 export const deleteMultipleQuestionsController = async (req, res) => {
   try {
+    console.log("🟠 DELETE Request Body:", req.body);
+
     const { questionIds } = req.body;
+
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+      console.log("❌ No valid question IDs provided");
+      return res
+        .status(400)
+        .json({ message: "No questions provided for delete" });
+    }
+
     const result = await deleteMultipleQuestionsService(questionIds);
     res.json(result);
   } catch (error) {

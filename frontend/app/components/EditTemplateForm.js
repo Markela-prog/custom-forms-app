@@ -18,6 +18,7 @@ const EditTemplateForm = ({ templateId }) => {
   const [newQuestions, setNewQuestions] = useState([]);
   const [modifiedQuestions, setModifiedQuestions] = useState({});
   const [statusMessage, setStatusMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Fetch existing questions when component loads
   useEffect(() => {
@@ -38,6 +39,7 @@ const EditTemplateForm = ({ templateId }) => {
         setOriginalQuestions(data); // Store original for tracking changes
       } catch (error) {
         console.error(error);
+        setStatusMessage("❌ Failed to load questions.");
       }
     };
 
@@ -47,15 +49,13 @@ const EditTemplateForm = ({ templateId }) => {
   // ✅ Handle Drag & Drop Reordering
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
-      const oldIndex = questions.findIndex((q) => q.id === active.id);
-      const newIndex = questions.findIndex((q) => q.id === over.id);
-      const updatedQuestions = arrayMove(questions, oldIndex, newIndex);
+    if (!over || active.id === over.id) return;
 
-      setQuestions(
-        updatedQuestions.map((q, index) => ({ ...q, order: index }))
-      );
-    }
+    const oldIndex = questions.findIndex((q) => q.id === active.id);
+    const newIndex = questions.findIndex((q) => q.id === over.id);
+    const updatedQuestions = arrayMove(questions, oldIndex, newIndex);
+
+    setQuestions(updatedQuestions.map((q, index) => ({ ...q, order: index })));
   };
 
   // ✅ Handle Adding New Questions
@@ -112,6 +112,12 @@ const EditTemplateForm = ({ templateId }) => {
 
   // ✅ Handle Saving Changes
   const handleSave = async () => {
+    if (!isAuthenticated) {
+      setStatusMessage("❌ You must be logged in to save changes.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const headers = {
@@ -121,7 +127,7 @@ const EditTemplateForm = ({ templateId }) => {
 
       // 1️⃣ Delete Removed Questions
       if (deletedQuestions.size > 0) {
-        await fetch(
+        const deleteResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/questions/delete`,
           {
             method: "DELETE",
@@ -129,11 +135,13 @@ const EditTemplateForm = ({ templateId }) => {
             body: JSON.stringify({ questionIds: Array.from(deletedQuestions) }),
           }
         );
+        if (!deleteResponse.ok)
+          throw new Error("❌ Failed to delete questions.");
       }
 
       // 2️⃣ Add New Questions
       if (newQuestions.length > 0) {
-        await fetch(
+        const addResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/questions/${templateId}`,
           {
             method: "POST",
@@ -141,11 +149,12 @@ const EditTemplateForm = ({ templateId }) => {
             body: JSON.stringify({ questions: newQuestions }),
           }
         );
+        if (!addResponse.ok) throw new Error("❌ Failed to add new questions.");
       }
 
       // 3️⃣ Update Modified Questions
       if (Object.keys(modifiedQuestions).length > 0) {
-        await fetch(
+        const updateResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/questions/update`,
           {
             method: "PUT",
@@ -155,19 +164,28 @@ const EditTemplateForm = ({ templateId }) => {
             }),
           }
         );
+        if (!updateResponse.ok)
+          throw new Error("❌ Failed to update questions.");
       }
 
       // 4️⃣ Reorder Questions
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/questions/reorder`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({ questions, templateId }),
-      });
+      const reorderResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/questions/reorder`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ questions, templateId }),
+        }
+      );
+      if (!reorderResponse.ok)
+        throw new Error("❌ Failed to reorder questions.");
 
       setStatusMessage("✅ Changes saved successfully!");
     } catch (error) {
       console.error(error);
-      setStatusMessage("❌ Error saving changes.");
+      setStatusMessage(error.message || "❌ Error saving changes.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,8 +208,27 @@ const EditTemplateForm = ({ templateId }) => {
           </div>
         </SortableContext>
       </DndContext>
-      <button onClick={handleSave}>💾 Save Changes</button>
-      {statusMessage && <p>{statusMessage}</p>}
+
+      {/* 🔹 Add New Question Button */}
+      <button
+        onClick={() => handleAddQuestion("SINGLE_LINE")}
+        className="flex items-center text-blue-600 mt-4"
+      >
+        <PlusCircle size={18} className="mr-1" /> Add Question
+      </button>
+
+      {/* 🔹 Save Changes Button */}
+      <button
+        onClick={handleSave}
+        className={`bg-blue-500 text-white px-4 py-2 rounded mt-4 ${
+          loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
+        }`}
+        disabled={loading}
+      >
+        {loading ? "Saving..." : "💾 Save Changes"}
+      </button>
+
+      {statusMessage && <p className="mt-2 text-red-500">{statusMessage}</p>}
     </div>
   );
 };
