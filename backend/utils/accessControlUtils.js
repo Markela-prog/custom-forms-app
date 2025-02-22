@@ -154,7 +154,9 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for Bulk QUESTION Update/Delete
   if (resource === "question" && ["update", "delete"].includes(action)) {
-    if (!Array.isArray(questions) || questions.length === 0) {
+    const questionIds = req.body.questionIds || []; // ⬅️ Ensure questionIds are used
+
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
       return {
         access: false,
         reason: "No questions provided for update/delete",
@@ -162,13 +164,12 @@ export const checkAccess = async ({
     }
 
     // ✅ Fetch all affected questions from DB
-    const questionIds = questions;
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
       include: { template: { include: { owner: true, accessControl: true } } },
     });
 
-    if (dbQuestions.length !== questions.length) {
+    if (dbQuestions.length !== questionIds.length) {
       return { access: false, reason: "Some questions do not exist" };
     }
 
