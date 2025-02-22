@@ -43,7 +43,7 @@ export const getResourceId = (resource, action, req) => {
         return req.params.templateId || null;
       }
       if (["update", "delete"].includes(action)) {
-        return req.params.questionId || null;
+        return req.body.questionIds?.[0] || null;
       }
       break;
 

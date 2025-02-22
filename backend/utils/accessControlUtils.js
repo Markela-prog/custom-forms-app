@@ -161,8 +161,8 @@ export const checkAccess = async ({
       };
     }
 
-    // ✅ Fetch all affected questions
-    const questionIds = questions.map((q) => q.id);
+    // ✅ Fetch all affected questions from DB
+    const questionIds = questions;
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
       include: { template: { include: { owner: true, accessControl: true } } },
@@ -187,10 +187,10 @@ export const checkAccess = async ({
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
 
-    // 🟢 ✅ Admin Access
+    // ✅ Admin Access
     if (user?.role === "ADMIN") return { access: true, role: "admin" };
 
-    // 🟢 ✅ Template Owner Access
+    // ✅ Template Owner Access
     if (user?.id === templateOwnerId) {
       return { access: true, role: "owner" };
     }
