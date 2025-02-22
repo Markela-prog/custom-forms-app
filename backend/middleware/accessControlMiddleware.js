@@ -31,6 +31,7 @@ export const accessControl = (resource, action) => async (req, res, next) => {
     action,
     templateId: req.body.templateId,
     questions: req.body.questions || [],
+    questionIds: req.body.questionIds || [],
   });
 
   console.log(

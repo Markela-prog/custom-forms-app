@@ -1,4 +1,3 @@
-// ✅ src/utils/getResourceId.js
 export const getResourceId = (resource, action, req) => {
   switch (resource) {
     /** TEMPLATE CASES **/

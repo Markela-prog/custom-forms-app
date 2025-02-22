@@ -1,4 +1,3 @@
-// src/utils/accessControlUtils.js
 import prisma from "../prisma/prismaClient.js";
 
 export const checkAccess = async ({
@@ -154,8 +153,6 @@ export const checkAccess = async ({
 
   // 🟡 Special Handling for Bulk QUESTION Update/Delete
   if (resource === "question" && ["update", "delete"].includes(action)) {
-    const questionIds = req.body.questionIds || []; // ⬅️ Ensure questionIds are used
-
     if (!Array.isArray(questionIds) || questionIds.length === 0) {
       return {
         access: false,
