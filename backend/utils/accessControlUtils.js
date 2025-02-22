@@ -7,6 +7,7 @@ export const checkAccess = async ({
   action,
   templateId = null,
   questions = [],
+  questionIds = [],
 }) => {
   console.log(
     `[AccessControl] Checking access for User: ${
