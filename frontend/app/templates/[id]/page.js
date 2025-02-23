@@ -153,6 +153,11 @@ const TemplatePage = () => {
     }
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setIsEditing(false);
+  };
+
   if (loadingTemplate) return <p>Loading template...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -160,7 +165,9 @@ const TemplatePage = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Top Bar with Title */}
       <h1 className="text-3xl font-bold text-center">{template?.title}</h1>
-      <p className="text-foreground text-center mb-2">{template?.description}</p>
+      <p className="text-foreground text-center mb-2">
+        {template?.description}
+      </p>
 
       {!isAuthenticated ? (
         <ReadOnlyTemplateView template={template} />
@@ -197,7 +204,7 @@ const TemplatePage = () => {
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-gray-500 hover:text-blue-500"
                       }`}
-                      onClick={() => setActiveTab(tab)}
+                      onClick={() => handleTabChange(tab)}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -231,7 +238,7 @@ const TemplatePage = () => {
 
           {/* Edit Mode */}
           {isEditing ? (
-            <EditTemplateForm templateId={templateId} />
+            <EditTemplateForm templateId={templateId} setIsEditing={setIsEditing} />
           ) : (
             <>
               {/* Show Questions Tab */}

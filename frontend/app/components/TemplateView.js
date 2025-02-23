@@ -8,7 +8,7 @@ const ReadOnlyTemplateView = ({ template }) => {
       <div className="space-y-4">
         {template.questions.length > 0 ? (
           template.questions.map((question) => (
-            <div key={question.id} className="p-4 border rounded-lg bg-gray-100">
+            <div key={question.id} className="p-4 border rounded-lg bg-background">
               <p className="font-semibold">{question.title}</p>
               <QuestionField question={question} value="" disabled />
             </div>

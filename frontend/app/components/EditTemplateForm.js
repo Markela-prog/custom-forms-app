@@ -10,8 +10,9 @@ import { AuthContext } from "@/app/context/authContext";
 import QuestionEditor from "@/app/components/QuestionEditor";
 import { PlusCircle } from "lucide-react";
 import { validateQuestions } from "../utils/validateForm";
+import { useRouter } from "next/navigation";
 
-const EditTemplateForm = ({ templateId }) => {
+const EditTemplateForm = ({ templateId, setIsEditing  }) => {
   const { isAuthenticated } = useContext(AuthContext);
   const [questions, setQuestions] = useState([]);
   const [originalQuestions, setOriginalQuestions] = useState([]);
@@ -20,6 +21,7 @@ const EditTemplateForm = ({ templateId }) => {
   const [modifiedQuestions, setModifiedQuestions] = useState({});
   const [statusMessage, setStatusMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -237,7 +239,9 @@ const EditTemplateForm = ({ templateId }) => {
         throw new Error("❌ Failed to reorder questions.");
 
       setStatusMessage("✅ Changes saved successfully!");
-      router.push(`/${templateId}`);
+      setTimeout(() => {
+        setIsEditing(false);
+      }, 2000);
     } catch (error) {
       console.error(error);
       setStatusMessage(error.message || "❌ Error saving changes.");

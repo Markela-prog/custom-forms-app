@@ -93,7 +93,7 @@ const ProfilePage = () => {
             <img
               src={user.profilePicture || "/profile.png"}
               alt="Profile"
-              className="w-32 h-32 rounded-full border-none shadow-none bg-transparent profile-picture"
+              className="w-32 h-32 rounded-full border shadow-none bg-transparent profile-picture bg-white"
             />
 
             {/* Change Profile Image Button */}
@@ -105,46 +105,46 @@ const ProfilePage = () => {
             />
 
             {/* Username Section */}
-            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full px-4">
+            <div className="flex flex-col items-center w-full px-4 sm:flex-row sm:justify-center sm:gap-x-4">
               {editingUsername ? (
-                <>
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3 items-center">
                   <input
                     type="text"
                     value={newUsername}
                     onChange={(e) => setNewUsername(e.target.value)}
-                    className="p-2 border rounded"
+                    className="p-2 border rounded w-full sm:w-[200px] md:w-[250px] lg:w-[300px] text-center sm:text-left"
                   />
-                  <button
-                    onClick={handleUsernameChange}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full sm:w-auto"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingUsername(false)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 w-full sm:w-auto"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center space-x-3">
-                    <h2 className="text-xl font-semibold text-foreground dark:text-white">
-                      {user.username || "Anonymous"}
-                    </h2>
-                    <Pencil
-                      size={20}
-                      className="cursor-pointer text-gray-500 hover:text-gray-700"
-                      onClick={() => setEditingUsername(true)}
-                    />
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={handleUsernameChange}
+                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full sm:w-auto transition-all"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingUsername(false)}
+                      className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 w-full sm:w-auto transition-all"
+                    >
+                      Cancel
+                    </button>
                   </div>
-                </>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                  <h2 className="text-xl font-semibold text-foreground dark:text-white">
+                    {user.username || "Anonymous"}
+                  </h2>
+                  <Pencil
+                    size={20}
+                    className="cursor-pointer text-gray-500 hover:text-gray-700 transition-all"
+                    onClick={() => setEditingUsername(true)}
+                  />
+                </div>
               )}
             </div>
 
             {/* Email */}
-            <p className="text-gray-500">{user.email}</p>
+            <p className="text-foreground">{user.email}</p>
 
             <div className="flex space-x-4">
               {/* Change Password Button */}
