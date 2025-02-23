@@ -11,7 +11,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
       return (
         <input
           type="text"
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           placeholder={question.title}
           value={value || ""}
           onChange={(e) => onChange && onChange(question.id, e.target.value)}
@@ -23,7 +23,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
     case "MULTI_LINE":
       return (
         <textarea
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           placeholder={question.title}
           rows={4}
           value={value || ""}
@@ -37,7 +37,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
       return (
         <input
           type="number"
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           placeholder={question.title}
           value={value || ""}
           onChange={(e) => onChange && onChange(question.id, e.target.value)}
@@ -104,7 +104,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
     case "DROPDOWN":
       return (
         <select
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           value={value || ""}
           required={question.isRequired}
           onChange={(e) =>
@@ -129,7 +129,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
       return (
         <input
           type="date"
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           value={value || ""}
           onChange={(e) =>
             !disabled && onChange && onChange(question.id, e.target.value)
@@ -143,7 +143,7 @@ const QuestionField = ({ question, value, onChange, disabled = false }) => {
       return (
         <input
           type="time"
-          className="border p-2 w-full rounded"
+          className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
           value={value || ""}
           onChange={(e) =>
             !disabled && onChange && onChange(question.id, e.target.value)

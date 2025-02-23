@@ -11,6 +11,9 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        inputBg: "var(--input-bg)",
+        inputText: "var(--input-text)",
+        borderColor: "var(--border)",
       },
     },
   },

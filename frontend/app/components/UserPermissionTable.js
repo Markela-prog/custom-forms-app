@@ -177,7 +177,7 @@ export default function UserPermissionTable({ templateId }) {
         <input
           type="text"
           placeholder="Search by username or email..."
-          className="border p-2 w-full rounded-md"
+          className="border p-2 w-full rounded-md bg-inputBg text-inputText border-borderColor"
           onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
         />
 
@@ -211,9 +211,9 @@ export default function UserPermissionTable({ templateId }) {
 
       {/* Responsive Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 text-sm">
+        <table className="w-full border-collapse border border-borderColor text-sm">
           <thead>
-            <tr className="bg-gray-200">
+            <tr className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
               <th className="p-2 border">
                 <input
                   type="checkbox"
@@ -234,7 +234,7 @@ export default function UserPermissionTable({ templateId }) {
           </thead>
           <tbody>
             {filteredAndSortedUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-100">
+              <tr key={user.id} className="hover:bg-hoverBg">
                 <td className="p-2 border text-center">
                   <input
                     type="checkbox"

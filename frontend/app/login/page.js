@@ -141,7 +141,7 @@ const LoginPage = () => {
 
       {/* Right Pane - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center">
-        <div className="max-w-md w-full p-6">
+        <div className="max-w-md w-full  p-6">
           <h1 className="text-3xl font-semibold mb-6 text-black text-center">
             {isRegistering
               ? "Sign Up"
@@ -196,7 +196,7 @@ const LoginPage = () => {
             <input
               type="email"
               placeholder="Email"
-              className="p-2 w-full border rounded-md"
+              className="p-2 w-full border rounded-md bg-inputBg text-inputText border-borderColor"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -206,7 +206,7 @@ const LoginPage = () => {
               <input
                 type="password"
                 placeholder="Password"
-                className="p-2 w-full border rounded-md"
+                className="p-2 w-full border rounded-md bg-inputBg text-inputText border-borderColor"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

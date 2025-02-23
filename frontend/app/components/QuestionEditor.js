@@ -73,7 +73,7 @@ const QuestionEditor = ({ question, onUpdate, onDelete }) => {
 
       {/* Question Type */}
       <select
-        className="border p-2 w-full rounded"
+        className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
         value={question.type}
         onChange={(e) => handleFieldChange("type", e.target.value)}
       >
@@ -105,7 +105,7 @@ const QuestionEditor = ({ question, onUpdate, onDelete }) => {
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
-                className="border p-2 w-full rounded"
+                className="border p-2 w-full rounded bg-inputBg text-inputText border-borderColor"
                 placeholder={`Option ${index + 1}`}
               />
               <button
