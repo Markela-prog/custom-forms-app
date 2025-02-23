@@ -52,8 +52,8 @@ const ChangePasswordForm = ({ onClose, onStatusMessage }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+    <div className="fixed inset-0 bg-background bg-opacity-50 flex justify-center items-center">
+      <div className="bg-background p-6 rounded-lg shadow-lg w-full max-w-md relative">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -62,7 +62,7 @@ const ChangePasswordForm = ({ onClose, onStatusMessage }) => {
           ✕
         </button>
 
-        <h2 className="text-xl font-semibold text-center mb-4">
+        <h2 className="text-xl text-foreground font-semibold text-center mb-4">
           Change Password
         </h2>
 
