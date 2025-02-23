@@ -5,7 +5,7 @@ import { FaCheck, FaTimes, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 const ActionButton = ({ onClick, label, bgColor, hoverColor }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 ${bgColor} text-white py-2 px-4 rounded-md hover:${hoverColor} focus:outline-none focus:ring-2 focus:ring-offset-2`}
+    className={`flex items-center justify-center gap-2 ${bgColor} text-white py-2 px-4 rounded-md hover:${hoverColor} focus:outline-none focus:ring-2 focus:ring-offset-2`}
   >
     {label}
   </button>
@@ -165,7 +165,7 @@ export default function UserPermissionTable({ templateId }) {
     });
 
   return (
-    <div>
+    <div className="p-4 w-full max-w-4xl mx-auto">
       {statusMessage && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-md shadow-md">
           {statusMessage}
@@ -173,16 +173,16 @@ export default function UserPermissionTable({ templateId }) {
       )}
 
       {/* Search & Filter Bar */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
         <input
           type="text"
           placeholder="Search by username or email..."
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded-md"
           onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
         />
 
         <select
-          className="border p-2"
+          className="border p-2 rounded-md"
           onChange={(e) => setFilterByAccess(e.target.value)}
         >
           <option value="all">All Users</option>
@@ -209,42 +209,53 @@ export default function UserPermissionTable({ templateId }) {
         </div>
       </div>
 
-      {/* User Table */}
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2 border">
-              <button onClick={handleSort} className="flex items-center gap-1">
-                Username
-                {sortBy === "asc" ? (
-                  <FaSortUp />
-                ) : sortBy === "desc" ? (
-                  <FaSortDown />
-                ) : (
-                  <FaSort />
-                )}
-              </button>
-            </th>
-            <th className="p-2 border">Email</th>
-            <th className="p-2 border">Access</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredAndSortedUsers.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-100">
-              <td className="p-2 border">{user.username || "Anonymous"}</td>
-              <td className="p-2 border">{user.email}</td>
-              <td className="p-2 border text-center">
-                {user.hasAccess ? (
-                  <FaCheck className="text-green-500" />
-                ) : (
-                  <FaTimes className="text-red-500" />
-                )}
-              </td>
+      {/* Responsive Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300 text-sm">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2 border">
+                <input
+                  type="checkbox"
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              </th>
+              <th className="p-2 border">
+                <button
+                  onClick={handleSort}
+                  className="flex items-center gap-1"
+                >
+                  Username {sortBy === "asc" ? <FaSortUp /> : <FaSortDown />}
+                </button>
+              </th>
+              <th className="p-2 border">Email</th>
+              <th className="p-2 border">Access</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredAndSortedUsers.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-100">
+                <td className="p-2 border text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.has(user.id)}
+                    onChange={() => handleSelectSingle(user.id)}
+                  />
+                </td>
+                <td className="p-2 border">{user.username || "Anonymous"}</td>
+                <td className="p-2 border">{user.email}</td>
+                <td className="p-2 border text-center">
+                  {user.hasAccess ? (
+                    <FaCheck className="text-green-500" />
+                  ) : (
+                    <FaTimes className="text-red-500" />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

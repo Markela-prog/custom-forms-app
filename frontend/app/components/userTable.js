@@ -1,6 +1,12 @@
 "use client";
 import { useState } from "react";
-import { FaArrowUp, FaArrowDown, FaTrash } from "react-icons/fa";
+import {
+  FaArrowUp,
+  FaArrowDown,
+  FaTrash,
+  FaSortUp,
+  FaSortDown,
+} from "react-icons/fa";
 
 const ActionButton = ({ onClick, icon, label, bgColor, hoverColor }) => (
   <button
@@ -14,6 +20,7 @@ const ActionButton = ({ onClick, icon, label, bgColor, hoverColor }) => (
 export default function UserTable({ users, setUsers }) {
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [statusMessage, setStatusMessage] = useState(null);
+  const [sortBy, setSortBy] = useState(null);
 
   const showStatusMessage = (message) => {
     setStatusMessage(message);
@@ -77,18 +84,26 @@ export default function UserTable({ users, setUsers }) {
     }
   };
 
+  const handleSort = () => {
+    setSortBy(sortBy === "asc" ? "desc" : "asc");
+  };
+
   return (
-    <div>
-      {/* Status Message */}
+    <div className="p-4 w-full max-w-4xl mx-auto">
       {statusMessage && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-md shadow-md">
           {statusMessage}
         </div>
       )}
 
+      {/* Page Title */}
+      <h2 className="text-2xl font-bold mb-4 text-center md:text-left">
+        User Management
+      </h2>
+
       {/* Action Buttons */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+        <div className="flex flex-wrap gap-2">
           <ActionButton
             onClick={() => handleAction("promote")}
             icon={<FaArrowUp />}
@@ -113,41 +128,47 @@ export default function UserTable({ users, setUsers }) {
         </div>
       </div>
 
-      {/* User Table */}
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2 border">
-              <input
-                type="checkbox"
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                checked={
-                  selectedUsers.size === users.length && users.length > 0
-                }
-              />
-            </th>
-            <th className="p-2 border">Username</th>
-            <th className="p-2 border">Email</th>
-            <th className="p-2 border">Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-100">
-              <td className="p-2 border text-center">
+      {/* Responsive Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300 text-sm">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2 border w-12 text-center">
                 <input
                   type="checkbox"
-                  checked={selectedUsers.has(user.id)}
-                  onChange={() => handleSelectSingle(user.id)}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
                 />
-              </td>
-              <td className="p-2 border">{user.username || "Annonymous"}</td>
-              <td className="p-2 border">{user.email}</td>
-              <td className="p-2 border">{user.role}</td>
+              </th>
+              <th className="p-2 border">
+                <button
+                  onClick={handleSort}
+                  className="flex items-center gap-1"
+                >
+                  Username {sortBy === "asc" ? <FaSortUp /> : <FaSortDown />}
+                </button>
+              </th>
+              <th className="p-2 border">Email</th>
+              <th className="p-2 border">Role</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-100">
+                <td className="p-2 border text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.has(user.id)}
+                    onChange={() => handleSelectSingle(user.id)}
+                  />
+                </td>
+                <td className="p-2 border">{user.username || "Anonymous"}</td>
+                <td className="p-2 border">{user.email}</td>
+                <td className="p-2 border text-center">{user.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -138,8 +138,8 @@ const CreateTemplateForm = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-6 space-y-6">
-      <h2 className="text-2xl font-bold">Create a New Template</h2>
+    <div className="max-w-2xl mx-auto mt-6 space-y-6 px-4 md:px-6">
+      <h2 className="text-2xl font-bold text-center">Create a New Template</h2>
 
       <input
         type="text"
@@ -201,19 +201,19 @@ const CreateTemplateForm = () => {
 
       <button
         onClick={() => handleAddQuestion("SINGLE_LINE")}
-        className="text-blue-600"
+        className="text-blue-600 flex items-center"
       >
-        <PlusCircle size={18} /> Add Question
+        <PlusCircle size={18} className="mr-1" /> Add Question
       </button>
 
       <button
         onClick={handleCreateTemplate}
-        className="bg-blue-500 text-white px-4 py-2 rounded mt-4 ml-2"
+        className="bg-blue-500 text-white px-4 py-2 rounded mt-4 w-full md:w-auto"
       >
         Create Template
       </button>
 
-      {statusMessage && <p className="text-green-600">{statusMessage}</p>}
+      {statusMessage && <p className="text-green-600 text-center">{statusMessage}</p>}
     </div>
   );
 };
