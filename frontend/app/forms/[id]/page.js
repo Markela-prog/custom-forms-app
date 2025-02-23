@@ -106,7 +106,7 @@ const FormPage = () => {
       </p>
 
       {/*  Display Questions and Answers */}
-      <div className="mt-6 p-6 border rounded-lg shadow bg-white">
+      <div className="mt-6 p-6 border rounded-lg shadow bg-background">
         <h2 className="text-2xl font-semibold mb-4">User's Responses</h2>
 
         {enrichedQuestions.map((question) => (

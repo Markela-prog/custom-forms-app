@@ -71,7 +71,7 @@ const ProfilePage = () => {
 
   return (
     <AuthGuard>
-      <div className="max-w-3xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg mt-2">
+      <div className="max-w-3xl mx-auto p-6 bg-background dark:bg-gray-900 rounded-lg shadow-lg mt-2">
         <h1 className="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-white">
           Profile
         </h1>
