@@ -19,15 +19,15 @@ export const checkAccess = async ({
   let templateOwnerId = null;
   let accessControl = null;
 
-  // ✅ SPECIAL CASE: Fetching Non-Admin Users
+  // SPECIAL CASE: Fetching Non-Admin Users
   if (resource === "template" && action === "manage_access" && !resourceId) {
-    // ✅ Allow if user is ADMIN
+    // Allow if user is ADMIN
     if (user?.role === "ADMIN") {
       console.log(`[AccessControl] ✅ Admin allowed to fetch non-admin users.`);
       return { access: true, role: "admin" };
     }
 
-    // ✅ Allow if user is a Template Owner
+    // Allow if user is a Template Owner
     const ownedTemplates = await prisma.template.findMany({
       where: { ownerId: user?.id },
       select: { id: true },
@@ -44,7 +44,7 @@ export const checkAccess = async ({
     };
   }
 
-  // ✅ SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
+  // SPECIAL CASE: Bypass access control for PUBLIC TEMPLATES (read only)
   if (resource === "template" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -55,18 +55,18 @@ export const checkAccess = async ({
       return { access: false, reason: "Template not found" };
     }
 
-    // ✅ Allow guests to read public templates
+    // Allow guests to read public templates
     if (template.isPublic && !user) {
       return { access: true, role: "any" };
     }
 
-    // ✅ Allow authenticated users to read public templates
+    // Allow authenticated users to read public templates
     if (template.isPublic && user) {
       return { access: true, role: "authenticated" };
     }
   }
 
-  // ✅ Bypass resource check for template creation (only requires authentication)
+  // Bypass resource check for template creation (only requires authentication)
   if (resource === "template" && action === "create") {
     if (user) {
       console.log("[AccessControl] ✅ Authenticated user creating template.");
@@ -79,7 +79,7 @@ export const checkAccess = async ({
     }
   }
 
-  // ✅ Allow fetching owned templates
+  // Allow fetching owned templates
   if (resource === "userTemplates" && action === "getUserTemplates") {
     if (user?.id === resourceId) {
       console.log(
@@ -90,7 +90,7 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized" };
   }
 
-  // 🟡 Special Handling for QUESTION Reorder
+  // Special Handling for QUESTION Reorder
   if (resource === "question" && action === "reorder") {
     const targetTemplateId = templateId || questions[0]?.templateId;
     if (!targetTemplateId) {
@@ -108,7 +108,7 @@ export const checkAccess = async ({
     accessControl = template.accessControl;
   }
 
-  // 🟡 Handle QUESTION Create/Read
+  // Handle QUESTION Create/Read
   if (resource === "question" && ["create", "read"].includes(action)) {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -120,13 +120,13 @@ export const checkAccess = async ({
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
 
-    // 🟢 ✅ Owner Check
+    // Owner Check
     if (user?.id === templateOwnerId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the OWNER.`);
       return { access: true, role: "owner" };
     }
 
-    // 🟢 ✅ Non-authenticated users (Guests) can read public template questions
+    // Non-authenticated users (Guests) can read public template questions
     if (!user && template.isPublic) {
       console.log(
         `[AccessControl] ✅ Guest accessing public template questions.`
@@ -134,7 +134,7 @@ export const checkAccess = async ({
       return { access: true, role: "any" };
     }
 
-    // 🟢 ✅ Authenticated users can read public template questions
+    // Authenticated users can read public template questions
     if (user && template.isPublic) {
       console.log(
         `[AccessControl] ✅ Authenticated user accessing public template questions.`
@@ -142,7 +142,7 @@ export const checkAccess = async ({
       return { access: true, role: "authenticated" };
     }
 
-    // 🟢 ✅ ACL Check (for shared access)
+    //ACL Check (for shared access)
     const isACL = template.accessControl?.some((ac) => ac.userId === user?.id);
     if (isACL) {
       console.log(`[AccessControl] ✅ User ${user?.id} has ACL access.`);
@@ -152,7 +152,7 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized" };
   }
 
-  // 🟡 Special Handling for Bulk QUESTION Update
+  // Special Handling for Bulk QUESTION Update
   if (resource === "question" && action === "update") {
     const idsToCheck =
       action === "update" ? questions?.map((q) => q.id) || [] : questionIds;
@@ -161,17 +161,17 @@ export const checkAccess = async ({
       return { access: false, reason: `No questions provided for ${action}` };
     }
 
-    // ✅ Fetch all affected questions from DB
+    // Fetch all affected questions from DB
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
-      include: { template: { select: { ownerId: true } } }, // ✅ Fetch template ownership
+      include: { template: { select: { ownerId: true } } },
     });
 
     if (dbQuestions.length !== questionIds.length) {
       return { access: false, reason: "Some questions do not exist" };
     }
 
-    // ✅ Ensure all questions belong to the same template
+    // Ensure all questions belong to the same template
     const uniqueTemplateIds = [
       ...new Set(dbQuestions.map((q) => q.templateId)),
     ];
@@ -193,7 +193,7 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized to modify questions" };
   }
 
-  // 🟡 Special Handling for Bulk QUESTION Delete (Remains Unchanged)
+  // Special Handling for Bulk QUESTION Delete (Remains Unchanged)
   if (resource === "question" && action === "delete") {
     if (!Array.isArray(questionIds) || questionIds.length === 0) {
       return {
@@ -202,7 +202,7 @@ export const checkAccess = async ({
       };
     }
 
-    // ✅ Fetch all affected questions from DB
+    // Fetch all affected questions from DB
     const dbQuestions = await prisma.question.findMany({
       where: { id: { in: questionIds } },
       include: { template: { select: { ownerId: true } } },
@@ -212,7 +212,7 @@ export const checkAccess = async ({
       return { access: false, reason: "Some questions do not exist" };
     }
 
-    // ✅ Ensure all questions belong to the same template
+    // Ensure all questions belong to the same template
     const uniqueTemplateIds = [
       ...new Set(dbQuestions.map((q) => q.templateId)),
     ];
@@ -234,7 +234,7 @@ export const checkAccess = async ({
     return { access: false, reason: "Unauthorized to delete questions" };
   }
 
-  // 🟡 Handle TEMPLATE Directly (for read/update/delete)
+  // Handle TEMPLATE Directly (for read/update/delete)
   if (resource === "template") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -246,14 +246,14 @@ export const checkAccess = async ({
     templateOwnerId = template.ownerId;
     accessControl = template.accessControl;
 
-    // 🟢 ✅ Guests can read public templates
+    // Guests can read public templates
     if (!user && template.isPublic) {
       console.log(`[AccessControl] ✅ Guest accessing public template.`);
       return { access: true, role: "any" };
     }
   }
 
-  // 🟡 Role-Based Access Logic
+  //Role-Based Access Logic
   if (user?.role === "ADMIN") {
     console.log(`[AccessControl] ✅ Admin Override`);
     return { access: true, role: "admin" };
@@ -264,14 +264,14 @@ export const checkAccess = async ({
     return { access: true, role: "owner" };
   }
 
-  // 🟢 ACL Check
+  // ACL Check
   const isACL = accessControl?.some((ac) => ac.userId === user?.id);
   if (isACL) {
     console.log(`[AccessControl] ✅ User ${user?.id} has ACL access.`);
     return { access: true, role: "acl" };
   }
 
-  /** 🟡 1) USER FORMS (Get User's Own Forms) **/
+  /** USER FORMS (Get User's Own Forms) **/
   if (resource === "userForms" && action === "getUserForms") {
     if (user?.id === resourceId) {
       console.log(
@@ -285,7 +285,7 @@ export const checkAccess = async ({
     };
   }
 
-  /** 🟡 2) TEMPLATE FORMS (Get Forms by Template) **/
+  /** TEMPLATE FORMS (Get Forms by Template) **/
   if (resource === "templateForms" && action === "read") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -313,32 +313,32 @@ export const checkAccess = async ({
     };
   }
 
-  /** 🟡 3) FORM (Get a Single Form) **/
+  /** FORM **/
   if (resource === "form" && ["read", "delete"].includes(action)) {
     const form = await prisma.form.findUnique({
       where: { id: resourceId },
-      include: { template: { select: { ownerId: true } } }, // ✅ Fetch related template owner
+      include: { template: { select: { ownerId: true } } },
     });
 
     if (!form) {
       return { access: false, reason: "Form not found" };
     }
 
-    resourceData = form; // ✅ Now resourceData is set correctly
+    resourceData = form;
 
-    // ✅ Admins can view or delete any form
+    // Admins can view or delete any form
     if (user?.role === "ADMIN") {
       console.log(`[AccessControl] ✅ Admin accessing form ${resourceId}`);
       return { access: true, role: "admin" };
     }
 
-    // ✅ Form owners can VIEW and DELETE their own forms
+    // Form owners can VIEW and DELETE their own forms
     if (user?.id === form.userId) {
       console.log(`[AccessControl] ✅ User ${user.id} is the form owner.`);
       return { access: true, role: "owner" };
     }
 
-    // ✅ Template owners can ONLY VIEW forms related to their template
+    // Template owners can ONLY VIEW forms related to their template
     if (user?.id === form.template.ownerId && action === "read") {
       console.log(
         `[AccessControl] ✅ User ${user.id} is the template owner, granting READ access.`
@@ -355,9 +355,9 @@ export const checkAccess = async ({
     };
   }
 
-  /** ✅ THEN: Handle Default Template and Question Logic **/
+  /** Handle Default Template and Question Logic **/
 
-  // 🟡 Handle TEMPLATE Directly (for read/update/delete)
+  // Handle TEMPLATE Directly (for read/update/delete)
   if (resource === "template") {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -368,14 +368,14 @@ export const checkAccess = async ({
     resourceData = template;
     templateOwnerId = template.ownerId;
 
-    // 🟢 ✅ Guests can read public templates
+    // Guests can read public templates
     if (!user && template.isPublic) {
       console.log(`[AccessControl] ✅ Guest accessing public template.`);
       return { access: true, role: "any" };
     }
   }
 
-  // 🟡 Handle QUESTION Create/Read
+  // Handle QUESTION Create/Read
   if (resource === "question" && ["create", "read"].includes(action)) {
     const template = await prisma.template.findUnique({
       where: { id: resourceId },
@@ -391,7 +391,7 @@ export const checkAccess = async ({
     }
   }
 
-  /** 🟡 ANSWER (Update/Delete) **/
+  /** ANSWER (Update/Delete) **/
   // Only Form Owner or Admin can update/delete answers
   if (resource === "answer" && ["update", "delete"].includes(action)) {
     const form = await prisma.form.findUnique({
@@ -421,7 +421,7 @@ export const checkAccess = async ({
     };
   }
 
-  /** 🛑 FINAL FALLBACK (After All Checks) **/
+  /** FINAL FALLBACK (After All Checks) **/
   if (!resourceData) {
     console.error(`[AccessControl] ❌ Resource ${resource} not found.`);
     return { access: false, reason: `${resource} not found` };

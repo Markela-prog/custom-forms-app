@@ -131,7 +131,7 @@ const FormPage = () => {
             router.push(`/templates/${form.templateId}?tab=answers`)
           }
         >
-          🔙 Back to Submitted Forms
+          Back to Submitted Forms
         </button>
       )}
     </div>

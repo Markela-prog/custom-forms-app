@@ -3,7 +3,6 @@ import {
   getQuestionsByTemplateId,
   bulkUpdateQuestions,
   bulkDeleteQuestions,
-  getQuestionsByIds,
   batchUpdateQuestionOrders,
 } from "../repositories/questionRepository.js";
 

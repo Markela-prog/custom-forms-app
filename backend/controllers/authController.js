@@ -12,7 +12,6 @@ import {
 import {
   generateAccessToken,
   generateRefreshToken,
-  verifyRefreshToken,
 } from "../services/tokenService.js";
 
 export const register = async (req, res) => {

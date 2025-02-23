@@ -238,7 +238,10 @@ const TemplatePage = () => {
 
           {/* Edit Mode */}
           {isEditing ? (
-            <EditTemplateForm templateId={templateId} setIsEditing={setIsEditing} />
+            <EditTemplateForm
+              templateId={templateId}
+              setIsEditing={setIsEditing}
+            />
           ) : (
             <>
               {/* Show Questions Tab */}

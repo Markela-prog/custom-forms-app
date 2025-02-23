@@ -4,7 +4,6 @@ import {
   updateUserRole,
   deleteUserById,
 } from "../repositories/adminRepository.js";
-import { handleError } from "../utils/errorHandler.js";
 
 export const getAllUsersService = async () => {
   return findAllUsers();
