@@ -99,21 +99,10 @@ button {
   position: relative;
 }
 
-
-/* .profile-picture {
-  background-color: transparent !important;
-  mix-blend-mode: normal !important;
-  filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  display: block;
+tr:hover {
+  background-color: var(--hover-bg);
 }
 
-
-@media (prefers-color-scheme: dark) {
-  .profile-picture {
-    background-color: transparent !important;
-    mix-blend-mode: normal !important;
-    filter: none !important;
-  }
-} */
+.dark tr:hover {
+  background-color: var(--hover-bg) !important;
+}

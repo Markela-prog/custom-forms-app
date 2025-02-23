@@ -43,6 +43,10 @@ export default function UserTable({ users, setUsers }) {
   const handleAction = async (action) => {
     if (selectedUsers.size === 0) return;
 
+    const userIds = [...selectedUsers];
+
+    console.log("Sending userIds:", userIds);
+
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
@@ -53,11 +57,14 @@ export default function UserTable({ users, setUsers }) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ userIds: [...selectedUsers] }),
+          body: JSON.stringify({ userIds }),
         }
       );
 
-      if (!response.ok) throw new Error(`Failed to ${action} users`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to ${action} users`);
+      }
 
       setUsers((prev) =>
         action === "delete"
@@ -79,8 +86,8 @@ export default function UserTable({ users, setUsers }) {
       );
       setSelectedUsers(new Set());
     } catch (error) {
+      console.error("Error:", error.message);
       showStatusMessage(`❌ Error: ${error.message}`);
-      console.error(error.message);
     }
   };
 
@@ -153,7 +160,7 @@ export default function UserTable({ users, setUsers }) {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-100">
+              <tr key={user.id} className="hover:bg-gray-400 dark:hover:bg-gray-700">
                 <td className="p-2 border text-center">
                   <input
                     type="checkbox"
