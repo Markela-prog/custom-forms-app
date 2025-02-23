@@ -123,7 +123,7 @@ const QuestionnaireForm = ({ templateId, isOwner, onSubmit }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto p-6 border rounded-lg shadow bg-white"
+      className="mx-auto p-6 border rounded-lg shadow bg-background"
     >
       <h2 className="text-2xl font-bold mb-4">Fill out the form</h2>
 

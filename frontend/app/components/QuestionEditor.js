@@ -42,7 +42,7 @@ const QuestionEditor = ({ question, onUpdate, onDelete }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="p-4 border rounded bg-white shadow space-y-2 flex flex-col relative"
+      className="p-4 border rounded bg-background shadow space-y-2 flex flex-col relative"
     >
       {/* Drag Handle */}
       <div
