@@ -93,7 +93,7 @@ const ProfilePage = () => {
             <img
               src={user.profilePicture || "/profile.png"}
               alt="Profile"
-              className="w-32 h-32 rounded-full border shadow-lg profile-picture"
+              className="w-32 h-32 rounded-full border-none shadow-none bg-transparent profile-picture"
             />
 
             {/* Change Profile Image Button */}

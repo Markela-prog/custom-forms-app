@@ -101,7 +101,15 @@ button {
 
 
 .profile-picture {
-  filter: none !important;
-  mix-blend-mode: normal !important;
   background-color: transparent !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .profile-picture {
+    background-color: transparent !important;
+  }
 }
