@@ -93,7 +93,7 @@ const ProfilePage = () => {
             <img
               src={user.profilePicture || "/profile.png"}
               alt="Profile"
-              className="w-32 h-32 rounded-full border shadow-lg"
+              className="w-32 h-32 rounded-full border shadow-lg profile-picture"
             />
 
             {/* Change Profile Image Button */}
@@ -105,7 +105,7 @@ const ProfilePage = () => {
             />
 
             {/* Username Section */}
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full px-4">
               {editingUsername ? (
                 <>
                   <input
@@ -116,27 +116,29 @@ const ProfilePage = () => {
                   />
                   <button
                     onClick={handleUsernameChange}
-                    className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full sm:w-auto"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setEditingUsername(false)}
-                    className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 w-full sm:w-auto"
                   >
                     Cancel
                   </button>
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl font-semibold text-foreground dark:text-white">
-                    {user.username || "Anonymous"}
-                  </h2>
-                  <Pencil
-                    size={18}
-                    className="cursor-pointer text-gray-500 hover:text-gray-700"
-                    onClick={() => setEditingUsername(true)}
-                  />
+                  <div className="flex items-center space-x-3">
+                    <h2 className="text-xl font-semibold text-foreground dark:text-white">
+                      {user.username || "Anonymous"}
+                    </h2>
+                    <Pencil
+                      size={20}
+                      className="cursor-pointer text-gray-500 hover:text-gray-700"
+                      onClick={() => setEditingUsername(true)}
+                    />
+                  </div>
                 </>
               )}
             </div>
