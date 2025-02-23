@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ✅ Define Custom CSS Variables for Colors */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -23,13 +22,12 @@
   }
 }
 
-/* ✅ Apply Universal Styles */
+
 body {
   background-color: var(--background);
   color: var(--foreground);
 }
 
-/* ✅ Fix Forms, Inputs, and Labels */
 input,
 textarea,
 select {
@@ -44,7 +42,6 @@ label {
   color: var(--foreground);
 }
 
-/* ✅ Fix Tables */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -63,7 +60,6 @@ td {
   color: var(--foreground);
 }
 
-/* ✅ Fix Buttons */
 button {
   padding: 10px 15px;
   border-radius: 6px;
@@ -71,26 +67,24 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
-/* ✅ Fix Specific Button Colors */
 .btn-primary {
-  background-color: #3b82f6; /* Tailwind `bg-blue-500` */
+  background-color: #3b82f6;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #2563eb; /* Tailwind `hover:bg-blue-600` */
+  background-color: #2563eb;
 }
 
 .btn-secondary {
-  background-color: #6b7280; /* Tailwind `bg-gray-600` */
+  background-color: #6b7280;
   color: white;
 }
 
 .btn-secondary:hover {
-  background-color: #4b5563; /* Tailwind `hover:bg-gray-700` */
+  background-color: #4b5563;
 }
 
-/* ✅ Fix Card / Modal Background */
 .card {
   background-color: var(--background);
   color: var(--foreground);
@@ -99,9 +93,15 @@ button {
   border-radius: 8px;
 }
 
-/* ✅ Ensure Dropdowns & Modals Render Correctly */
 .menu-dropdown,
 .modal {
   z-index: 50;
   position: relative;
+}
+
+
+.profile-picture {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  background-color: transparent !important;
 }
