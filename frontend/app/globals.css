@@ -106,10 +106,14 @@ button {
   filter: none !important;
   border: none !important;
   box-shadow: none !important;
+  display: block;
 }
+
 
 @media (prefers-color-scheme: dark) {
   .profile-picture {
     background-color: transparent !important;
+    mix-blend-mode: normal !important;
+    filter: none !important;
   }
 }
