@@ -160,7 +160,7 @@ const TemplatePage = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Top Bar with Title */}
       <h1 className="text-3xl font-bold text-center">{template?.title}</h1>
-      <p className="text-gray-600 text-center mb-2">{template?.description}</p>
+      <p className="text-foreground text-center mb-2">{template?.description}</p>
 
       {!isAuthenticated ? (
         <ReadOnlyTemplateView template={template} />
@@ -169,7 +169,7 @@ const TemplatePage = () => {
           {/*  Toggle Switch (Only for Owners) */}
           {isOwnerOrAdmin && (
             <div className="flex justify-center items-center gap-2 my-4">
-              <span className="text-gray-700 font-semibold">
+              <span className="text-foreground font-semibold">
                 {template?.isPublic ? "Public" : "Private"}
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
