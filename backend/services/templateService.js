@@ -42,27 +42,25 @@ export const getAllTemplatesService = async (
     return templates.map((template) => ({ ...template, isLikedByUser: false }));
   }
 
-  // Fetch user likes separately
-  const userLikes = userId
-    ? await prisma.like.findMany({
-        where: { userId },
-        select: { templateId: true },
-      })
-    : [];
-
-  const likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
-
-  // Fetch total likes for each template
-  return Promise.all(
+  // Fetch likes for all templates
+  const likesData = await Promise.all(
     templates.map(async (template) => {
       const totalLikes = await countLikes(template.id);
-      return {
-        ...template,
-        isLikedByUser: likedTemplateIds.has(template.id),
-        stats: { totalLikes }, // Ensure stats always contain totalLikes
-      };
+      return { templateId: template.id, totalLikes };
     })
   );
+
+  // Map totalLikes back to the template data
+  const templatesWithLikes = templates.map((template) => {
+    const likesInfo = likesData.find((like) => like.templateId === template.id);
+    return {
+      ...template,
+      stats: { totalLikes: likesInfo ? likesInfo.totalLikes : 0 }, // Ensure totalLikes is always included
+      isLikedByUser: userId ? Boolean(findLike(userId, template.id)) : false, // If user is authenticated, check if they liked it
+    };
+  });
+
+  return templatesWithLikes;
 };
 
 export const getTemplatesByUserService = async (userId) => {

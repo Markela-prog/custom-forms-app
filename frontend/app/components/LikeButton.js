@@ -18,7 +18,9 @@ const LikeButton = ({
     setLikes(initialLikes);
   }, [initialLikes, initialLiked]);
 
-  const handleLike = async () => {
+  const handleLike = async (event) => {
+    event.stopPropagation(); // Prevent click from triggering template redirect
+
     if (!isAuthenticated) {
       alert("You need to be logged in to like a template.");
       return;
@@ -28,7 +30,7 @@ const LikeButton = ({
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/like`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/likes/${templateId}/like`,
         {
           method: "POST",
           headers: {

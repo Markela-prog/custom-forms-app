@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import LikeButton from "./components/LikeButton";
 
 const HomePage = () => {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
   const [templates, setTemplates] = useState([]);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -47,18 +47,25 @@ const HomePage = () => {
         {templates.map((template) => (
           <div
             key={template.id}
-            className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
-            onClick={() => router.push(`/templates/${template.id}`)}
+            className="p-4 border rounded-lg shadow hover:shadow-lg flex flex-col"
           >
-            <h2 className="font-semibold text-lg">{template.title}</h2>
-            <p className="text-gray-500">{template.description}</p>
+            <div
+              className="cursor-pointer flex-grow"
+              onClick={() => router.push(`/templates/${template.id}`)}
+            >
+              <h2 className="font-semibold text-lg">{template.title}</h2>
+              <p className="text-gray-500">{template.description}</p>
+            </div>
 
-            {/* Like Button */}
-            <LikeButton
-              templateId={template.id}
-              initialLikes={template.stats?.totalLikes || 0}
-              initialLiked={template.isLikedByUser}
-            />
+            {/* Separate Like Button - Prevent Redirect */}
+            <div className="mt-2">
+              <LikeButton
+                templateId={template.id}
+                initialLikes={template.stats?.totalLikes || 0}
+                initialLiked={template.isLikedByUser}
+                onClick={(event) => event.stopPropagation()} // Prevent parent div click
+              />
+            </div>
           </div>
         ))}
       </div>
