@@ -6,6 +6,7 @@ import QuestionnaireForm from "@/app/components/QuestionnaireForm";
 import EditTemplateForm from "@/app/components/EditTemplateForm";
 import UserPermissionTable from "@/app/components/UserPermissionTable";
 import ReadOnlyTemplateView from "@/app/components/TemplateView";
+import LikeButton from "@/app/components/LikeButton";
 
 const TemplatePage = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
@@ -168,6 +169,13 @@ const TemplatePage = () => {
       <p className="text-foreground text-center mb-2">
         {template?.description}
       </p>
+      <div className="flex justify-center mt-4">
+        <LikeButton
+          templateId={template?.id}
+          initialLikes={template?.stats?.totalLikes || 0}
+          initialLiked={template?.isLikedByUser}
+        />
+      </div>
 
       {!isAuthenticated ? (
         <ReadOnlyTemplateView template={template} />

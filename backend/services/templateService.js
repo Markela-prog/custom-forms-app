@@ -6,22 +6,42 @@ import {
   deleteTemplate,
   getTemplatesByUser,
 } from "../repositories/templateRepository.js";
+import { findLike } from "../repositories/likeRepository.js";
 
 export const createTemplateService = async (ownerId, templateData) => {
   return await createTemplate({ ...templateData, ownerId });
 };
 
-export const getTemplateByIdService = async (templateId) => {
-  return await getTemplateById(templateId);
+export const getTemplateByIdService = async (templateId, userId) => {
+  const template = await getTemplateById(templateId);
+  if (!template) throw new Error("Template not found");
+
+  // Fetch whether the user has liked this template
+  const userLike = userId ? await findLike(userId, templateId) : null;
+
+  return { ...template, isLikedByUser: Boolean(userLike) };
 };
 
-export const getAllTemplatesService = async (
-  page,
-  pageSize,
-  userId,
-  isAdmin
-) => {
-  return await getAllTemplates(page, pageSize, userId, isAdmin);
+export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) => {
+  const templates = await getAllTemplates(page, pageSize, userId, isAdmin);
+
+  if (!userId) {
+    // If the user is not logged in, return templates without `isLikedByUser`
+    return templates.map((template) => ({ ...template, isLikedByUser: false }));
+  }
+
+  // Fetch user likes separately
+  const userLikes = await prisma.like.findMany({
+    where: { userId },
+    select: { templateId: true },
+  });
+
+  const likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
+
+  return templates.map((template) => ({
+    ...template,
+    isLikedByUser: likedTemplateIds.has(template.id),
+  }));
 };
 
 export const getTemplatesByUserService = async (userId) => {

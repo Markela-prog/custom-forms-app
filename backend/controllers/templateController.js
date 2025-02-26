@@ -20,7 +20,8 @@ export const createTemplateController = async (req, res) => {
 export const getTemplateByIdController = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const template = await getTemplateByIdService(templateId);
+    const userId = req.user?.id || null;
+    const template = await getTemplateByIdService(templateId, userId);
     res.json(template);
   } catch (error) {
     res.status(404).json({ message: error.message });
