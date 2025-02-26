@@ -23,6 +23,7 @@ const HomePage = () => {
         );
 
         if (!response.ok) throw new Error("Failed to load templates");
+
         const data = await response.json();
         setTemplates(data);
       } catch (error) {
@@ -47,23 +48,17 @@ const HomePage = () => {
           <div
             key={template.id}
             className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+            onClick={() => router.push(`/templates/${template.id}`)}
           >
             <h2 className="font-semibold text-lg">{template.title}</h2>
             <p className="text-gray-500">{template.description}</p>
-            
+
             {/* Like Button */}
             <LikeButton
               templateId={template.id}
               initialLikes={template.stats?.totalLikes || 0}
               initialLiked={template.isLikedByUser}
             />
-
-            <button
-              onClick={() => router.push(`/templates/${template.id}`)}
-              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              View Template
-            </button>
           </div>
         ))}
       </div>

@@ -2,11 +2,16 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/authContext";
 
-const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
+const LikeButton = ({ templateId, initialLikes, initialLiked, onLikeUpdate }) => {
   const { isAuthenticated } = useContext(AuthContext);
   const [liked, setLiked] = useState(initialLiked);
   const [likes, setLikes] = useState(initialLikes);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLiked(initialLiked);
+    setLikes(initialLikes);
+  }, [initialLikes, initialLiked]);
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -18,7 +23,7 @@ const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/like`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/likes/${templateId}/like`,
         {
           method: "POST",
           headers: {
@@ -33,6 +38,11 @@ const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
       const data = await response.json();
       setLiked(data.liked);
       setLikes(data.totalLikes);
+
+      // Notify parent component (HomePage) to update UI
+      if (onLikeUpdate) {
+        onLikeUpdate(templateId, data.liked, data.totalLikes);
+      }
     } catch (error) {
       console.error("Error toggling like:", error);
     } finally {
@@ -45,9 +55,7 @@ const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
       onClick={handleLike}
       disabled={loading}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-        liked
-          ? "bg-red-500 text-white"
-          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+        liked ? "bg-red-500 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
       }`}
     >
       {liked ? "❤️" : "🤍"} {likes}

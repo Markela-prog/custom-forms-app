@@ -20,7 +20,9 @@ export const getTemplateByIdService = async (templateId, userId) => {
   // Fetch whether the user has liked this template
   const userLike = userId ? await findLike(userId, templateId) : null;
 
-  return { ...template, isLikedByUser: Boolean(userLike) };
+  const totalLikes = await countLikes(templateId);
+
+  return { ...template, isLikedByUser: Boolean(userLike), totalLikes };
 };
 
 export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) => {
