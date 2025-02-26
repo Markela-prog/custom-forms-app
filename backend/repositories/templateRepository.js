@@ -55,6 +55,7 @@ export const getAllTemplates = async (
       owner: true,
       tags: { include: { tag: true } },
       accessControl: true,
+      stats: true,
     },
   });
 };
