@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "./context/authContext";
 import { useRouter } from "next/navigation";
-import LikeButton from "../components/LikeButton";
+import LikeButton from "./components/LikeButton";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useContext(AuthContext);
