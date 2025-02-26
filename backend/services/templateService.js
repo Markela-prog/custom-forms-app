@@ -17,7 +17,6 @@ export const getTemplateByIdService = async (templateId, userId) => {
   const template = await getTemplateById(templateId);
   if (!template) throw new Error("Template not found");
 
-  // Fetch whether the user has liked this template
   const userLike = userId ? await findLike(userId, templateId) : null;
 
   const totalLikes = await countLikes(templateId);
@@ -38,20 +37,18 @@ export const getAllTemplatesService = async (
   const templates = await getAllTemplates(page, pageSize, userId, isAdmin);
 
   if (!userId) {
-    // If the user is not logged in, return templates without `isLikedByUser`
     return templates.map((template) => ({ ...template, isLikedByUser: false }));
   }
-  // ✅ Fetch total likes for all templates
+
   const likesData = await prisma.templateStats.findMany({
     select: { templateId: true, totalLikes: true },
   });
 
-  // ✅ Convert likesData to a Map for quick lookup
+
   const likesMap = new Map(
     likesData.map((like) => [like.templateId, like.totalLikes])
   );
 
-  // ✅ Fetch user-specific likes only if user is authenticated
   let likedTemplateIds = new Set();
   if (userId) {
     const userLikes = await prisma.like.findMany({

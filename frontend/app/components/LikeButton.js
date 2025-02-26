@@ -14,7 +14,7 @@ const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
   }, [initialLikes, initialLiked]);
 
   const handleLike = async (event) => {
-    event.stopPropagation(); // Prevent click from triggering template redirect
+    event.stopPropagation();
 
     if (!isAuthenticated) {
       alert("You need to be logged in to like a template.");

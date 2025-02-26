@@ -54,11 +54,13 @@ const HomePage = () => {
             <p className="text-gray-500">{template.description}</p>
 
             {/* Like Button */}
+            <div className="mt-2 flex justify-end">
             <LikeButton
               templateId={template.id}
               initialLikes={template.stats?.totalLikes ?? 0}
               initialLiked={isAuthenticated ? template.isLikedByUser : false}
             />
+            </div>
           </div>
         ))}
       </div>
