@@ -156,8 +156,8 @@ model Like {
   templateId String
   userId     String
 
-  template   Template @relation(fields: [templateId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, userId])
 }
