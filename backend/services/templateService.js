@@ -7,6 +7,7 @@ import {
   getTemplatesByUser,
 } from "../repositories/templateRepository.js";
 import { findLike } from "../repositories/likeRepository.js";
+import prisma from "../prisma/prismaClient.js";
 
 export const createTemplateService = async (ownerId, templateData) => {
   return await createTemplate({ ...templateData, ownerId });

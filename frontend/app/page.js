@@ -50,7 +50,7 @@ const HomePage = () => {
           >
             <h2 className="font-semibold text-lg">{template.title}</h2>
             <p className="text-gray-500">{template.description}</p>
-
+            
             {/* Like Button */}
             <LikeButton
               templateId={template.id}
