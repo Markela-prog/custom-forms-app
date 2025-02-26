@@ -57,9 +57,8 @@ const HomePage = () => {
             <div className="mt-2">
               <LikeButton
                 templateId={template.id}
-                initialLikes={template.stats?.totalLikes ?? 0} // Ensure it is always a number
-                initialLiked={isAuthenticated ? template.isLikedByUser : false} // Show user likes only if authenticated
-                onClick={(event) => event.stopPropagation()} // Prevent parent div click
+                initialLikes={template.stats?.totalLikes ?? 0} // Ensure totalLikes is always present
+                initialLiked={isAuthenticated ? template.isLikedByUser : false} // Only show user likes if authenticated
               />
             </div>
           </div>

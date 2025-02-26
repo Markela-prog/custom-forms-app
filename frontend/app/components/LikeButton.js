@@ -2,12 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/authContext";
 
-const LikeButton = ({
-  templateId,
-  initialLikes,
-  initialLiked,
-  onLikeUpdate,
-}) => {
+const LikeButton = ({ templateId, initialLikes, initialLiked }) => {
   const { isAuthenticated } = useContext(AuthContext);
   const [liked, setLiked] = useState(initialLiked);
   const [likes, setLikes] = useState(initialLikes);
@@ -45,11 +40,6 @@ const LikeButton = ({
       const data = await response.json();
       setLiked(data.liked);
       setLikes(data.totalLikes);
-
-      // Notify parent component (HomePage) to update UI
-      if (onLikeUpdate) {
-        onLikeUpdate(templateId, data.liked, data.totalLikes);
-      }
     } catch (error) {
       console.error("Error toggling like:", error);
     } finally {

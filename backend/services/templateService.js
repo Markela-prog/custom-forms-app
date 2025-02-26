@@ -42,14 +42,13 @@ export const getAllTemplatesService = async (
     return templates.map((template) => ({ ...template, isLikedByUser: false }));
   }
   // Fetch total likes for all templates
-  const likesData = await prisma.like.groupBy({
-    by: ["templateId"],
-    _count: { templateId: true }, // Count total likes per template
+  const likesData = await prisma.templateStats.findMany({
+    select: { templateId: true, totalLikes: true },
   });
 
-  // Convert likesData to a Map for faster lookup
+  // Convert likesData to a Map for quick lookup
   const likesMap = new Map(
-    likesData.map((like) => [like.templateId, like._count.templateId])
+    likesData.map((like) => [like.templateId, like.totalLikes])
   );
 
   // Fetch user-specific likes only if user is authenticated
@@ -65,7 +64,7 @@ export const getAllTemplatesService = async (
   return templates.map((template) => ({
     ...template,
     stats: {
-      totalLikes: likesMap.get(template.id) || 0, // Ensure totalLikes is always included
+      totalLikes: likesMap.get(template.id) || 0, // Ensure totalLikes is included
     },
     isLikedByUser: userId ? likedTemplateIds.has(template.id) : false,
   }));
