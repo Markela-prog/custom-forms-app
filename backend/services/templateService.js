@@ -22,10 +22,19 @@ export const getTemplateByIdService = async (templateId, userId) => {
 
   const totalLikes = await countLikes(templateId);
 
-  return { ...template, isLikedByUser: Boolean(userLike), totalLikes };
+  return {
+    ...template,
+    isLikedByUser: Boolean(userLike),
+    stats: { totalLikes },
+  };
 };
 
-export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) => {
+export const getAllTemplatesService = async (
+  page,
+  pageSize,
+  userId,
+  isAdmin
+) => {
   const templates = await getAllTemplates(page, pageSize, userId, isAdmin);
 
   if (!userId) {
@@ -34,17 +43,26 @@ export const getAllTemplatesService = async (page, pageSize, userId, isAdmin) =>
   }
 
   // Fetch user likes separately
-  const userLikes = await prisma.like.findMany({
-    where: { userId },
-    select: { templateId: true },
-  });
+  const userLikes = userId
+    ? await prisma.like.findMany({
+        where: { userId },
+        select: { templateId: true },
+      })
+    : [];
 
   const likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
 
-  return templates.map((template) => ({
-    ...template,
-    isLikedByUser: likedTemplateIds.has(template.id),
-  }));
+  // Fetch total likes for each template
+  return Promise.all(
+    templates.map(async (template) => {
+      const totalLikes = await countLikes(template.id);
+      return {
+        ...template,
+        isLikedByUser: likedTemplateIds.has(template.id),
+        stats: { totalLikes }, // Ensure stats always contain totalLikes
+      };
+    })
+  );
 };
 
 export const getTemplatesByUserService = async (userId) => {

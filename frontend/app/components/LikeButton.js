@@ -2,7 +2,12 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/authContext";
 
-const LikeButton = ({ templateId, initialLikes, initialLiked, onLikeUpdate }) => {
+const LikeButton = ({
+  templateId,
+  initialLikes,
+  initialLiked,
+  onLikeUpdate,
+}) => {
   const { isAuthenticated } = useContext(AuthContext);
   const [liked, setLiked] = useState(initialLiked);
   const [likes, setLikes] = useState(initialLikes);
@@ -23,7 +28,7 @@ const LikeButton = ({ templateId, initialLikes, initialLiked, onLikeUpdate }) =>
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/likes/${templateId}/like`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/templates/${templateId}/like`,
         {
           method: "POST",
           headers: {
@@ -55,7 +60,9 @@ const LikeButton = ({ templateId, initialLikes, initialLiked, onLikeUpdate }) =>
       onClick={handleLike}
       disabled={loading}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-        liked ? "bg-red-500 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+        liked
+          ? "bg-red-500 text-white"
+          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
       }`}
     >
       {liked ? "❤️" : "🤍"} {likes}
