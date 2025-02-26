@@ -41,26 +41,34 @@ export const getAllTemplatesService = async (
     // If the user is not logged in, return templates without `isLikedByUser`
     return templates.map((template) => ({ ...template, isLikedByUser: false }));
   }
-
-  // Fetch likes for all templates
-  const likesData = await Promise.all(
-    templates.map(async (template) => {
-      const totalLikes = await countLikes(template.id);
-      return { templateId: template.id, totalLikes };
-    })
-  );
-
-  // Map totalLikes back to the template data
-  const templatesWithLikes = templates.map((template) => {
-    const likesInfo = likesData.find((like) => like.templateId === template.id);
-    return {
-      ...template,
-      stats: { totalLikes: likesInfo ? likesInfo.totalLikes : 0 }, // Ensure totalLikes is always included
-      isLikedByUser: userId ? Boolean(findLike(userId, template.id)) : false, // If user is authenticated, check if they liked it
-    };
+  // Fetch total likes for all templates
+  const likesData = await prisma.like.groupBy({
+    by: ["templateId"],
+    _count: { templateId: true }, // Count total likes per template
   });
 
-  return templatesWithLikes;
+  // Convert likesData to a Map for faster lookup
+  const likesMap = new Map(
+    likesData.map((like) => [like.templateId, like._count.templateId])
+  );
+
+  // Fetch user-specific likes only if user is authenticated
+  const userLikes = userId
+    ? await prisma.like.findMany({
+        where: { userId },
+        select: { templateId: true },
+      })
+    : [];
+
+  const likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
+
+  return templates.map((template) => ({
+    ...template,
+    stats: {
+      totalLikes: likesMap.get(template.id) || 0, // Ensure totalLikes is always included
+    },
+    isLikedByUser: userId ? likedTemplateIds.has(template.id) : false,
+  }));
 };
 
 export const getTemplatesByUserService = async (userId) => {

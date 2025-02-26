@@ -14,12 +14,8 @@ const HomePage = () => {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/templates`,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          }
+          `${process.env.NEXT_PUBLIC_API_URL}/api/templates`
         );
 
         if (!response.ok) throw new Error("Failed to load templates");
@@ -34,7 +30,7 @@ const HomePage = () => {
     };
 
     fetchTemplates();
-  }, [isAuthenticated]);
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -61,8 +57,8 @@ const HomePage = () => {
             <div className="mt-2">
               <LikeButton
                 templateId={template.id}
-                initialLikes={template.stats?.totalLikes || 0}
-                initialLiked={template.isLikedByUser}
+                initialLikes={template.stats?.totalLikes ?? 0} // Ensure it is always a number
+                initialLiked={isAuthenticated ? template.isLikedByUser : false} // Show user likes only if authenticated
                 onClick={(event) => event.stopPropagation()} // Prevent parent div click
               />
             </div>
