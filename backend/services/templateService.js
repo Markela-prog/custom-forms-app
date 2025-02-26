@@ -52,21 +52,21 @@ export const getAllTemplatesService = async (
   );
 
   // Fetch user-specific likes only if user is authenticated
-  const userLikes = userId
-    ? await prisma.like.findMany({
-        where: { userId },
-        select: { templateId: true },
-      })
-    : [];
-
-  const likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
+  let likedTemplateIds = new Set();
+  if (userId) {
+    const userLikes = await prisma.like.findMany({
+      where: { userId },
+      select: { templateId: true },
+    });
+    likedTemplateIds = new Set(userLikes.map((like) => like.templateId));
+  }
 
   return templates.map((template) => ({
     ...template,
     stats: {
-      totalLikes: likesMap.get(template.id) || 0, // Ensure totalLikes is included
+      totalLikes: likesMap.get(template.id) || 0, // Ensure `totalLikes` is always included
     },
-    isLikedByUser: userId ? likedTemplateIds.has(template.id) : false,
+    isLikedByUser: userId ? likedTemplateIds.has(template.id) : false, // Only return `isLikedByUser` for authenticated users
   }));
 };
 

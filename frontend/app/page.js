@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import LikeButton from "./components/LikeButton";
 
 const HomePage = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const [templates, setTemplates] = useState([]);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -14,8 +14,12 @@ const HomePage = () => {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
+        const token = localStorage.getItem("accessToken");
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/templates`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/templates`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
         );
 
         if (!response.ok) throw new Error("Failed to load templates");
@@ -30,7 +34,7 @@ const HomePage = () => {
     };
 
     fetchTemplates();
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -43,24 +47,18 @@ const HomePage = () => {
         {templates.map((template) => (
           <div
             key={template.id}
-            className="p-4 border rounded-lg shadow hover:shadow-lg flex flex-col"
+            className="p-4 border rounded-lg shadow cursor-pointer hover:shadow-lg"
+            onClick={() => router.push(`/templates/${template.id}`)}
           >
-            <div
-              className="cursor-pointer flex-grow"
-              onClick={() => router.push(`/templates/${template.id}`)}
-            >
-              <h2 className="font-semibold text-lg">{template.title}</h2>
-              <p className="text-gray-500">{template.description}</p>
-            </div>
+            <h2 className="font-semibold text-lg">{template.title}</h2>
+            <p className="text-gray-500">{template.description}</p>
 
-            {/* Separate Like Button - Prevent Redirect */}
-            <div className="mt-2">
-              <LikeButton
-                templateId={template.id}
-                initialLikes={template.stats?.totalLikes ?? 0} // Ensure totalLikes is always present
-                initialLiked={isAuthenticated ? template.isLikedByUser : false} // Only show user likes if authenticated
-              />
-            </div>
+            {/* Like Button */}
+            <LikeButton
+              templateId={template.id}
+              initialLikes={template.stats?.totalLikes ?? 0}
+              initialLiked={isAuthenticated ? template.isLikedByUser : false}
+            />
           </div>
         ))}
       </div>
