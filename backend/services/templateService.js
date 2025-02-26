@@ -41,17 +41,17 @@ export const getAllTemplatesService = async (
     // If the user is not logged in, return templates without `isLikedByUser`
     return templates.map((template) => ({ ...template, isLikedByUser: false }));
   }
-  // Fetch total likes for all templates
+  // ✅ Fetch total likes for all templates
   const likesData = await prisma.templateStats.findMany({
     select: { templateId: true, totalLikes: true },
   });
 
-  // Convert likesData to a Map for quick lookup
+  // ✅ Convert likesData to a Map for quick lookup
   const likesMap = new Map(
     likesData.map((like) => [like.templateId, like.totalLikes])
   );
 
-  // Fetch user-specific likes only if user is authenticated
+  // ✅ Fetch user-specific likes only if user is authenticated
   let likedTemplateIds = new Set();
   if (userId) {
     const userLikes = await prisma.like.findMany({
@@ -64,9 +64,9 @@ export const getAllTemplatesService = async (
   return templates.map((template) => ({
     ...template,
     stats: {
-      totalLikes: likesMap.get(template.id) || 0, // Ensure `totalLikes` is always included
+      totalLikes: likesMap.get(template.id) || 0, 
     },
-    isLikedByUser: userId ? likedTemplateIds.has(template.id) : false, // Only return `isLikedByUser` for authenticated users
+    isLikedByUser: userId ? likedTemplateIds.has(template.id) : false, 
   }));
 };
 
