@@ -21,10 +21,11 @@ const TemplatePage = () => {
   const [submittedForms, setSubmittedForms] = useState([]);
 
   useEffect(() => {
-    if (params?.id) {
+    if (params?.id && params.id !== "create") {
       setTemplateId(params.id);
     }
   }, [params]);
+  
 
   const isOwnerOrAdmin =
     user?.role === "ADMIN" || template?.ownerId === user?.id;
