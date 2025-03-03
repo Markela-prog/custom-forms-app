@@ -14,13 +14,11 @@ import answerRoutes from "./routes/answerRoutes.js";
 import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
-import FileStoreFactory from "session-file-store";
+import cookieParser from "cookie-parser";
 
-const FileStore = FileStoreFactory(session);
 
 dotenv.config();
 
-const fileStoreOptions = {};
 const app = express();
 
 app.use(
@@ -32,6 +30,8 @@ app.use(
   })
 );
 
+app.use(cookieParser());
+
 app.use((req, res, next) => {
   console.log("🔹 [Session Middleware] Current Session:", req.session);
   console.log("🔹 [Session ID]:", req.sessionID);
@@ -40,15 +40,14 @@ app.use((req, res, next) => {
 
 app.use(
   session({
-    store: new FileStore({ path: "./sessions", ttl: 86400 }), // ✅ Store sessions in a folder
     secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24,
+      secure: process.env.NODE_ENV === "production", // Secure in production
+      httpOnly: true, // Prevents JS access
+      sameSite: "lax", // Prevents CSRF issues
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   })
 );
@@ -67,14 +66,6 @@ app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes);
-
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    "script-src 'self' *.salesforce.com 'unsafe-inline'"
-  );
-  next();
-});
 
 app.use("/api/salesforce", salesforceRoutes);
 

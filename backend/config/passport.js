@@ -112,20 +112,14 @@ passport.use(
       scope: ["api", "refresh_token", "id"],
       state: true,
       pkce: true,
-      customHeaders: {
-        "Code-Challenge": CODE_CHALLENGE,
-        "Code-Challenge-Method": "S256",
-      },
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
         console.log("✅ [Salesforce] OAuth Callback Triggered");
-        console.log("🔹 [Params Received]:", params);
         console.log("🔹 [Access Token]:", accessToken);
         console.log("🔹 [Refresh Token]:", refreshToken);
 
         const instanceUrl = params.instance_url;
-        console.log("🔹 [Salesforce Instance URL]:", instanceUrl);
 
         // Fetch Salesforce user details
         const userInfo = await axios.get(
@@ -133,22 +127,14 @@ passport.use(
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
-        console.log("✅ [Salesforce] User Info:", userInfo.data);
+        const salesforceUser = userInfo.data;
 
-        // Store tokens and Salesforce user details in DB
-        await storeSalesforceTokens({
-          userId: profile.id,
-          salesforceId: userInfo.data.user_id,
+        // Store tokens in session
+        return done(null, {
+          salesforceId: salesforceUser.user_id,
           accessToken,
           refreshToken,
           instanceUrl,
-        });
-
-        console.log("✅ [Salesforce] Tokens Stored Successfully");
-
-        return done(null, {
-          id: profile.id,
-          salesforceId: userInfo.data.user_id,
         });
       } catch (error) {
         console.error("❌ [Salesforce OAuth Error]:", error);

@@ -5,9 +5,11 @@ import {
   disconnectSalesforce,
 } from "../services/salesforceService.js";
 import { protect } from "../middleware/authMiddleware.js";
+import cookie from "cookie";
 
 const router = express.Router();
 
+// 🔹 Salesforce OAuth Login
 router.get(
   "/connect",
   (req, res, next) => {
@@ -18,31 +20,38 @@ router.get(
   passport.authenticate("salesforce")
 );
 
+// 🔹 Salesforce OAuth Callback (Store Token in Cookie)
 router.get(
   "/callback",
-  (req, res, next) => {
-    console.log("✅ [Salesforce] Callback Route Hit");
-    console.log("🔹 [Query Params]:", req.query);
-    console.log("🔹 [Session Before Auth]:", req.session);
-    next();
-  },
   passport.authenticate("salesforce", { session: true }),
   (req, res) => {
-    console.log("✅ [Salesforce] Authentication Successful");
-    console.log("🔹 [Authenticated User]:", req.user);
-
-    if (!req.user) {
-      console.error("🚨 [Salesforce Error]: No user in session");
+    if (!req.user || !req.user.accessToken) {
+      console.error("🚨 [Salesforce Error]: No user or accessToken in session");
       return res
         .status(403)
         .json({ message: "Salesforce authentication failed" });
     }
 
+    console.log("✅ [Salesforce] Authentication Successful");
+    console.log("🔹 [Access Token]:", req.user.accessToken);
+
+    // Store the token securely in an HTTP-only cookie
+    res.setHeader(
+      "Set-Cookie",
+      cookie.serialize("salesforceToken", req.user.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 24 * 60 * 60, // 24 hours
+        path: "/",
+      })
+    );
+
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   }
 );
 
-// Create Salesforce Account
+// 🔹 Create Salesforce Account
 router.post("/create-account", protect, async (req, res) => {
   try {
     const result = await createSalesforceAccountAndContact(req.user);
@@ -52,9 +61,20 @@ router.post("/create-account", protect, async (req, res) => {
   }
 });
 
-// Disconnect Salesforce
+// 🔹 Disconnect Salesforce (Clear Cookies)
 router.post("/disconnect", protect, async (req, res) => {
   try {
+    res.setHeader(
+      "Set-Cookie",
+      cookie.serialize("salesforceToken", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: new Date(0),
+        path: "/",
+      })
+    );
+
     await disconnectSalesforce(req.user.id);
     res.json({ message: "Disconnected from Salesforce" });
   } catch (error) {
