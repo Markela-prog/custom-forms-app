@@ -1,5 +1,5 @@
 import express from "express";
-import passport from "../config/salesforceAuth.js";
+import passport from "passport";
 import {
   createSalesforceAccountAndContact,
   disconnectSalesforce,
