@@ -8,22 +8,36 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Salesforce OAuth Login
-router.get("/connect", passport.authenticate("salesforce"));
+router.get(
+  "/connect",
+  (req, res, next) => {
+    console.log("✅ [Salesforce] OAuth Login Initiated");
+    console.log("🔹 [Session Before Login]:", req.session);
+    next();
+  },
+  passport.authenticate("salesforce")
+);
 
-// Salesforce OAuth Callback
 router.get(
   "/callback",
+  (req, res, next) => {
+    console.log("✅ [Salesforce] Callback Route Hit");
+    console.log("🔹 [Query Params]:", req.query);
+    console.log("🔹 [Session Before Auth]:", req.session);
+    next();
+  },
   passport.authenticate("salesforce", { session: true }),
   (req, res) => {
+    console.log("✅ [Salesforce] Authentication Successful");
+    console.log("🔹 [Authenticated User]:", req.user);
+
     if (!req.user) {
-      console.error("🚨 Salesforce authentication failed: No user in session");
+      console.error("🚨 [Salesforce Error]: No user in session");
       return res
         .status(403)
         .json({ message: "Salesforce authentication failed" });
     }
 
-    console.log("✅ Salesforce User Authenticated:", req.user);
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   }
 );

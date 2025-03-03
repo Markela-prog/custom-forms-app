@@ -14,9 +14,8 @@ import answerRoutes from "./routes/answerRoutes.js";
 import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
-import cookieParser from "cookie-parser"; 
+import cookieParser from "cookie-parser";
 import FileStore from "session-file-store";
-
 
 dotenv.config();
 
@@ -31,6 +30,12 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.use((req, res, next) => {
+  console.log("🔹 [Session Middleware] Current Session:", req.session);
+  console.log("🔹 [Session ID]:", req.sessionID);
+  next();
+});
 
 app.use(
   session({
@@ -69,7 +74,6 @@ app.use((req, res, next) => {
   );
   next();
 });
-
 
 app.use("/api/salesforce", salesforceRoutes);
 
