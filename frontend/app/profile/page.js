@@ -16,42 +16,43 @@ const ProfilePage = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
-  const [salesforceConnected, setSalesforceConnected] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    company: "",
+    accountName: "",
+    firstName: "",
+    lastName: "",
+    email: "",
   });
 
-  useEffect(() => {
-    // ✅ Check if user is authenticated with Salesforce
-    fetch("https://custom-forms-app-r0hw.onrender.com/api/salesforce/session", {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => setSalesforceConnected(data.salesforceConnected))
-      .catch(() => setSalesforceConnected(false));
-  }, []);
+  const handleAuthRedirect = () => {
+    window.location.href = "/api/salesforce/login";
+  };
 
-  const handleCreateSalesforceAccount = async () => {
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const salesforceToken = urlParams.get("salesforce_token");
+    const instanceUrl = urlParams.get("instance_url");
+
+    if (!salesforceToken || !instanceUrl) {
+      alert("Please authenticate with Salesforce first.");
+      return;
+    }
+
     try {
-      const response = await fetch(
-        "https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch("/api/salesforce/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, salesforceToken, instanceUrl }),
+      });
+
       const data = await response.json();
-      if (data.error) {
-        alert("Error: " + data.error);
-      } else {
-        alert("✅ Salesforce Account Created! Account ID: " + data.accountId);
-      }
+      if (data.success) alert("Salesforce Account and Contact created!");
+      else alert("Failed to create Salesforce account.");
     } catch (error) {
-      console.error("Error creating Salesforce account:", error);
+      console.error("Error:", error);
+      alert("Something went wrong.");
     }
   };
 
@@ -207,43 +208,80 @@ const ProfilePage = () => {
           <p className="text-center text-gray-500">No user data found.</p>
         )}
 
-        {salesforceConnected ? (
-          <div>
-            <h2>Create Salesforce Account</h2>
-            <input
-              type="text"
-              placeholder="Full Name"
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Phone"
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Company"
-              onChange={(e) =>
-                setFormData({ ...formData, company: e.target.value })
-              }
-            />
-            <button onClick={handleCreateSalesforceAccount}>
-              Create Account
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() =>
-              (window.location.href =
-                "https://custom-forms-app-r0hw.onrender.com/api/salesforce")
-            }
+        <button
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={handleAuthRedirect}
+        >
+          Connect to Salesforce
+        </button>
+
+        <button
+          className="mt-4 ml-2 px-4 py-2 bg-green-600 text-white rounded"
+          onClick={() => setShowForm(true)}
+        >
+          Create Salesforce Account
+        </button>
+
+        {showForm && (
+          <form
+            className="mt-4 p-4 border rounded bg-gray-100"
+            onSubmit={handleFormSubmit}
           >
-            Connect to Salesforce
-          </button>
+            <div className="mb-2">
+              <label className="block font-medium">Account Name</label>
+              <input
+                type="text"
+                className="border p-2 w-full"
+                required
+                onChange={(e) =>
+                  setFormData({ ...formData, accountName: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="block font-medium">First Name</label>
+              <input
+                type="text"
+                className="border p-2 w-full"
+                required
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="block font-medium">Last Name</label>
+              <input
+                type="text"
+                className="border p-2 w-full"
+                required
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mb-2">
+              <label className="block font-medium">Email</label>
+              <input
+                type="email"
+                className="border p-2 w-full"
+                required
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+            >
+              Submit
+            </button>
+          </form>
         )}
       </div>
     </AuthGuard>
