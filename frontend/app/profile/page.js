@@ -25,7 +25,7 @@ const ProfilePage = () => {
   });
 
   const handleAuthRedirect = () => {
-    window.location.href = "/api/salesforce/login";
+    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
   };
 
   const handleFormSubmit = async (e) => {
@@ -41,7 +41,7 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await fetch("/api/salesforce/create-account", {
+      const response = await fetch("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, salesforceToken, instanceUrl }),
