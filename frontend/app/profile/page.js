@@ -24,17 +24,14 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    // ✅ Check if user has a Salesforce session
-    axios
-      .get("https://custom-forms-app-r0hw.onrender.com/api/salesforce/session")
-      .then((res) => setSalesforceConnected(true))
+    // ✅ Check if user is authenticated with Salesforce
+    fetch("https://custom-forms-app-r0hw.onrender.com/api/salesforce/session", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => setSalesforceConnected(data.salesforceConnected))
       .catch(() => setSalesforceConnected(false));
   }, []);
-
-  const handleConnectSalesforce = () => {
-    window.location.href =
-      "https://custom-forms-app-r0hw.onrender.com/api/salesforce";
-  };
 
   const handleCreateSalesforceAccount = async () => {
     try {
@@ -42,11 +39,17 @@ const ProfilePage = () => {
         "https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account",
         {
           method: "POST",
-          credentials: "include", // Important to send cookies
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(formData),
         }
       );
       const data = await response.json();
-      console.log("Salesforce Account Created:", data);
+      if (data.error) {
+        alert("Error: " + data.error);
+      } else {
+        alert("✅ Salesforce Account Created! Account ID: " + data.accountId);
+      }
     } catch (error) {
       console.error("Error creating Salesforce account:", error);
     }
@@ -228,10 +231,17 @@ const ProfilePage = () => {
                 setFormData({ ...formData, company: e.target.value })
               }
             />
-            <button onClick={handleCreateSalesforceAccount}>Create Account</button>
+            <button onClick={handleCreateSalesforceAccount}>
+              Create Account
+            </button>
           </div>
         ) : (
-          <button onClick={handleConnectSalesforce}>
+          <button
+            onClick={() =>
+              (window.location.href =
+                "https://custom-forms-app-r0hw.onrender.com/api/salesforce")
+            }
+          >
             Connect to Salesforce
           </button>
         )}
