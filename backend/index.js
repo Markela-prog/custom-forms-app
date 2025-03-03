@@ -33,13 +33,14 @@ app.use(cookieParser());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq", // 🔹 Secure with ENV
+    secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq",
     resave: false,
-    saveUninitialized: true,
-    cookie: { 
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // Secure in production
+      httpOnly: true, // Prevent XSS attacks
+      sameSite: "lax", // Allows cross-site authentication
+      maxAge: 1000 * 60 * 60 * 24, // 1 day session lifespan
     },
   })
 );
