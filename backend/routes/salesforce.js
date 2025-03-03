@@ -3,6 +3,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import prisma from "../prisma/prismaClient.js";
+import { protect } from "../middleware/authMiddleware";
 
 dotenv.config();
 
@@ -24,7 +25,9 @@ const generateCodeChallenge = (codeVerifier) => {
 };
 
 // Step 1: Redirect to Salesforce for OAuth authentication
-router.get("/login", (req, res) => {
+router.get("/login", protect, (req, res) => {
+  const userId = req.user.id;
+
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
@@ -32,19 +35,20 @@ router.get("/login", (req, res) => {
 
   const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
     SALESFORCE_REDIRECT_URI
-  )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full`;
+  )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full&state=${userId}`;
   res.redirect(authUrl);
 });
 
 router.get("/callback", async (req, res) => {
-  const { code, error } = req.query;
-  if (error) return res.status(400).send(`Salesforce OAuth Error: ${error}`);
+  const { code, state } = req.query;
+
+  if (!state) return res.status(400).send("Missing user ID.");
+  const userId = state; // User ID passed from `/login`
 
   const codeVerifier = req.session.codeVerifier;
   if (!codeVerifier) return res.status(400).send("Missing Code Verifier.");
 
   try {
-    // Exchange Code for Access Token
     const tokenResponse = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -58,10 +62,6 @@ router.get("/callback", async (req, res) => {
     );
 
     const { access_token, instance_url } = tokenResponse.data;
-
-    // Retrieve the authenticated user (you need to adjust this logic)
-    const userId = req.session.userId; // Assuming user ID is stored in session
-    if (!userId) return res.status(401).send("User not authenticated.");
 
     // Save tokens to user table
     await prisma.user.update({

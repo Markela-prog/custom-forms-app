@@ -24,9 +24,25 @@ const ProfilePage = () => {
     email: "",
   });
 
-  const handleAuthRedirect = () => {
-    window.location.href =
-      "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
+  const handleAuthRedirect = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token || !user?.id) {
+      alert("User must be logged in.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `https://custom-forms-app-r0hw.onrender.com/api/salesforce/login`,
+        { headers: { Authorization: `Bearer ${token}` } } // ✅ Send JWT token
+      );
+
+      window.location.href = response.data.redirectUrl;
+    } catch (error) {
+      console.error("Salesforce Auth Error:", error);
+      alert("Failed to start Salesforce authentication.");
+    }
   };
 
   const handleFormSubmit = async (e) => {
@@ -38,11 +54,14 @@ const ProfilePage = () => {
     }
 
     try {
-      const response = await axios.post("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", {
-        ...formData,
-        salesforceToken: user.salesforceAccessToken,
-        instanceUrl: user.salesforceInstanceUrl,
-      });
+      const response = await axios.post(
+        "https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account",
+        {
+          ...formData,
+          salesforceToken: user.salesforceAccessToken,
+          instanceUrl: user.salesforceInstanceUrl,
+        }
+      );
 
       if (response.data.success) {
         alert("Salesforce Account and Contact created!");
