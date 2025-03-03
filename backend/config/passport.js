@@ -94,6 +94,11 @@ passport.deserializeUser(async (userData, done) => {
   done(null, user);
 });
 
+// Generate PKCE challenge and verifier
+const pkce = pkceChallenge();
+const CODE_VERIFIER = pkce.code_verifier;
+const CODE_CHALLENGE = pkce.code_challenge;
+
 passport.use(
   "salesforce",
   new OAuth2Strategy(
@@ -104,6 +109,8 @@ passport.use(
       clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
       callbackURL: process.env.SALESFORCE_REDIRECT_URI,
       scope: ["api", "refresh_token", "id"],
+      state: true, // Enable state validation
+      pkce: true, // Enable PKCE
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
@@ -140,5 +147,13 @@ passport.use(
     }
   )
 );
+
+// Inject PKCE challenge parameters dynamically
+passport.authenticate("salesforce", {
+  session: false,
+  state: true, // Ensures state validation
+  codeChallenge: CODE_CHALLENGE, // Add PKCE challenge
+  codeChallengeMethod: "S256", // Use SHA256 hashing for PKCE
+});
 
 export default passport;
