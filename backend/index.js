@@ -13,20 +13,11 @@ import formRoutes from "./routes/formRoutes.js";
 import answerRoutes from "./routes/answerRoutes.js";
 import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
-import salesforce from "./routes/salesforceRoutes.js";
+import salesforceRoutes from "./routes/salesforceRoutes.js";
 
 dotenv.config();
 
 const app = express();
-
-app.use(
-  session({
-    secret: "S8qj8O14mseeYz3ImiWecdmf8tFEVe0P",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
 
 app.use(
   cors({
@@ -50,7 +41,7 @@ app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes);
-app.use("/api/salesforce", salesforce);
+app.use("/api/salesforce", salesforceRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
