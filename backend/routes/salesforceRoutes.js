@@ -16,6 +16,14 @@ router.get(
   "/callback",
   passport.authenticate("salesforce", { session: true }),
   (req, res) => {
+    if (!req.user) {
+      console.error("🚨 Salesforce authentication failed: No user in session");
+      return res
+        .status(403)
+        .json({ message: "Salesforce authentication failed" });
+    }
+
+    console.log("✅ Salesforce User Authenticated:", req.user);
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   }
 );

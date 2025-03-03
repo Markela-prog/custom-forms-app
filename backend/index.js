@@ -36,7 +36,8 @@ app.use(
     secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq", // 🔹 Secure with ENV
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === "production",
+    cookie: { 
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
     },
