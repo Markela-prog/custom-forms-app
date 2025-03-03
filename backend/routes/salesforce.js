@@ -3,7 +3,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import prisma from "../prisma/prismaClient.js";
-import { protect } from "../middleware/authMiddleware";
+import { protect } from "../middleware/authMiddleware.js";
 
 dotenv.config();
 
