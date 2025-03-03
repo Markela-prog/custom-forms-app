@@ -5,11 +5,24 @@ import dotenv from "dotenv";
 dotenv.config();
 const router = express.Router();
 
+// Function to generate a code verifier (random string)
+function generateCodeVerifier() {
+  return base64url(crypto.randomBytes(32));
+}
+
+// Function to generate a code challenge (SHA-256 hash of code verifier)
+function generateCodeChallenge(codeVerifier) {
+  return base64url(crypto.createHash("sha256").update(codeVerifier).digest());
+}
 
 // Step 1: Redirect User to Salesforce OAuth Login (Using Org Domain)
 router.get("/", (req, res) => {
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}`;
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = generateCodeChallenge(codeVerifier);
 
+  req.session.codeVerifier = codeVerifier;
+
+  const authUrl = `${SALESFORCE_INSTANCE_URL}?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
   res.redirect(authUrl);
 });
 
@@ -21,6 +34,11 @@ router.get("/callback", async (req, res) => {
     return res.status(400).json({ error: "Authorization code is missing" });
   }
 
+  const codeVerifier = req.session.codeVerifier;
+  if (!codeVerifier) {
+    return res.status(400).json({ error: "Missing code_verifier in session" });
+  }
+
   try {
     const response = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
@@ -29,6 +47,7 @@ router.get("/callback", async (req, res) => {
         client_id: process.env.SALESFORCE_CONSUMER_KEY,
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
+        code_verifier: codeVerifier,
         code,
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
