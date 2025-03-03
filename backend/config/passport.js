@@ -110,8 +110,12 @@ passport.use(
       clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
       callbackURL: process.env.SALESFORCE_REDIRECT_URI,
       scope: ["api", "refresh_token", "id"],
-      state: true, // Enable state validation
-      pkce: true, // Enable PKCE
+      state: true,
+      pkce: true,
+      customHeaders: {
+        "Code-Challenge": CODE_CHALLENGE,
+        "Code-Challenge-Method": "S256",
+      },
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
@@ -130,7 +134,7 @@ passport.use(
 
         // Store tokens and Salesforce user details in DB
         await storeSalesforceTokens({
-          userId: profile.id, // Use user ID from session
+          userId: profile.id,
           salesforceId: salesforceUser.user_id,
           accessToken,
           refreshToken,

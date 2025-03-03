@@ -58,6 +58,15 @@ app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes);
 
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "script-src 'self' *.salesforce.com 'unsafe-inline'"
+  );
+  next();
+});
+
+
 app.use("/api/salesforce", salesforceRoutes);
 
 const PORT = process.env.PORT || 5000;
