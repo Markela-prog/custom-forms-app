@@ -24,8 +24,8 @@ router.get("/", (req, res) => {
 
   req.session.codeVerifier = codeVerifier;
 
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
-  
+  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256&prompt=consent`;
+
   res.redirect(authUrl);
 });
 
