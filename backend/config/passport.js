@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { handleOAuthLogin } from "../services/authService.js";
 import dotenv from "dotenv";
+import { storeSalesforceTokens } from "../services/salesforceService.js";
 
 dotenv.config();
 
