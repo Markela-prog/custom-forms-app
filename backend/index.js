@@ -15,9 +15,12 @@ import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
 import cookieParser from "cookie-parser"; 
+import FileStore from "session-file-store";
+
 
 dotenv.config();
 
+const fileStoreOptions = {};
 const app = express();
 
 app.use(
@@ -29,18 +32,17 @@ app.use(
   })
 );
 
-app.use(cookieParser());
-
 app.use(
   session({
+    store: new (FileStore(session))(fileStoreOptions),
     secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Secure in production
-      httpOnly: true, // Prevent XSS attacks
-      sameSite: "lax", // Allows cross-site authentication
-      maxAge: 1000 * 60 * 60 * 24, // 1 day session lifespan
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
