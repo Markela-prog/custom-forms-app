@@ -15,6 +15,33 @@ const ProfilePage = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [salesforceConnected, setSalesforceConnected] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    company: "",
+  });
+
+  useEffect(() => {
+    // ✅ Check if user has a Salesforce session
+    axios
+      .get("/api/salesforce/session")
+      .then((res) => setSalesforceConnected(true))
+      .catch(() => setSalesforceConnected(false));
+  }, []);
+
+  const handleConnectSalesforce = () => {
+    window.location.href = "/api/salesforce";
+  };
+
+  const handleCreateAccount = async () => {
+    try {
+      const res = await axios.post("/api/salesforce/create-account", formData);
+      alert("Salesforce Account Created: " + res.data.id);
+    } catch (error) {
+      alert("Failed to create Salesforce account");
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -166,6 +193,38 @@ const ProfilePage = () => {
           </div>
         ) : (
           <p className="text-center text-gray-500">No user data found.</p>
+        )}
+
+        {salesforceConnected ? (
+          <div>
+            <h2>Create Salesforce Account</h2>
+            <input
+              type="text"
+              placeholder="Full Name"
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Phone"
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Company"
+              onChange={(e) =>
+                setFormData({ ...formData, company: e.target.value })
+              }
+            />
+            <button onClick={handleCreateAccount}>Create Account</button>
+          </div>
+        ) : (
+          <button onClick={handleConnectSalesforce}>
+            Connect to Salesforce
+          </button>
         )}
       </div>
     </AuthGuard>

@@ -19,12 +19,17 @@ function generateCodeChallenge(codeVerifier) {
 
 // Step 1: Redirect User to Salesforce OAuth Login (Using Org Domain)
 router.get("/", (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "User not authenticated" });
+  }
+
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
   req.session.codeVerifier = codeVerifier;
+  req.session.userId = req.user.id; // ✅ Track which user is logging in
 
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256&prompt=consent`;
+  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
   res.redirect(authUrl);
 });
@@ -33,13 +38,8 @@ router.get("/", (req, res) => {
 router.get("/callback", async (req, res) => {
   const { code } = req.query;
 
-  if (!code) {
-    return res.status(400).json({ error: "Authorization code is missing" });
-  }
-
-  const codeVerifier = req.session.codeVerifier;
-  if (!codeVerifier) {
-    return res.status(400).json({ error: "Missing code_verifier in session" });
+  if (!code || !req.session.userId) {
+    return res.status(400).json({ error: "Missing code or user session" });
   }
 
   try {
@@ -50,32 +50,26 @@ router.get("/callback", async (req, res) => {
         client_id: process.env.SALESFORCE_CONSUMER_KEY,
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
-        code_verifier: codeVerifier,
+        code_verifier: req.session.codeVerifier,
         code,
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
-    const { access_token, refresh_token, instance_url } = response.data;
+    const { access_token, instance_url } = response.data;
 
-    // ✅ Store tokens and instance_url in session (or DB)
-    req.session.salesforce = { access_token, refresh_token, instance_url };
-
-    return res.json({
-      message: "✅ Salesforce authentication successful",
+    // ✅ Store with the userId
+    req.session.salesforce = {
       access_token,
       instance_url,
-    });
-  } catch (error) {
-    console.error(
-      "🔴 Salesforce OAuth Error:",
-      error.response?.data || error.message
-    );
+      userId: req.session.userId,
+    };
 
-    return res.status(error.response?.status || 500).json({
-      error: "Failed to exchange authorization code",
-      details: error.response?.data || error.message,
-    });
+    return res.json({ message: "✅ Salesforce authentication successful" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "Failed to exchange authorization code" });
   }
 });
 
@@ -85,39 +79,60 @@ router.get("/callback", async (req, res) => {
  * @access Private (Requires authentication)
  */
 router.post("/create-account", async (req, res) => {
-  const { name, email, phone } = req.body;
-
-  if (!name || !email) {
-    return res.status(400).json({ error: "Name and email are required" });
+  // 🔹 Step 1: Ensure user is authenticated
+  if (!req.user) {
+    return res.status(401).json({ error: "User not authenticated" });
   }
 
-  try {
-    // Get Salesforce access token from session
-    const { access_token, instance_url } = req.session.salesforce || {};
+  // 🔹 Step 2: Get user info from session
+  const { email, username } = req.user; // Assuming `req.user` contains the logged-in user
+  if (!email) {
+    return res
+      .status(400)
+      .json({ error: "User email is required but missing" });
+  }
 
+  // 🔹 Step 3: Get additional data from request body
+  const { name = username || "Anonymous User", phone } = req.body;
+
+  try {
+    // 🔹 Step 4: Get Salesforce access token from session
+    const { access_token, instance_url } = req.session.salesforce || {};
     if (!access_token || !instance_url) {
-      return res.status(401).json({ error: "Not authenticated with Salesforce" });
+      return res
+        .status(401)
+        .json({ error: "Not authenticated with Salesforce" });
     }
 
-    // Step 1: Create Account
+    // 🔹 Step 5: Create Account in Salesforce
     const accountResponse = await axios.post(
       `${instance_url}/services/data/v63.0/sobjects/Account`,
       { Name: name }, // Only name is required for an Account
-      { headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" } }
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
 
     const accountId = accountResponse.data.id;
 
-    // Step 2: Create Contact & Link to Account
+    // 🔹 Step 6: Create Contact & Link to Account
     const contactResponse = await axios.post(
       `${instance_url}/services/data/v63.0/sobjects/Contact`,
       {
-        LastName: name, // Salesforce requires LastName for Contact, using name as fallback
-        Email: email,
+        LastName: name, // Salesforce requires LastName, using name as fallback
+        Email: email, // Auto-filled from logged-in user
         Phone: phone || "", // Optional
         AccountId: accountId, // Link to created Account
       },
-      { headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" } }
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
 
     return res.json({
@@ -126,7 +141,10 @@ router.post("/create-account", async (req, res) => {
       contactId: contactResponse.data.id,
     });
   } catch (error) {
-    console.error("🔴 Salesforce API Error:", error.response?.data || error.message);
+    console.error(
+      "🔴 Salesforce API Error:",
+      error.response?.data || error.message
+    );
     return res.status(500).json({
       error: "Failed to create Account or Contact in Salesforce",
       details: error.response?.data || error.message,
