@@ -21,10 +21,12 @@ const app = express();
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "62g+$9n_s-*_3963wz(xvc5k_9w(1t7b=wkv$o94*-cu1-wcq",
+    secret:
+      process.env.SESSION_SECRET ||
+      "62g+$9n_s-*_3963wz(xvc5k_9w(1t7b=wkv$o94*-cu1-wcq",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Use `true` in production with HTTPS
+    cookie: { secure: false, httpOnly: true, sameSite: "Lax" }, // Use `true` in production with HTTPS
   })
 );
 
@@ -36,7 +38,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 
 app.use(express.json());
 app.use(passport.initialize());
@@ -50,9 +51,8 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
-app.use("/api/likes", likeRoutes)
-app.use('/api/salesforce', salesforceAuth);
-
+app.use("/api/likes", likeRoutes);
+app.use("/api/salesforce", salesforceAuth);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

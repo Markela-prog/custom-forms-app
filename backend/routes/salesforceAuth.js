@@ -152,4 +152,12 @@ router.post("/create-account", async (req, res) => {
   }
 });
 
+router.get("/session", (req, res) => {
+  console.log("Session Data:", req.session.salesforce); // Check logs
+  if (!req.session.salesforce) {
+    return res.status(401).json({ error: "Salesforce session not found" });
+  }
+  res.json(req.session.salesforce);
+});
+
 export default router;

@@ -32,15 +32,23 @@ const ProfilePage = () => {
   }, []);
 
   const handleConnectSalesforce = () => {
-    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce";
+    window.location.href =
+      "https://custom-forms-app-r0hw.onrender.com/api/salesforce";
   };
 
-  const handleCreateAccount = async () => {
+  const handleCreateSalesforceAccount = async () => {
     try {
-      const res = await axios.post("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", formData);
-      alert("Salesforce Account Created: " + res.data.id);
+      const response = await fetch(
+        "https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account",
+        {
+          method: "POST",
+          credentials: "include", // Important to send cookies
+        }
+      );
+      const data = await response.json();
+      console.log("Salesforce Account Created:", data);
     } catch (error) {
-      alert("Failed to create Salesforce account");
+      console.error("Error creating Salesforce account:", error);
     }
   };
 
@@ -220,7 +228,7 @@ const ProfilePage = () => {
                 setFormData({ ...formData, company: e.target.value })
               }
             />
-            <button onClick={handleCreateAccount}>Create Account</button>
+            <button onClick={handleCreateSalesforceAccount}>Create Account</button>
           </div>
         ) : (
           <button onClick={handleConnectSalesforce}>
