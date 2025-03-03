@@ -6,6 +6,7 @@ import ProfilePictureUpload from "../components/ProfilePictureUpload";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import StatusMessage from "../components/StatusMessage";
 import { Pencil } from "lucide-react";
+import axios from "axios";
 
 const ProfilePage = () => {
   const { isAuthenticated } = useContext(AuthContext);
