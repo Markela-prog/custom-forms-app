@@ -14,8 +14,9 @@ import answerRoutes from "./routes/answerRoutes.js";
 import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
-import cookieParser from "cookie-parser";
-import FileStore from "session-file-store";
+import FileStoreFactory from "session-file-store";
+
+const FileStore = FileStoreFactory(session);
 
 dotenv.config();
 
@@ -39,8 +40,8 @@ app.use((req, res, next) => {
 
 app.use(
   session({
-    store: new (FileStore(session))(fileStoreOptions),
-    secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq",
+    store: new FileStore({ path: "./sessions", ttl: 86400 }), // ✅ Store sessions in a folder
+    secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
