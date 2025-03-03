@@ -17,6 +17,16 @@ import salesforceAuth from "./routes/salesforceAuth.js";
 dotenv.config();
 
 const app = express();
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "62g+$9n_s-*_3963wz(xvc5k_9w(1t7b=wkv$o94*-cu1-wcq",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Use `true` in production with HTTPS
+  })
+);
+
 app.use(
   cors({
     origin: ["http://localhost:3000", process.env.FRONTEND_URL],
@@ -25,6 +35,8 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
 app.use(express.json());
 app.use(passport.initialize());
 
