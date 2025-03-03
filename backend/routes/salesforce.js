@@ -15,7 +15,7 @@ const {
 
 // Step 1: Redirect to Salesforce for OAuth authentication
 router.get("/login", (req, res) => {
-  const authUrl = `https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
+  const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
     SALESFORCE_REDIRECT_URI
   )}&scope=full`;
   res.redirect(authUrl);
@@ -28,7 +28,7 @@ router.get("/callback", async (req, res) => {
 
   try {
     const tokenResponse = await axios.post(
-      "https://login.salesforce.com/services/oauth2/token",
+      `${SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
         grant_type: "authorization_code",
         client_id: SALESFORCE_CONSUMER_KEY,
