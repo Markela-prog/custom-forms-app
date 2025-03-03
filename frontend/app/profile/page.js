@@ -26,18 +26,18 @@ const ProfilePage = () => {
   useEffect(() => {
     // ✅ Check if user has a Salesforce session
     axios
-      .get("/api/salesforce/session")
+      .get("https://custom-forms-app-r0hw.onrender.com/api/salesforce/session")
       .then((res) => setSalesforceConnected(true))
       .catch(() => setSalesforceConnected(false));
   }, []);
 
   const handleConnectSalesforce = () => {
-    window.location.href = "/api/salesforce";
+    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce";
   };
 
   const handleCreateAccount = async () => {
     try {
-      const res = await axios.post("/api/salesforce/create-account", formData);
+      const res = await axios.post("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", formData);
       alert("Salesforce Account Created: " + res.data.id);
     } catch (error) {
       alert("Failed to create Salesforce account");
