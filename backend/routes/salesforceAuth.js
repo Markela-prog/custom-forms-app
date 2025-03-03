@@ -1,6 +1,8 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import crypto from "crypto";
+import base64url from "base64url";
 import {
   getUserById,
   updateUserSalesforceToken,
@@ -9,8 +11,28 @@ import {
 dotenv.config();
 const router = express.Router();
 
+function generateCodeVerifier() {
+  return base64url(crypto.randomBytes(32));
+}
+
+function generateCodeChallenge(codeVerifier) {
+  return base64url(crypto.createHash("sha256").update(codeVerifier).digest());
+}
+
 router.get("/", (req, res) => {
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}`;
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = generateCodeChallenge(codeVerifier);
+
+  req.session.codeVerifier = codeVerifier;
+
+  const authUrl =
+    `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize
+    ?response_type=code
+    &client_id=${process.env.SALESFORCE_CONSUMER_KEY}
+    &redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}
+    &code_challenge=${codeChallenge}
+    &code_challenge_method=S256`.replace(/\s+/g, "");
+
   res.redirect(authUrl);
 });
 
@@ -18,6 +40,11 @@ router.get("/callback", async (req, res) => {
   const { code } = req.query;
   if (!code)
     return res.status(400).json({ error: "Authorization code is missing" });
+
+  // Retrieve stored code_verifier
+  const codeVerifier = req.session.codeVerifier;
+  if (!codeVerifier)
+    return res.status(400).json({ error: "Missing code_verifier in session" });
 
   try {
     const response = await axios.post(
@@ -27,6 +54,7 @@ router.get("/callback", async (req, res) => {
         client_id: process.env.SALESFORCE_CONSUMER_KEY,
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
+        code_verifier: codeVerifier, // ✅ PKCE parameter
         code,
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
@@ -34,12 +62,12 @@ router.get("/callback", async (req, res) => {
 
     const { access_token, instance_url } = response.data;
 
-    // Get the authenticated user from session
+    // Get user from session
     const userId = req.session.userId;
     if (!userId)
       return res.status(401).json({ error: "User not authenticated" });
 
-    // ✅ Store Salesforce tokens in the database
+    // ✅ Store tokens in database
     await updateUserSalesforceToken(userId, access_token, instance_url);
 
     return res.json({
@@ -48,6 +76,10 @@ router.get("/callback", async (req, res) => {
       instance_url,
     });
   } catch (error) {
+    console.error(
+      "🔴 Salesforce OAuth Error:",
+      error.response?.data || error.message
+    );
     return res.status(500).json({
       error: "Failed to exchange authorization code",
       details: error.response?.data || error.message,
