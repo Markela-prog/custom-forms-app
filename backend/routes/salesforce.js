@@ -25,8 +25,10 @@ const generateCodeChallenge = (codeVerifier) => {
 };
 
 router.get("/login", protect, (req, res) => {
-  const userId = req.user.id; // Get user ID from protect middleware
+  const userId = req.user.id;
   const token = req.headers.authorization?.split(" ")[1]; // Extract JWT token
+
+  console.log("JWT Token before encoding:", token); // ✅ Debugging
 
   if (!token) {
     return res.status(401).json({ message: "No access token provided" });
@@ -41,6 +43,7 @@ router.get("/login", protect, (req, res) => {
 
   // Encode the user ID and JWT in state
   const state = encodeURIComponent(JSON.stringify({ userId, token }));
+  console.log("Encoded State:", state); // ✅ Debugging
 
   // Redirect user to Salesforce OAuth
   const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
@@ -52,27 +55,30 @@ router.get("/login", protect, (req, res) => {
 
 router.get("/callback", async (req, res) => {
   const { code, state } = req.query;
+
+  console.log("Received State from Salesforce:", state); // ✅ Debugging
+
   if (!state) return res.status(400).send("Missing state parameter.");
 
   // Decode state to extract userId and token
-  const { userId, token } = JSON.parse(decodeURIComponent(state));
-
-  // Verify the JWT access token
   try {
+    const { userId, token } = JSON.parse(decodeURIComponent(state));
+
+    console.log("Extracted JWT Token:", token); // ✅ Debugging
+
+    // Verify the JWT access token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded JWT:", decoded); // ✅ Debugging
+
     if (decoded.id !== userId) {
       return res
         .status(401)
         .json({ message: "Invalid token or user mismatch" });
     }
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
 
-  const codeVerifier = req.session.codeVerifier;
-  if (!codeVerifier) return res.status(400).send("Missing Code Verifier.");
+    const codeVerifier = req.session.codeVerifier;
+    if (!codeVerifier) return res.status(400).send("Missing Code Verifier.");
 
-  try {
     const tokenResponse = await axios.post(
       `${SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -99,10 +105,7 @@ router.get("/callback", async (req, res) => {
     // Redirect back to frontend (WITHOUT exposing tokens in the URL)
     res.redirect(`${process.env.FRONTEND_URL}/profile`);
   } catch (error) {
-    console.error(
-      "Error getting Salesforce token:",
-      error.response?.data || error.message
-    );
+    console.error("Error processing OAuth callback:", error);
     res.status(500).send("Authentication failed.");
   }
 });
