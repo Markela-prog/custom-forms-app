@@ -12,6 +12,7 @@ import formRoutes from "./routes/formRoutes.js";
 import answerRoutes from "./routes/answerRoutes.js";
 import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
+import salesforceAuth from "./routes/salesforceAuth.js";
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes)
-app.use('/api/salesforce', salesforceRoutes);
+app.use('/api/salesforce', salesforceAuth);
 
 
 const PORT = process.env.PORT || 5000;
