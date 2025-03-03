@@ -119,34 +119,39 @@ passport.use(
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
+        console.log("✅ [Salesforce] OAuth Callback Triggered");
+        console.log("🔹 [Params Received]:", params);
+        console.log("🔹 [Access Token]:", accessToken);
+        console.log("🔹 [Refresh Token]:", refreshToken);
+
         const instanceUrl = params.instance_url;
+        console.log("🔹 [Salesforce Instance URL]:", instanceUrl);
 
         // Fetch Salesforce user details
         const userInfo = await axios.get(
           `${instanceUrl}/services/oauth2/userinfo`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
+          { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
-        const salesforceUser = userInfo.data;
-        console.log("✅ Salesforce User Info:", salesforceUser);
+        console.log("✅ [Salesforce] User Info:", userInfo.data);
 
         // Store tokens and Salesforce user details in DB
         await storeSalesforceTokens({
           userId: profile.id,
-          salesforceId: salesforceUser.user_id,
+          salesforceId: userInfo.data.user_id,
           accessToken,
           refreshToken,
           instanceUrl,
         });
 
+        console.log("✅ [Salesforce] Tokens Stored Successfully");
+
         return done(null, {
           id: profile.id,
-          salesforceId: salesforceUser.user_id,
+          salesforceId: userInfo.data.user_id,
         });
       } catch (error) {
-        console.error("❌ Salesforce OAuth Error:", error);
+        console.error("❌ [Salesforce OAuth Error]:", error);
         return done(error, null);
       }
     }
@@ -155,7 +160,7 @@ passport.use(
 
 // Inject PKCE challenge parameters dynamically
 passport.authenticate("salesforce", {
-  session: false,
+  session: true,
   state: true, // Ensures state validation
   codeChallenge: CODE_CHALLENGE, // Add PKCE challenge
   codeChallengeMethod: "S256", // Use SHA256 hashing for PKCE
