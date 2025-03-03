@@ -5,6 +5,7 @@ import { handleOAuthLogin } from "../services/authService.js";
 import dotenv from "dotenv";
 import { storeSalesforceTokens } from "../services/salesforceService.js";
 import { Strategy as OAuth2Strategy } from "passport-oauth2";
+import pkceChallenge from "pkce-challenge";
 
 dotenv.config();
 
