@@ -24,26 +24,10 @@ const ProfilePage = () => {
     email: "",
   });
 
-  const handleAuthRedirect = async () => {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token || !user?.id) {
-      alert("User must be logged in.");
-      return;
-    }
-
-    try {
-      const response = await axios.get(
-        `https://custom-forms-app-r0hw.onrender.com/api/salesforce/login`,
-        { headers: { Authorization: `Bearer ${token}` } } // ✅ Send JWT token
-      );
-
-      window.location.href = response.data.redirectUrl;
-    } catch (error) {
-      console.error("Salesforce Auth Error:", error);
-      alert("Failed to start Salesforce authentication.");
-    }
+  const handleAuthRedirect = () => {
+    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
   };
+  
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
