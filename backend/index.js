@@ -20,6 +20,15 @@ dotenv.config();
 const app = express();
 
 app.use(
+  session({
+    secret: "S8qj8O14mseeYz3ImiWecdmf8tFEVe0P",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
+
+app.use(
   cors({
     origin: ["http://localhost:3000", process.env.FRONTEND_URL],
     credentials: true,
