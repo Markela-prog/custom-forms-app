@@ -24,33 +24,57 @@ const generateCodeChallenge = (codeVerifier) => {
   return crypto.createHash("sha256").update(codeVerifier).digest("base64url");
 };
 
-// Step 1: Redirect to Salesforce for OAuth authentication
 router.get("/login", protect, (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user.id; // Get user ID from protect middleware
+  const token = req.headers.authorization?.split(" ")[1]; // Extract JWT token
 
+  if (!token) {
+    return res.status(401).json({ message: "No access token provided" });
+  }
+
+  // Generate PKCE challenge for OAuth flow
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
+  // Store codeVerifier for later use
   req.session.codeVerifier = codeVerifier;
 
+  // Encode the user ID and JWT in state
+  const state = encodeURIComponent(JSON.stringify({ userId, token }));
+
+  // Redirect user to Salesforce OAuth
   const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
     SALESFORCE_REDIRECT_URI
-  )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full&state=${userId}`;
+  )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full&state=${state}`;
+
   res.redirect(authUrl);
 });
 
 router.get("/callback", async (req, res) => {
   const { code, state } = req.query;
+  if (!state) return res.status(400).send("Missing state parameter.");
 
-  if (!state) return res.status(400).send("Missing user ID.");
-  const userId = state; // User ID passed from `/login`
+  // Decode state to extract userId and token
+  const { userId, token } = JSON.parse(decodeURIComponent(state));
+
+  // Verify the JWT access token
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.id !== userId) {
+      return res
+        .status(401)
+        .json({ message: "Invalid token or user mismatch" });
+    }
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
 
   const codeVerifier = req.session.codeVerifier;
   if (!codeVerifier) return res.status(400).send("Missing Code Verifier.");
 
   try {
     const tokenResponse = await axios.post(
-      `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
+      `${SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
         grant_type: "authorization_code",
         client_id: SALESFORCE_CONSUMER_KEY,
@@ -63,7 +87,7 @@ router.get("/callback", async (req, res) => {
 
     const { access_token, instance_url } = tokenResponse.data;
 
-    // Save tokens to user table
+    // Save Salesforce credentials in the user's database record
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -72,7 +96,7 @@ router.get("/callback", async (req, res) => {
       },
     });
 
-    // Redirect to profile (without tokens in query)
+    // Redirect back to frontend (WITHOUT exposing tokens in the URL)
     res.redirect(`${process.env.FRONTEND_URL}/profile`);
   } catch (error) {
     console.error(

@@ -24,10 +24,22 @@ const ProfilePage = () => {
     email: "",
   });
 
-  const handleAuthRedirect = () => {
-    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
+  const handleAuthRedirect = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token || !user?.id) {
+      alert("User must be logged in.");
+      return;
+    }
+
+    try {
+      // Call backend to initiate OAuth login
+      window.location.href = `https://custom-forms-app-r0hw.onrender.com/api/salesforce/login`;
+    } catch (error) {
+      console.error("Salesforce Auth Error:", error);
+      alert("Failed to start Salesforce authentication.");
+    }
   };
-  
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
