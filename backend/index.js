@@ -41,6 +41,18 @@ app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes);
+
+app.use(passport.session());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "cSzPG8WUW63xoHsLNNC9JIkgHHai9Ohq", // 🔹 Secure with ENV
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" }, // Use secure cookies in production
+  })
+);
+
 app.use("/api/salesforce", salesforceRoutes);
 
 const PORT = process.env.PORT || 5000;
