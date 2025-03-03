@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import prisma from "../prisma/prismaClient.js";
 
 dotenv.config();
 
@@ -36,43 +37,43 @@ router.get("/login", (req, res) => {
 });
 
 router.get("/callback", async (req, res) => {
-  console.log("Salesforce OAuth callback received:", req.query);
+  const { code, error } = req.query;
+  if (error) return res.status(400).send(`Salesforce OAuth Error: ${error}`);
 
-  const { code, error, error_description } = req.query;
-  if (error) {
-    console.error("Salesforce OAuth Error:", error, error_description);
-    return res.status(400).send(`Salesforce OAuth Error: ${error_description}`);
-  }
-
-  if (!code) {
-    return res.status(400).send("Authorization code missing.");
-  }
-
-  // Retrieve the Code Verifier from session (must match the one from /login)
   const codeVerifier = req.session.codeVerifier;
-  if (!codeVerifier) {
-    return res.status(400).send("Missing Code Verifier.");
-  }
+  if (!codeVerifier) return res.status(400).send("Missing Code Verifier.");
 
   try {
+    // Exchange Code for Access Token
     const tokenResponse = await axios.post(
-      "https://markela-dev-ed.develop.my.salesforce.com/services/oauth2/token",
+      `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
         grant_type: "authorization_code",
         client_id: SALESFORCE_CONSUMER_KEY,
         client_secret: SALESFORCE_CONSUMER_SECRET,
         redirect_uri: SALESFORCE_REDIRECT_URI,
         code,
-        code_verifier: codeVerifier, // ✅ Include the Code Verifier
+        code_verifier: codeVerifier,
       })
     );
 
     const { access_token, instance_url } = tokenResponse.data;
-    console.log("Salesforce Access Token Received:", access_token);
 
-    res.redirect(
-      `/profile?salesforce_token=${access_token}&instance_url=${instance_url}`
-    );
+    // Retrieve the authenticated user (you need to adjust this logic)
+    const userId = req.session.userId; // Assuming user ID is stored in session
+    if (!userId) return res.status(401).send("User not authenticated.");
+
+    // Save tokens to user table
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        salesforceAccessToken: access_token,
+        salesforceInstanceUrl: instance_url,
+      },
+    });
+
+    // Redirect to profile (without tokens in query)
+    res.redirect(`${process.env.FRONTEND_URL}/profile`);
   } catch (error) {
     console.error(
       "Error getting Salesforce token:",

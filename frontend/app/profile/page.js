@@ -25,31 +25,30 @@ const ProfilePage = () => {
   });
 
   const handleAuthRedirect = () => {
-    window.location.href = "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
+    window.location.href =
+      "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const salesforceToken = urlParams.get("salesforce_token");
-    const instanceUrl = urlParams.get("instance_url");
-
-    if (!salesforceToken || !instanceUrl) {
+    if (!user.salesforceAccessToken || !user.salesforceInstanceUrl) {
       alert("Please authenticate with Salesforce first.");
       return;
     }
 
     try {
-      const response = await fetch("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, salesforceToken, instanceUrl }),
+      const response = await axios.post("https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account", {
+        ...formData,
+        salesforceToken: user.salesforceAccessToken,
+        instanceUrl: user.salesforceInstanceUrl,
       });
 
-      const data = await response.json();
-      if (data.success) alert("Salesforce Account and Contact created!");
-      else alert("Failed to create Salesforce account.");
+      if (response.data.success) {
+        alert("Salesforce Account and Contact created!");
+      } else {
+        alert("Failed to create Salesforce account.");
+      }
     } catch (error) {
       console.error("Error:", error);
       alert("Something went wrong.");
