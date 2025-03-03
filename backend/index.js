@@ -15,10 +15,10 @@ import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
 import cookieParser from "cookie-parser";
-
+import FileStoreFactory from "session-file-store";
 
 dotenv.config();
-
+const FileStore = FileStoreFactory(session);
 const app = express();
 
 app.use(
@@ -40,13 +40,14 @@ app.use((req, res, next) => {
 
 app.use(
   session({
+    store: new FileStore({ path: "./sessions", ttl: 86400 }), // Persist sessions for 1 day
     secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production", // Secure in production
-      httpOnly: true, // Prevents JS access
-      sameSite: "lax", // Prevents CSRF issues
+      httpOnly: true, // Prevents JavaScript access
+      sameSite: "lax", // Helps prevent CSRF issues
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   })

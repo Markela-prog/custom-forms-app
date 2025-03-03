@@ -20,7 +20,7 @@ router.get(
   passport.authenticate("salesforce")
 );
 
-// 🔹 Salesforce OAuth Callback (Store Token in Cookie)
+// 🔹 Salesforce OAuth Callback (Store Tokens in Session)
 router.get(
   "/callback",
   passport.authenticate("salesforce", { session: true }),
@@ -35,17 +35,10 @@ router.get(
     console.log("✅ [Salesforce] Authentication Successful");
     console.log("🔹 [Access Token]:", req.user.accessToken);
 
-    // Store the token securely in an HTTP-only cookie
-    res.setHeader(
-      "Set-Cookie",
-      cookie.serialize("salesforceToken", req.user.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60, // 24 hours
-        path: "/",
-      })
-    );
+    // Store Salesforce tokens inside the session
+    req.session.salesforceToken = req.user.accessToken;
+    req.session.salesforceId = req.user.salesforceId;
+    req.session.save(); // Ensure the session is saved
 
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   }
@@ -61,19 +54,12 @@ router.post("/create-account", protect, async (req, res) => {
   }
 });
 
-// 🔹 Disconnect Salesforce (Clear Cookies)
+// 🔹 Disconnect Salesforce (Clear Sessions)
 router.post("/disconnect", protect, async (req, res) => {
   try {
-    res.setHeader(
-      "Set-Cookie",
-      cookie.serialize("salesforceToken", "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        expires: new Date(0),
-        path: "/",
-      })
-    );
+    req.session.salesforceToken = null;
+    req.session.salesforceId = null;
+    req.session.save(); // Ensure session updates
 
     await disconnectSalesforce(req.user.id);
     res.json({ message: "Disconnected from Salesforce" });
@@ -82,15 +68,10 @@ router.post("/disconnect", protect, async (req, res) => {
   }
 });
 
-// Check if the user is connected to Salesforce
+// 🔹 Check Salesforce Connection Status
 router.get("/status", protect, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { salesforceId: true },
-    });
-
-    res.json({ connected: !!user.salesforceId });
+    res.json({ connected: !!req.session.salesforceToken });
   } catch (error) {
     console.error("Error checking Salesforce status:", error);
     res.status(500).json({ message: "Failed to check Salesforce status" });
