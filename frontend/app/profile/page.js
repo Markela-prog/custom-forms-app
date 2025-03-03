@@ -16,55 +16,71 @@ const ProfilePage = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    accountName: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-  });
+  const [salesforceConnected, setSalesforceConnected] = useState(false);
 
-  const handleAuthRedirect = async () => {
-    const token = localStorage.getItem("accessToken");
+  useEffect(() => {
+    // Check if the user is connected to Salesforce
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/salesforce-status`, {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => setSalesforceConnected(data.connected))
+      .catch((err) => console.error("Error checking Salesforce status:", err));
+  }, []);
 
-    if (!token || !user?.id) {
-      alert("User must be logged in.");
-      return;
-    }
-
-    console.log("Redirecting user to backend for Salesforce auth...");
-
-    // Redirect to your backend, let the backend handle the OAuth flow
-    window.location.href =
-      "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
+  const handleConnectSalesforce = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/connect`;
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!user.salesforceAccessToken || !user.salesforceInstanceUrl) {
-      alert("Please authenticate with Salesforce first.");
-      return;
-    }
-
+  const handleCreateSalesforceAccount = async () => {
+    setLoading(true);
     try {
-      const response = await axios.post(
-        "https://custom-forms-app-r0hw.onrender.com/api/salesforce/create-account",
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/create-account`,
         {
-          ...formData,
-          salesforceToken: user.salesforceAccessToken,
-          instanceUrl: user.salesforceInstanceUrl,
+          method: "POST",
+          credentials: "include",
         }
       );
 
-      if (response.data.success) {
-        alert("Salesforce Account and Contact created!");
+      const result = await response.json();
+      if (response.ok) {
+        alert(result.message);
+        setSalesforceConnected(true);
       } else {
-        alert("Failed to create Salesforce account.");
+        alert(`Error: ${result.message}`);
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Something went wrong.");
+      console.error("Salesforce Account Creation Error:", error);
+      alert("An error occurred while creating a Salesforce account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnectSalesforce = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/disconnect`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+      if (response.ok) {
+        alert(result.message);
+        setSalesforceConnected(false);
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Salesforce Disconnect Error:", error);
+      alert("An error occurred while disconnecting from Salesforce.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,18 +143,15 @@ const ProfilePage = () => {
         <h1 className="text-2xl font-bold text-center mb-6 text-foreground dark:text-white">
           Profile
         </h1>
-
         {loading && (
           <p className="text-center text-gray-500">Loading profile...</p>
         )}
-
         {statusMessage && (
           <StatusMessage
             message={statusMessage}
             onClose={() => setStatusMessage(null)}
           />
         )}
-
         {user ? (
           <div className="flex flex-col items-center space-y-4">
             {/* Profile Picture */}
@@ -219,82 +232,36 @@ const ProfilePage = () => {
         ) : (
           <p className="text-center text-gray-500">No user data found.</p>
         )}
+        <div className="p-6 bg-white shadow-md rounded-lg max-w-lg mx-auto">
+          <h2 className="text-xl font-bold mb-4">Salesforce Integration</h2>
 
-        <button
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={handleAuthRedirect}
-        >
-          Connect to Salesforce
-        </button>
-
-        <button
-          className="mt-4 ml-2 px-4 py-2 bg-green-600 text-white rounded"
-          onClick={() => setShowForm(true)}
-        >
-          Create Salesforce Account
-        </button>
-
-        {showForm && (
-          <form
-            className="mt-4 p-4 border rounded bg-gray-100"
-            onSubmit={handleFormSubmit}
-          >
-            <div className="mb-2">
-              <label className="block font-medium">Account Name</label>
-              <input
-                type="text"
-                className="border p-2 w-full"
-                required
-                onChange={(e) =>
-                  setFormData({ ...formData, accountName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="mb-2">
-              <label className="block font-medium">First Name</label>
-              <input
-                type="text"
-                className="border p-2 w-full"
-                required
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="mb-2">
-              <label className="block font-medium">Last Name</label>
-              <input
-                type="text"
-                className="border p-2 w-full"
-                required
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="mb-2">
-              <label className="block font-medium">Email</label>
-              <input
-                type="email"
-                className="border p-2 w-full"
-                required
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-            </div>
-
+          {!salesforceConnected ? (
             <button
-              type="submit"
-              className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+              onClick={handleConnectSalesforce}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Submit
+              Connect to Salesforce
             </button>
-          </form>
-        )}
+          ) : (
+            <>
+              <button
+                onClick={handleCreateSalesforceAccount}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-2"
+                disabled={loading}
+              >
+                {loading ? "Syncing..." : "Create Salesforce Account"}
+              </button>
+
+              <button
+                onClick={handleDisconnectSalesforce}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                disabled={loading}
+              >
+                {loading ? "Disconnecting..." : "Disconnect from Salesforce"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </AuthGuard>
   );

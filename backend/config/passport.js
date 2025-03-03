@@ -92,4 +92,51 @@ passport.deserializeUser(async (userData, done) => {
   done(null, user);
 });
 
+passport.use(
+  "salesforce",
+  new OAuth2Strategy(
+    {
+      authorizationURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize`,
+      tokenURL: `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
+      clientID: process.env.SALESFORCE_CONSUMER_KEY,
+      clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
+      callbackURL: process.env.SALESFORCE_REDIRECT_URI,
+      scope: ["api", "refresh_token", "id"],
+    },
+    async (accessToken, refreshToken, params, profile, done) => {
+      try {
+        const instanceUrl = params.instance_url;
+
+        // Fetch Salesforce user details
+        const userInfo = await axios.get(
+          `${instanceUrl}/services/oauth2/userinfo`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        const salesforceUser = userInfo.data;
+        console.log("✅ Salesforce User Info:", salesforceUser);
+
+        // Store tokens and Salesforce user details in DB
+        await storeSalesforceTokens({
+          userId: profile.id, // Use user ID from session
+          salesforceId: salesforceUser.user_id,
+          accessToken,
+          refreshToken,
+          instanceUrl,
+        });
+
+        return done(null, {
+          id: profile.id,
+          salesforceId: salesforceUser.user_id,
+        });
+      } catch (error) {
+        console.error("❌ Salesforce OAuth Error:", error);
+        return done(error, null);
+      }
+    }
+  )
+);
+
 export default passport;

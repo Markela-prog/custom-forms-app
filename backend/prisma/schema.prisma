@@ -28,6 +28,7 @@ model User {
   deletedAt DateTime?
   salesforceAccessToken String?
   salesforceInstanceUrl String?
+  salesforceAccountId     String?
 
   templates Template[]
   forms     Form[]
