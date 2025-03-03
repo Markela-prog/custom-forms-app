@@ -14,7 +14,7 @@ router.get("/connect", passport.authenticate("salesforce"));
 // Salesforce OAuth Callback
 router.get(
   "/callback",
-  passport.authenticate("salesforce", { session: false }),
+  passport.authenticate("salesforce", { session: true }),
   (req, res) => {
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   }
