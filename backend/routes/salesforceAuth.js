@@ -79,4 +79,59 @@ router.get("/callback", async (req, res) => {
   }
 });
 
+/**
+ * @route POST /api/salesforce/create-account
+ * @desc Create an Account and a linked Contact in Salesforce
+ * @access Private (Requires authentication)
+ */
+router.post("/create-account", async (req, res) => {
+  const { name, email, phone } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and email are required" });
+  }
+
+  try {
+    // Get Salesforce access token from session
+    const { access_token, instance_url } = req.session.salesforce || {};
+
+    if (!access_token || !instance_url) {
+      return res.status(401).json({ error: "Not authenticated with Salesforce" });
+    }
+
+    // Step 1: Create Account
+    const accountResponse = await axios.post(
+      `${instance_url}/services/data/v63.0/sobjects/Account`,
+      { Name: name }, // Only name is required for an Account
+      { headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" } }
+    );
+
+    const accountId = accountResponse.data.id;
+
+    // Step 2: Create Contact & Link to Account
+    const contactResponse = await axios.post(
+      `${instance_url}/services/data/v63.0/sobjects/Contact`,
+      {
+        LastName: name, // Salesforce requires LastName for Contact, using name as fallback
+        Email: email,
+        Phone: phone || "", // Optional
+        AccountId: accountId, // Link to created Account
+      },
+      { headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" } }
+    );
+
+    return res.json({
+      message: "✅ Account & Contact created successfully in Salesforce",
+      accountId,
+      contactId: contactResponse.data.id,
+    });
+  } catch (error) {
+    console.error("🔴 Salesforce API Error:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: "Failed to create Account or Contact in Salesforce",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
 export default router;
