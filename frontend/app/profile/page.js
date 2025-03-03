@@ -29,7 +29,7 @@ const ProfilePage = () => {
   }, []);
 
   const handleConnectSalesforce = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URLL}/api/salesforce/connect`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`;
   };
 
   const handleCreateSalesforceAccount = async () => {
