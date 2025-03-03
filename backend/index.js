@@ -37,6 +37,8 @@ app.use("/api/forms", formRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/template-access", templateAccessRoutes);
 app.use("/api/likes", likeRoutes)
+app.use('/api/salesforce', salesforceRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
