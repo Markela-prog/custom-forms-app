@@ -20,7 +20,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     // Check if the user is connected to Salesforce
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/salesforce-status`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/salesforce-status`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -29,14 +29,14 @@ const ProfilePage = () => {
   }, []);
 
   const handleConnectSalesforce = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/connect`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URLL}/api/salesforce/connect`;
   };
 
   const handleCreateSalesforceAccount = async () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/create-account`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/create-account`,
         {
           method: "POST",
           credentials: "include",
