@@ -4,6 +4,7 @@ import { Strategy as GitHubStrategy } from "passport-github2";
 import { handleOAuthLogin } from "../services/authService.js";
 import dotenv from "dotenv";
 import { storeSalesforceTokens } from "../services/salesforceService.js";
+import { Strategy as OAuth2Strategy } from "passport-oauth2";
 
 dotenv.config();
 
