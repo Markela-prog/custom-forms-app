@@ -7,14 +7,14 @@ const router = express.Router();
 
 
 // Step 1: Redirect User to Salesforce OAuth Login (Using Org Domain)
-router.get("/salesforce", (req, res) => {
+router.get("/", (req, res) => {
   const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}`;
 
   res.redirect(authUrl);
 });
 
 // 🔹 Step 2: Handle OAuth Callback & Exchange Code for Access Token
-router.get("/salesforce/callback", async (req, res) => {
+router.get("/callback", async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
