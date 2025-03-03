@@ -32,23 +32,11 @@ const ProfilePage = () => {
       return;
     }
 
-    try {
-      console.log("Sending Token to Backend:", token); // ✅ Debugging
+    console.log("Redirecting user to backend for Salesforce auth...");
 
-      const response = await axios.get(
-        "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login",
-        {
-          headers: { Authorization: `Bearer ${token}` }, // ✅ Ensure token is sent
-          withCredentials: true, // ✅ Ensure cookies are included (important for sessions)
-        }
-      );
-
-      console.log("Redirecting to:", response.data.redirectUrl); // ✅ Debugging
-      window.location.href = response.data.redirectUrl;
-    } catch (error) {
-      console.error("Salesforce Auth Error:", error);
-      alert("Failed to start Salesforce authentication.");
-    }
+    // Redirect to your backend, let the backend handle the OAuth flow
+    window.location.href =
+      "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login";
   };
 
   const handleFormSubmit = async (e) => {

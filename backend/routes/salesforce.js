@@ -24,34 +24,38 @@ const generateCodeChallenge = (codeVerifier) => {
   return crypto.createHash("sha256").update(codeVerifier).digest("base64url");
 };
 
-router.get("/login", protect, (req, res) => {
-  const userId = req.user.id;
-  const token = req.headers.authorization?.split(" ")[1]; // Extract JWT token
+router.get("/login", protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const token = req.headers.authorization?.split(" ")[1]; // Extract JWT
 
-  console.log("Authorization Header:", req.headers.authorization); // ✅ Debugging
-  console.log("JWT Token in Backend:", token); // ✅ Debugging
+    if (!token) {
+      return res.status(401).json({ message: "No access token provided" });
+    }
 
-  if (!token) {
-    return res.status(401).json({ message: "No access token provided" });
+    console.log("JWT Token in Backend:", token);
+
+    // Generate PKCE challenge
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = generateCodeChallenge(codeVerifier);
+
+    req.session.codeVerifier = codeVerifier;
+
+    // Encode the user ID and JWT in state
+    const state = encodeURIComponent(JSON.stringify({ userId, token }));
+    console.log("Encoded State:", state);
+
+    // Construct the Salesforce OAuth URL
+    const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
+      SALESFORCE_REDIRECT_URI
+    )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full&state=${state}`;
+
+    // Instead of sending JSON, respond with a **redirect**
+    res.redirect(authUrl);
+  } catch (error) {
+    console.error("Error in Salesforce Login:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  // Generate PKCE challenge for OAuth flow
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
-
-  // Store codeVerifier for later use
-  req.session.codeVerifier = codeVerifier;
-
-  // Encode the user ID and JWT in state
-  const state = encodeURIComponent(JSON.stringify({ userId, token }));
-  console.log("Encoded State:", state); // ✅ Debugging
-
-  // Redirect user to Salesforce OAuth
-  const authUrl = `${SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${SALESFORCE_CONSUMER_KEY}&redirect_uri=${encodeURIComponent(
-    SALESFORCE_REDIRECT_URI
-  )}&code_challenge=${codeChallenge}&code_challenge_method=S256&scope=full&state=${state}`;
-
-  res.redirect(authUrl);
 });
 
 router.get("/callback", async (req, res) => {
