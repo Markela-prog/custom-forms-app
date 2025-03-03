@@ -28,7 +28,8 @@ router.get("/login", protect, (req, res) => {
   const userId = req.user.id;
   const token = req.headers.authorization?.split(" ")[1]; // Extract JWT token
 
-  console.log("JWT Token before encoding:", token); // ✅ Debugging
+  console.log("Authorization Header:", req.headers.authorization); // ✅ Debugging
+  console.log("JWT Token in Backend:", token); // ✅ Debugging
 
   if (!token) {
     return res.status(401).json({ message: "No access token provided" });

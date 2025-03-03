@@ -39,6 +39,7 @@ const ProfilePage = () => {
         "https://custom-forms-app-r0hw.onrender.com/api/salesforce/login",
         {
           headers: { Authorization: `Bearer ${token}` }, // ✅ Ensure token is sent
+          withCredentials: true, // ✅ Ensure cookies are included (important for sessions)
         }
       );
 
