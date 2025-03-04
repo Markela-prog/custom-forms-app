@@ -61,3 +61,21 @@ export const disconnectSalesforce = async (userId) => {
     },
   });
 };
+
+// ✅ Create Account and Contact in Salesforce
+export const createSalesforceAccountAndContact = async (user) => {
+  const accessToken = await refreshSalesforceToken(user.id);
+  const instanceUrl = user.salesforceInstanceUrl;
+
+  // Create Account
+  const { data: account } = await axios.post(
+    `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
+    { Name: user.companyName || "Unknown Company" },
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+
+  return {
+    accountId: account.id,
+    message: "Salesforce account created successfully",
+  };
+};
