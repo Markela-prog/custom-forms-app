@@ -150,4 +150,11 @@ passport.use(
   )
 );
 
+passport.authenticate("salesforce", {
+  session: true,
+  state: true, // Ensures state validation
+  codeChallenge: CODE_CHALLENGE, // Add PKCE challenge
+  codeChallengeMethod: "S256", // Use SHA256 hashing for PKCE
+});
+
 export default passport;

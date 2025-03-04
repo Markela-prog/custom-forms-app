@@ -6,11 +6,20 @@ import {
   createSalesforceAccountAndContact,
   disconnectSalesforce,
 } from "../services/salesforceService.js";
+import pkceChallenge from "pkce-challenge";
 
 const router = express.Router();
 
-// ✅ Start OAuth flow
-router.get("/connect", passport.authenticate("salesforce"));
+const pkce = pkceChallenge();
+const CODE_VERIFIER = pkce.code_verifier;
+const CODE_CHALLENGE = pkce.code_challenge;
+
+router.get("/connect", (req, res) => {
+  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256`;
+
+  console.log("✅ [Salesforce] Redirecting to Authorization URL:", authUrl);
+  res.redirect(authUrl);
+});
 
 // ✅ OAuth Callback Route
 router.get("/callback", async (req, res) => {
@@ -25,7 +34,7 @@ router.get("/callback", async (req, res) => {
   }
 
   try {
-    // Exchange Code for Access Token
+    // Exchange Authorization Code for Access Token
     const { data: tokenResponse } = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -34,6 +43,7 @@ router.get("/callback", async (req, res) => {
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
         code: req.query.code,
+        code_verifier: CODE_VERIFIER, // ✅ Required for PKCE
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
