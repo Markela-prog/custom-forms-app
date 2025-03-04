@@ -1,29 +1,31 @@
 import express from "express";
-import passport from "passport";
 import axios from "axios";
+import pkceChallenge from "pkce-challenge";
+import passport from "passport";
 import { protect } from "../middleware/authMiddleware.js";
 import {
   createSalesforceAccountAndContact,
   disconnectSalesforce,
 } from "../services/salesforceService.js";
-import pkceChallenge from "pkce-challenge";
 
 const router = express.Router();
 
+// ✅ Step 1: Start OAuth flow (Salesforce Login)
 router.get("/connect", (req, res) => {
-  // 🔹 Generate PKCE Challenge (Only Once)
+  // Generate PKCE Challenge
   const pkce = pkceChallenge();
   req.session.code_verifier = pkce.code_verifier;
   req.session.code_challenge = pkce.code_challenge;
   req.session.save(); // Save session
 
-  // 🔹 Redirect to Salesforce Auth URL with PKCE
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
+  // Redirect to Salesforce Auth URL with PKCE
+  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${pkce.code_challenge}&code_challenge_method=S256`;
 
   console.log("✅ [Salesforce] Redirecting to Authorization URL:", authUrl);
   res.redirect(authUrl);
 });
-// ✅ OAuth Callback Route
+
+// ✅ Step 2: OAuth Callback Route
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
   console.log("🔹 [Query Params]:", req.query);
@@ -35,7 +37,7 @@ router.get("/callback", async (req, res) => {
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
 
-  // 🔹 Retrieve `code_verifier` from session
+  // Retrieve `code_verifier` from session
   const codeVerifier = req.session.code_verifier;
   if (!codeVerifier) {
     console.error("🚨 [Salesforce Error]: Missing code_verifier in session");
@@ -43,7 +45,7 @@ router.get("/callback", async (req, res) => {
   }
 
   try {
-    // 🔹 Exchange Authorization Code for Access Token
+    // Exchange Authorization Code for Access Token
     const { data: tokenResponse } = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -52,7 +54,7 @@ router.get("/callback", async (req, res) => {
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
         code: req.query.code,
-        code_verifier: codeVerifier, // ✅ Send stored verifier
+        code_verifier: codeVerifier, // ✅ Use stored verifier
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );

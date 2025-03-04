@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// ✅ Store Salesforce Tokens
+// ✅ Store Salesforce Tokens in Database
 export const storeSalesforceTokens = async ({
   userId,
   salesforceId,
@@ -23,7 +23,7 @@ export const storeSalesforceTokens = async ({
   });
 };
 
-// ✅ Refresh Token
+// ✅ Refresh Salesforce Access Token
 export const refreshSalesforceToken = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -49,32 +49,15 @@ export const refreshSalesforceToken = async (userId) => {
   });
 };
 
-// ✅ Create Account and Contact in Salesforce
-export const createSalesforceAccountAndContact = async (user) => {
-  const accessToken = await refreshSalesforceToken(user.id);
-  const instanceUrl = user.salesforceInstanceUrl;
-
-  // Create Account
-  const { data: account } = await axios.post(
-    `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
-    { Name: user.companyName || "Unknown Company" },
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-
-  return {
-    accountId: account.id,
-    message: "Salesforce account created successfully",
-  };
-};
-
+// ✅ Disconnect Salesforce Account
 export const disconnectSalesforce = async (userId) => {
-    return await prisma.user.update({
-      where: { id: userId },
-      data: {
-        salesforceId: null,
-        salesforceAccessToken: null,
-        salesforceRefreshToken: null,
-        salesforceInstanceUrl: null,
-      },
-    });
-  };
+  return await prisma.user.update({
+    where: { id: userId },
+    data: {
+      salesforceId: null,
+      salesforceAccessToken: null,
+      salesforceRefreshToken: null,
+      salesforceInstanceUrl: null,
+    },
+  });
+};

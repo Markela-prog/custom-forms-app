@@ -5,15 +5,10 @@ import { handleOAuthLogin } from "../services/authService.js";
 import dotenv from "dotenv";
 import { storeSalesforceTokens } from "../services/salesforceService.js";
 import { Strategy as OAuth2Strategy } from "passport-oauth2";
-import pkceChallenge from "pkce-challenge";
 import prisma from "../prisma/prismaClient.js";
 import axios from "axios";
 
 dotenv.config();
-
-const pkce = pkceChallenge();
-const CODE_VERIFIER = pkce.code_verifier;
-const CODE_CHALLENGE = pkce.code_challenge;
 
 const commonOAuthStrategyHandler =
   (provider) => async (accessToken, refreshToken, profile, done) => {
@@ -111,26 +106,23 @@ passport.use(
       clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
       callbackURL: process.env.SALESFORCE_REDIRECT_URI,
       scope: ["api", "refresh_token", "id"],
-      state: true,
-      customHeaders: {
-        "Code-Challenge": CODE_CHALLENGE,
-        "Code-Challenge-Method": "S256",
-      },
+      state: true, // Enable state parameter for security
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
         console.log("✅ [Salesforce] OAuth Callback Triggered");
 
         const instanceUrl = process.env.SALESFORCE_INSTANCE_URL;
-        const userInfoResponse = await axios.get(
+
+        // Fetch user info from Salesforce
+        const { data: salesforceUser } = await axios.get(
           `${instanceUrl}/services/oauth2/userinfo`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
-        const salesforceUser = userInfoResponse.data;
-
+        // Store tokens in the database
         await storeSalesforceTokens({
-          userId: profile.id, // Fix: Use correct user ID
+          userId: profile.id,
           salesforceId: salesforceUser.user_id,
           accessToken,
           refreshToken,
@@ -138,6 +130,7 @@ passport.use(
         });
 
         console.log("✅ [Salesforce] Tokens Stored Successfully");
+
         return done(null, {
           salesforceId: salesforceUser.user_id,
           accessToken,
