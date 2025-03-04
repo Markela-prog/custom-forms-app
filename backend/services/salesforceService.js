@@ -66,3 +66,15 @@ export const createSalesforceAccountAndContact = async (user) => {
     message: "Salesforce account created successfully",
   };
 };
+
+export const disconnectSalesforce = async (userId) => {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        salesforceId: null,
+        salesforceAccessToken: null,
+        salesforceRefreshToken: null,
+        salesforceInstanceUrl: null,
+      },
+    });
+  };
