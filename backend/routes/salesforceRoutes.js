@@ -11,27 +11,34 @@ import {
 const router = express.Router();
 
 router.get("/connect", (req, res) => {
-  // Generate PKCE Challenge
-  const pkce = pkceChallenge();
+  try {
+    // ✅ Generate PKCE Challenge & Debug
+    const pkce = pkceChallenge();
+    console.log("✅ [PKCE] Generated Code Verifier:", pkce.code_verifier);
+    console.log("✅ [PKCE] Generated Code Challenge:", pkce.code_challenge);
 
-  // ✅ Store PKCE details in session
-  req.session.code_verifier = pkce.code_verifier;
-  req.session.code_challenge = pkce.code_challenge;
+    // ✅ Store in session
+    req.session.code_verifier = pkce.code_verifier;
+    req.session.code_challenge = pkce.code_challenge;
 
-  req.session.save((err) => {
-    if (err) {
-      console.error("🚨 Error saving session:", err);
-      return res.status(500).json({ message: "Session save failed" });
-    }
+    req.session.save((err) => {
+      if (err) {
+        console.error("🚨 [Salesforce Error] Session Save Failed:", err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
 
-    console.log("✅ [Salesforce] Session Before Redirect:", req.session);
+      console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
-    // ✅ Redirect to Salesforce Auth URL
-    const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
+      // ✅ Redirect to Salesforce Auth URL
+      const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
 
-    console.log("✅ [Salesforce] Redirecting to:", authUrl);
-    res.redirect(authUrl);
-  });
+      console.log("✅ [Salesforce] Redirecting to:", authUrl);
+      res.redirect(authUrl);
+    });
+  } catch (error) {
+    console.error("🚨 [PKCE Generation Error]:", error);
+    return res.status(500).json({ message: "PKCE generation failed" });
+  }
 });
 
 router.get("/callback", async (req, res) => {
