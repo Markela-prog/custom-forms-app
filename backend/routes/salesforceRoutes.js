@@ -1,50 +1,58 @@
 import express from "express";
 import passport from "passport";
+import axios from "axios";
+import { protect } from "../middleware/authMiddleware.js";
 import {
   createSalesforceAccountAndContact,
   disconnectSalesforce,
 } from "../services/salesforceService.js";
-import { protect } from "../middleware/authMiddleware.js";
-import cookie from "cookie";
 
 const router = express.Router();
 
-// 🔹 Salesforce OAuth Login
-router.get(
-  "/connect",
-  (req, res, next) => {
-    console.log("✅ [Salesforce] OAuth Login Initiated");
-    console.log("🔹 [Session Before Login]:", req.session);
-    next();
-  },
-  passport.authenticate("salesforce")
-);
+// ✅ Start OAuth flow
+router.get("/connect", passport.authenticate("salesforce"));
 
-// 🔹 Salesforce OAuth Callback (Store Tokens in Session)
-router.get(
-  "/callback",
-  passport.authenticate("salesforce", { session: true }),
-  (req, res) => {
-    if (!req.user || !req.user.accessToken) {
-      console.error("🚨 [Salesforce Error]: No user or accessToken in session");
-      return res
-        .status(403)
-        .json({ message: "Salesforce authentication failed" });
-    }
+// ✅ OAuth Callback Route
+router.get("/callback", async (req, res) => {
+  console.log("✅ [Salesforce] Callback Hit");
+  console.log("🔹 [Query Params]:", req.query);
 
-    console.log("✅ [Salesforce] Authentication Successful");
-    console.log("🔹 [Access Token]:", req.user.accessToken);
+  if (!req.query.code) {
+    console.error("🚨 [Salesforce Error]: No `code` received");
+    return res
+      .status(400)
+      .json({ message: "Salesforce OAuth failed: No code received" });
+  }
 
-    // Store Salesforce tokens inside the session
-    req.session.salesforceToken = req.user.accessToken;
-    req.session.salesforceId = req.user.salesforceId;
-    req.session.save(); // Ensure the session is saved
+  try {
+    // Exchange Code for Access Token
+    const { data: tokenResponse } = await axios.post(
+      `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: process.env.SALESFORCE_CONSUMER_KEY,
+        client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
+        redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
+        code: req.query.code,
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    console.log("✅ [Salesforce] Access Token:", tokenResponse.access_token);
 
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
+  } catch (error) {
+    console.error(
+      "❌ [Salesforce] Error Exchanging Code for Token:",
+      error.response?.data || error
+    );
+    return res
+      .status(500)
+      .json({ message: "Failed to exchange code for token" });
   }
-);
+});
 
-// 🔹 Create Salesforce Account
+// ✅ Create Salesforce Account
 router.post("/create-account", protect, async (req, res) => {
   try {
     const result = await createSalesforceAccountAndContact(req.user);
@@ -54,27 +62,13 @@ router.post("/create-account", protect, async (req, res) => {
   }
 });
 
-// 🔹 Disconnect Salesforce (Clear Sessions)
+// ✅ Disconnect from Salesforce
 router.post("/disconnect", protect, async (req, res) => {
   try {
-    req.session.salesforceToken = null;
-    req.session.salesforceId = null;
-    req.session.save(); // Ensure session updates
-
     await disconnectSalesforce(req.user.id);
     res.json({ message: "Disconnected from Salesforce" });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-// 🔹 Check Salesforce Connection Status
-router.get("/status", protect, async (req, res) => {
-  try {
-    res.json({ connected: !!req.session.salesforceToken });
-  } catch (error) {
-    console.error("Error checking Salesforce status:", error);
-    res.status(500).json({ message: "Failed to check Salesforce status" });
   }
 });
 

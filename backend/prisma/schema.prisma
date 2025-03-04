@@ -26,9 +26,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
-  salesforceAccessToken String?
-  salesforceInstanceUrl String?
-  salesforceAccountId     String?
+
+  salesforceAccessToken  String?
+  salesforceRefreshToken String?
+  salesforceInstanceUrl  String?
+  salesforceAccountId    String?
+  salesforceUserId       String?
 
   templates Template[]
   forms     Form[]

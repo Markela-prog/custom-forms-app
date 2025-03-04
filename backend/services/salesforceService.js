@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Store Salesforce tokens in DB
+// ✅ Store Salesforce Tokens
 export const storeSalesforceTokens = async ({
   userId,
   salesforceId,
@@ -23,7 +23,7 @@ export const storeSalesforceTokens = async ({
   });
 };
 
-// Refresh Salesforce Access Token
+// ✅ Refresh Token
 export const refreshSalesforceToken = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -33,7 +33,7 @@ export const refreshSalesforceToken = async (userId) => {
   if (!user || !user.salesforceRefreshToken)
     throw new Error("Salesforce refresh token not found");
 
-  const response = await axios.post(
+  const { data } = await axios.post(
     `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
     new URLSearchParams({
       grant_type: "refresh_token",
@@ -43,90 +43,26 @@ export const refreshSalesforceToken = async (userId) => {
     })
   );
 
-  const { access_token } = response.data;
-
-  await prisma.user.update({
+  return await prisma.user.update({
     where: { id: userId },
-    data: { salesforceAccessToken: access_token },
+    data: { salesforceAccessToken: data.access_token },
   });
-
-  return access_token;
 };
 
-// Check if Account Exists in Salesforce
-export const checkSalesforceAccount = async (
-  email,
-  accessToken,
-  instanceUrl
-) => {
-  const response = await axios.get(
-    `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/query`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params: {
-        q: `SELECT Id FROM Account WHERE Email='${email}'`,
-      },
-    }
-  );
-
-  return response.data.records.length > 0 ? response.data.records[0].Id : null;
-};
-
-// Create Salesforce Account & Contact
+// ✅ Create Account and Contact in Salesforce
 export const createSalesforceAccountAndContact = async (user) => {
-  let accessToken = user.salesforceAccessToken;
-  let instanceUrl = user.salesforceInstanceUrl;
-
-  if (!accessToken) accessToken = await refreshSalesforceToken(user.id);
-
-  const existingAccountId = await checkSalesforceAccount(
-    user.email,
-    accessToken,
-    instanceUrl
-  );
-
-  if (existingAccountId) {
-    return {
-      accountId: existingAccountId,
-      message: "Account already exists in Salesforce",
-    };
-  }
+  const accessToken = await refreshSalesforceToken(user.id);
+  const instanceUrl = user.salesforceInstanceUrl;
 
   // Create Account
-  const accountResponse = await axios.post(
+  const { data: account } = await axios.post(
     `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
     { Name: user.companyName || "Unknown Company" },
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
-  const accountId = accountResponse.data.id;
-
-  // Create Contact
-  await axios.post(
-    `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Contact`,
-    {
-      FirstName: user.firstName,
-      LastName: user.lastName,
-      Email: user.email,
-      AccountId: accountId,
-    },
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-
   return {
-    accountId,
-    message: "Salesforce account and contact created successfully",
+    accountId: account.id,
+    message: "Salesforce account created successfully",
   };
-};
-
-// Disconnect Salesforce
-export const disconnectSalesforce = async (userId) => {
-  return await prisma.user.update({
-    where: { id: userId },
-    data: {
-      salesforceId: null,
-      salesforceAccessToken: null,
-      salesforceRefreshToken: null,
-    },
-  });
 };

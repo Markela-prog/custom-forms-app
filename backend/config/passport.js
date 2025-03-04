@@ -6,8 +6,14 @@ import dotenv from "dotenv";
 import { storeSalesforceTokens } from "../services/salesforceService.js";
 import { Strategy as OAuth2Strategy } from "passport-oauth2";
 import pkceChallenge from "pkce-challenge";
+import prisma from "../prisma/prismaClient.js";
+import axios from "axios";
 
 dotenv.config();
+
+const pkce = pkceChallenge();
+const CODE_VERIFIER = pkce.code_verifier;
+const CODE_CHALLENGE = pkce.code_challenge;
 
 const commonOAuthStrategyHandler =
   (provider) => async (accessToken, refreshToken, profile, done) => {
@@ -95,11 +101,6 @@ passport.deserializeUser(async (userData, done) => {
   done(null, user);
 });
 
-// Generate PKCE challenge and verifier
-const pkce = pkceChallenge();
-const CODE_VERIFIER = pkce.code_verifier;
-const CODE_CHALLENGE = pkce.code_challenge;
-
 passport.use(
   "salesforce",
   new OAuth2Strategy(
@@ -111,30 +112,35 @@ passport.use(
       callbackURL: process.env.SALESFORCE_REDIRECT_URI,
       scope: ["api", "refresh_token", "id"],
       state: true,
-      pkce: true,
+      customHeaders: {
+        "Code-Challenge": CODE_CHALLENGE,
+        "Code-Challenge-Method": "S256",
+      },
     },
     async (accessToken, refreshToken, params, profile, done) => {
       try {
         console.log("✅ [Salesforce] OAuth Callback Triggered");
-        console.log("🔹 [Access Token]:", accessToken);
-        console.log("🔹 [Refresh Token]:", refreshToken);
 
-        const instanceUrl = params.instance_url;
-
-        // Fetch Salesforce user details
-        const userInfo = await axios.get(
+        const instanceUrl = process.env.SALESFORCE_INSTANCE_URL;
+        const userInfoResponse = await axios.get(
           `${instanceUrl}/services/oauth2/userinfo`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
-        const salesforceUser = userInfo.data;
+        const salesforceUser = userInfoResponse.data;
 
-        // Store tokens in session
-        return done(null, {
+        await storeSalesforceTokens({
+          userId: profile.id, // Fix: Use correct user ID
           salesforceId: salesforceUser.user_id,
           accessToken,
           refreshToken,
           instanceUrl,
+        });
+
+        console.log("✅ [Salesforce] Tokens Stored Successfully");
+        return done(null, {
+          salesforceId: salesforceUser.user_id,
+          accessToken,
         });
       } catch (error) {
         console.error("❌ [Salesforce OAuth Error]:", error);
@@ -143,13 +149,5 @@ passport.use(
     }
   )
 );
-
-// Inject PKCE challenge parameters dynamically
-passport.authenticate("salesforce", {
-  session: true,
-  state: true, // Ensures state validation
-  codeChallenge: CODE_CHALLENGE, // Add PKCE challenge
-  codeChallengeMethod: "S256", // Use SHA256 hashing for PKCE
-});
 
 export default passport;

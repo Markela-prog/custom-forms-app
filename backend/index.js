@@ -32,23 +32,18 @@ app.use(
 
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-  console.log("🔹 [Session Middleware] Current Session:", req.session);
-  console.log("🔹 [Session ID]:", req.sessionID);
-  next();
-});
-
+// 🔹 Session Middleware (FileStore for persistence)
 app.use(
   session({
-    store: new FileStore({ path: "./sessions", ttl: 86400 }), // Persist sessions for 1 day
-    secret: process.env.SESSION_SECRET || "super_secure_secret",
+    store: new FileStore({ path: "./sessions", ttl: 86400 }),
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Secure in production
-      httpOnly: true, // Prevents JavaScript access
-      sameSite: "lax", // Helps prevent CSRF issues
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
