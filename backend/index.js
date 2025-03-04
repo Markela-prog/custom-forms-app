@@ -15,10 +15,12 @@ import templateAccessRoutes from "./routes/templateAccessRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import salesforceRoutes from "./routes/salesforceRoutes.js";
 import cookieParser from "cookie-parser";
-import FileStoreFactory from "session-file-store";
+import { PrismaSessionStore } from "@quixo3/prisma-session-store";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
-const FileStore = FileStoreFactory(session);
+const prisma = new PrismaClient();
+
 const app = express();
 
 app.use(
@@ -34,12 +36,15 @@ app.use(cookieParser());
 
 app.use(
   session({
-    store: new FileStore({ path: "./sessions", ttl: 86400 }), // ✅ Persist session for 1 day
+    store: new PrismaSessionStore(prisma, {
+      checkPeriod: 2 * 60 * 1000, // ✅ Check expired sessions every 2 min
+      dbRecordIdIsSessionId: true, // ✅ Store session ID as primary key
+    }),
     secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
     saveUninitialized: false, // ✅ Prevent empty sessions
     cookie: {
-      secure: process.env.NODE_ENV === "production", // ✅ Only in production
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 24, // ✅ 24-hour expiration

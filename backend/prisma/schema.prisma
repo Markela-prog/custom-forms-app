@@ -195,3 +195,12 @@ model AuditLog {
 
   user        User     @relation(fields: [userId], references: [id])
 }
+
+model Session {
+  id         String   @id @default(uuid())
+  sid        String   @unique
+  data       Json
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
