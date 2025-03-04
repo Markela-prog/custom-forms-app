@@ -34,15 +34,15 @@ app.use(cookieParser());
 
 app.use(
   session({
-    store: new FileStore({ path: "./sessions", ttl: 86400 }), // Persist sessions for 1 day
+    store: new FileStore({ path: "./sessions", ttl: 86400 }), // ✅ Persist session for 1 day
     secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
-    saveUninitialized: false, // Fix: Prevent empty sessions
+    saveUninitialized: false, // ✅ Prevent empty sessions
     cookie: {
-      secure: process.env.NODE_ENV === "production", // Secure in production
+      secure: process.env.NODE_ENV === "production", // ✅ Only in production
       httpOnly: true,
-      sameSite: "lax", // Helps prevent CSRF issues
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24, // ✅ 24-hour expiration
     },
   })
 );

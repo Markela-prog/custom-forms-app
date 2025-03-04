@@ -13,20 +13,27 @@ const router = express.Router();
 router.get("/connect", (req, res) => {
   // Generate PKCE Challenge
   const pkce = pkceChallenge();
+
+  // ✅ Store PKCE details in session
   req.session.code_verifier = pkce.code_verifier;
   req.session.code_challenge = pkce.code_challenge;
-  req.session.save(() => {
+
+  req.session.save((err) => {
+    if (err) {
+      console.error("🚨 Error saving session:", err);
+      return res.status(500).json({ message: "Session save failed" });
+    }
+
     console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
-    // Redirect to Salesforce Auth URL
-    const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${pkce.code_challenge}&code_challenge_method=S256`;
+    // ✅ Redirect to Salesforce Auth URL
+    const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
 
     console.log("✅ [Salesforce] Redirecting to:", authUrl);
     res.redirect(authUrl);
   });
 });
 
-// ✅ OAuth Callback Route
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
   console.log("🔹 [Query Params]:", req.query);
@@ -38,17 +45,17 @@ router.get("/callback", async (req, res) => {
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
 
-  // Retrieve `code_verifier` from session
+  // ✅ Debug session before token exchange
   console.log("✅ [Salesforce] Session Before Token Exchange:", req.session);
-  const codeVerifier = req.session.code_verifier;
 
+  const codeVerifier = req.session.code_verifier;
   if (!codeVerifier) {
     console.error("🚨 [Salesforce Error]: Missing `code_verifier` in session");
     return res.status(400).json({ message: "Missing PKCE code verifier" });
   }
 
   try {
-    // Exchange Authorization Code for Access Token
+    // 🔹 Exchange Authorization Code for Access Token
     const { data: tokenResponse } = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -63,7 +70,6 @@ router.get("/callback", async (req, res) => {
     );
 
     console.log("✅ [Salesforce] Access Token:", tokenResponse.access_token);
-
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   } catch (error) {
     console.error(
