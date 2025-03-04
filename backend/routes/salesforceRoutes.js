@@ -1,23 +1,21 @@
 import express from "express";
 import axios from "axios";
-import pkceChallenge from "pkce-challenge";
 import passport from "passport";
 import { protect } from "../middleware/authMiddleware.js";
 import {
   createSalesforceAccountAndContact,
   disconnectSalesforce,
 } from "../services/salesforceService.js";
+import { generatePkce } from "../utils/pkceUtils.js";
 
 const router = express.Router();
 
-router.get("/connect", (req, res) => {
+// ✅ Step 1: Start OAuth flow
+router.get("/connect", async (req, res) => {
   try {
-    // ✅ Generate PKCE Challenge & Debug
-    const pkce = pkceChallenge();
-    console.log("✅ [PKCE] Generated Code Verifier:", pkce.code_verifier);
-    console.log("✅ [PKCE] Generated Code Challenge:", pkce.code_challenge);
+    const pkce = await generatePkce(); // ✅ Generate PKCE Challenge
 
-    // ✅ Store in session
+    // ✅ Store in session before redirecting
     req.session.code_verifier = pkce.code_verifier;
     req.session.code_challenge = pkce.code_challenge;
 
@@ -29,7 +27,7 @@ router.get("/connect", (req, res) => {
 
       console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
-      // ✅ Redirect to Salesforce Auth URL
+      // ✅ Construct Salesforce OAuth URL with PKCE
       const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
 
       console.log("✅ [Salesforce] Redirecting to:", authUrl);
@@ -41,6 +39,7 @@ router.get("/connect", (req, res) => {
   }
 });
 
+// ✅ Step 2: Handle OAuth Callback
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
   console.log("🔹 [Query Params]:", req.query);
@@ -52,9 +51,7 @@ router.get("/callback", async (req, res) => {
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
 
-  // ✅ Debug session before token exchange
-  console.log("✅ [Salesforce] Session Before Token Exchange:", req.session);
-
+  // 🔹 Retrieve stored PKCE code_verifier from session
   const codeVerifier = req.session.code_verifier;
   if (!codeVerifier) {
     console.error("🚨 [Salesforce Error]: Missing `code_verifier` in session");
@@ -77,6 +74,7 @@ router.get("/callback", async (req, res) => {
     );
 
     console.log("✅ [Salesforce] Access Token:", tokenResponse.access_token);
+
     res.redirect(`${process.env.FRONTEND_URL}/profile?connected=true`);
   } catch (error) {
     console.error(
