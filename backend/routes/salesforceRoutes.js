@@ -10,22 +10,23 @@ import {
 
 const router = express.Router();
 
-// ✅ Step 1: Start OAuth flow (Salesforce Login)
 router.get("/connect", (req, res) => {
   // Generate PKCE Challenge
   const pkce = pkceChallenge();
   req.session.code_verifier = pkce.code_verifier;
   req.session.code_challenge = pkce.code_challenge;
-  req.session.save(); // Save session
+  req.session.save(() => {
+    console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
-  // Redirect to Salesforce Auth URL with PKCE
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${pkce.code_challenge}&code_challenge_method=S256`;
+    // Redirect to Salesforce Auth URL
+    const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${pkce.code_challenge}&code_challenge_method=S256`;
 
-  console.log("✅ [Salesforce] Redirecting to Authorization URL:", authUrl);
-  res.redirect(authUrl);
+    console.log("✅ [Salesforce] Redirecting to:", authUrl);
+    res.redirect(authUrl);
+  });
 });
 
-// ✅ Step 2: OAuth Callback Route
+// ✅ OAuth Callback Route
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
   console.log("🔹 [Query Params]:", req.query);
@@ -38,9 +39,11 @@ router.get("/callback", async (req, res) => {
   }
 
   // Retrieve `code_verifier` from session
+  console.log("✅ [Salesforce] Session Before Token Exchange:", req.session);
   const codeVerifier = req.session.code_verifier;
+
   if (!codeVerifier) {
-    console.error("🚨 [Salesforce Error]: Missing code_verifier in session");
+    console.error("🚨 [Salesforce Error]: Missing `code_verifier` in session");
     return res.status(400).json({ message: "Missing PKCE code verifier" });
   }
 
