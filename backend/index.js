@@ -43,6 +43,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
     saveUninitialized: false, // ✅ Prevent empty sessions
+    proxy: true,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,

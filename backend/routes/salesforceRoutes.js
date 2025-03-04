@@ -44,9 +44,6 @@ router.get("/connect", async (req, res) => {
   }
 });
 
-/**
- * ✅ Step 2: OAuth Callback Route
- */
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
   console.log("🔹 [Query Params]:", req.query);
@@ -58,7 +55,20 @@ router.get("/callback", async (req, res) => {
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
 
-  // ✅ Retrieve PKCE code_verifier from session (PostgreSQL)
+  // ✅ Explicitly Fetch Session from Database (Ensures Persistence)
+  await new Promise((resolve, reject) => {
+    req.session.reload((err) => {
+      if (err) {
+        console.error("🚨 [Session Error] Could not reload session:", err);
+        return reject(err);
+      }
+      resolve();
+    });
+  });
+
+  console.log("✅ [Salesforce] Session Before Token Exchange:", req.session);
+
+  // ✅ Retrieve PKCE code_verifier from session
   const codeVerifier = req.session.code_verifier;
   if (!codeVerifier) {
     console.error("🚨 [Salesforce Error]: Missing `code_verifier` in session");
