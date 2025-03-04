@@ -10,17 +10,19 @@ import pkceChallenge from "pkce-challenge";
 
 const router = express.Router();
 
-const pkce = pkceChallenge();
-const CODE_VERIFIER = pkce.code_verifier;
-const CODE_CHALLENGE = pkce.code_challenge;
-
 router.get("/connect", (req, res) => {
-  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256`;
+  // 🔹 Generate PKCE Challenge (Only Once)
+  const pkce = pkceChallenge();
+  req.session.code_verifier = pkce.code_verifier;
+  req.session.code_challenge = pkce.code_challenge;
+  req.session.save(); // Save session
+
+  // 🔹 Redirect to Salesforce Auth URL with PKCE
+  const authUrl = `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/authorize?response_type=code&client_id=${process.env.SALESFORCE_CONSUMER_KEY}&redirect_uri=${process.env.SALESFORCE_REDIRECT_URI}&state=securestate&code_challenge=${req.session.code_challenge}&code_challenge_method=S256`;
 
   console.log("✅ [Salesforce] Redirecting to Authorization URL:", authUrl);
   res.redirect(authUrl);
 });
-
 // ✅ OAuth Callback Route
 router.get("/callback", async (req, res) => {
   console.log("✅ [Salesforce] Callback Hit");
@@ -33,8 +35,15 @@ router.get("/callback", async (req, res) => {
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
 
+  // 🔹 Retrieve `code_verifier` from session
+  const codeVerifier = req.session.code_verifier;
+  if (!codeVerifier) {
+    console.error("🚨 [Salesforce Error]: Missing code_verifier in session");
+    return res.status(400).json({ message: "Missing PKCE code verifier" });
+  }
+
   try {
-    // Exchange Authorization Code for Access Token
+    // 🔹 Exchange Authorization Code for Access Token
     const { data: tokenResponse } = await axios.post(
       `${process.env.SALESFORCE_INSTANCE_URL}/services/oauth2/token`,
       new URLSearchParams({
@@ -43,7 +52,7 @@ router.get("/callback", async (req, res) => {
         client_secret: process.env.SALESFORCE_CONSUMER_SECRET,
         redirect_uri: process.env.SALESFORCE_REDIRECT_URI,
         code: req.query.code,
-        code_verifier: CODE_VERIFIER, // ✅ Required for PKCE
+        code_verifier: codeVerifier, // ✅ Send stored verifier
       }),
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
