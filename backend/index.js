@@ -32,18 +32,16 @@ app.use(
 
 app.use(cookieParser());
 
-// 🔹 Session Middleware (FileStore for persistence)
 app.use(
   session({
-    store: new FileStore({ path: "./sessions", ttl: 86400 }),
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "super_secure_secret",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   })
 );
