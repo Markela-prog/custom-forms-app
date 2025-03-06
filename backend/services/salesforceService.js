@@ -62,20 +62,56 @@ export const disconnectSalesforce = async (userId) => {
   });
 };
 
-// ✅ Create Account and Contact in Salesforce
-export const createSalesforceAccountAndContact = async (user) => {
+export const createSalesforceAccountAndContact = async (user, accountData) => {
   const accessToken = await refreshSalesforceToken(user.id);
   const instanceUrl = user.salesforceInstanceUrl;
 
-  // Create Account
-  const { data: account } = await axios.post(
-    `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
-    { Name: user.companyName || "Unknown Company" },
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  if (!accessToken) {
+    throw new Error("No valid Salesforce access token.");
+  }
 
-  return {
-    accountId: account.id,
-    message: "Salesforce account created successfully",
-  };
+  try {
+    // 🔹 Step 1: Create Account in Salesforce
+    const { data: account } = await axios.post(
+      `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
+      {
+        Name: accountData.companyName || "Unnamed Company",
+        Industry: accountData.industry || "Unknown",
+        Website: accountData.website || "",
+        Phone: accountData.phone || "",
+        Type: "Customer",
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    console.log("✅ [Salesforce] Account Created:", account.id);
+
+    // 🔹 Step 2: Create Contact in Salesforce linked to Account
+    const { data: contact } = await axios.post(
+      `${instanceUrl}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Contact`,
+      {
+        FirstName: accountData.firstName,
+        LastName: accountData.lastName,
+        Email: accountData.email,
+        Phone: accountData.phone || "",
+        Title: accountData.title || "",
+        AccountId: account.id, // Link Contact to Account
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    console.log("✅ [Salesforce] Contact Created:", contact.id);
+
+    return {
+      accountId: account.id,
+      contactId: contact.id,
+      message: "Salesforce Account & Contact created successfully!",
+    };
+  } catch (error) {
+    console.error(
+      "❌ [Salesforce] Account/Contact Creation Failed:",
+      error.response?.data || error
+    );
+    throw new Error("Salesforce Account/Contact creation failed.");
+  }
 };

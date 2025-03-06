@@ -103,24 +103,48 @@ router.get("/callback", async (req, res) => {
   }
 });
 
-/**
- * ✅ Step 3: Create Salesforce Account
- */
 router.post("/create-account", protect, async (req, res) => {
   try {
-    const result = await createSalesforceAccountAndContact(req.user);
+    if (!req.user.salesforceAccessToken) {
+      return res.status(400).json({ message: "Salesforce not connected." });
+    }
+
+    const result = await createSalesforceAccountAndContact(req.user, req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-/**
- * ✅ Step 4: Disconnect Salesforce
- */
+router.get("/status", protect, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { salesforceAccessToken: true },
+    });
+
+    if (user && user.salesforceAccessToken) {
+      return res.json({ connected: true });
+    } else {
+      return res.json({ connected: false });
+    }
+  } catch (error) {
+    console.error("❌ [Salesforce] Status Check Error:", error);
+    res.status(500).json({ message: "Failed to check Salesforce status" });
+  }
+});
+
 router.post("/disconnect", protect, async (req, res) => {
   try {
-    await disconnectSalesforce(req.user.id);
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        salesforceAccessToken: null,
+        salesforceRefreshToken: null,
+        salesforceInstanceUrl: null,
+      },
+    });
+
     res.json({ message: "Disconnected from Salesforce" });
   } catch (error) {
     res.status(500).json({ message: error.message });

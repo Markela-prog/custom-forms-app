@@ -17,16 +17,40 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
   const [salesforceConnected, setSalesforceConnected] = useState(false);
+  const [accountData, setAccountData] = useState({
+    companyName: "",
+    industry: "",
+    website: "",
+    phone: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    title: "",
+  });
 
   useEffect(() => {
-    // Check if the user is connected to Salesforce
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/salesforce-status`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => setSalesforceConnected(data.connected))
-      .catch((err) => console.error("Error checking Salesforce status:", err));
+    const checkSalesforceConnection = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/status`,
+          {
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        setSalesforceConnected(data.connected);
+      } catch (error) {
+        console.error("Error checking Salesforce status:", error);
+      }
+    };
+
+    checkSalesforceConnection();
   }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setAccountData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleConnectSalesforce = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`;
@@ -35,24 +59,16 @@ const ProfilePage = () => {
   const handleCreateSalesforceAccount = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/create-account`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
+        accountData,
+        { withCredentials: true }
       );
 
-      const result = await response.json();
-      if (response.ok) {
-        alert(result.message);
-        setSalesforceConnected(true);
-      } else {
-        alert(`Error: ${result.message}`);
-      }
+      setStatusMessage(response.data.message);
     } catch (error) {
       console.error("Salesforce Account Creation Error:", error);
-      alert("An error occurred while creating a Salesforce account.");
+      setStatusMessage("Error creating Salesforce account.");
     } finally {
       setLoading(false);
     }
@@ -237,29 +253,84 @@ const ProfilePage = () => {
 
           {!salesforceConnected ? (
             <button
-              onClick={handleConnectSalesforce}
+              onClick={() =>
+                (window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`)
+              }
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Connect to Salesforce
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleCreateSalesforceAccount}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-2"
-                disabled={loading}
-              >
-                {loading ? "Syncing..." : "Create Salesforce Account"}
-              </button>
+            <div className="p-6 bg-gray-100 shadow-md rounded-lg">
+              <h2 className="text-xl font-bold mb-4">
+                Create Salesforce Account
+              </h2>
+
+              <input
+                type="text"
+                name="companyName"
+                placeholder="Company Name"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="industry"
+                placeholder="Industry"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="website"
+                placeholder="Website"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="phone"
+                placeholder="Phone"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="firstName"
+                placeholder="First Name"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
+              <input
+                type="text"
+                name="title"
+                placeholder="Title"
+                onChange={handleInputChange}
+                className="border p-2 w-full mb-3"
+              />
 
               <button
-                onClick={handleDisconnectSalesforce}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                onClick={handleCreateSalesforceAccount}
                 disabled={loading}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
               >
-                {loading ? "Disconnecting..." : "Disconnect from Salesforce"}
+                {loading ? "Creating..." : "Create Salesforce Account"}
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>
