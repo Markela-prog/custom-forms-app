@@ -35,8 +35,6 @@ router.get("/connect", async (req, res) => {
 
     console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
-    const encryptedState = encrypt(req.user.id);
-
     // ✅ Construct Salesforce Auth URL
     const authUrl = `${
       process.env.SALESFORCE_INSTANCE_URL
@@ -44,7 +42,7 @@ router.get("/connect", async (req, res) => {
       process.env.SALESFORCE_CONSUMER_KEY
     }&redirect_uri=${
       process.env.SALESFORCE_REDIRECT_URI
-    }&state=${encodeURIComponent(encryptedState)}&code_challenge=${
+    }&state=securestate&code_challenge=${
       pkce.code_challenge
     }&code_challenge_method=S256`;
 
@@ -66,8 +64,6 @@ router.get("/callback", async (req, res) => {
       .status(400)
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
-
-  const userId = decrypt(decodeURIComponent(req.query.state));
 
   // ✅ Explicitly Fetch Session from Database (Ensures Persistence)
   await new Promise((resolve, reject) => {
