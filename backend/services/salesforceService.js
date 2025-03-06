@@ -66,7 +66,7 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
   const accessToken = await refreshSalesforceToken(user.id);
   const instanceUrl = user.salesforceInstanceUrl;
 
-  if (!user.salesforceAccessToken) {
+  if (!accessToken) {
     throw new Error("No Salesforce access token found. Please reconnect.");
   }
 
@@ -85,7 +85,7 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
         Phone: accountData.phone || "",
         Type: "Customer",
       },
-      { headers: { Authorization: `Bearer ${user.salesforceAccessToken}` } }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     console.log("✅ [Salesforce] Account Created:", account.id);
@@ -101,10 +101,16 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
         Title: accountData.title || "",
         AccountId: account.id, // Link Contact to Account
       },
-      { headers: { Authorization: `Bearer ${user.salesforceAccessToken}` } }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     console.log("✅ [Salesforce] Contact Created:", contact.id);
+
+    // 🔹 Store Account & Contact ID in DB
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { salesforceAccountId: account.id },
+    });
 
     return {
       accountId: account.id,

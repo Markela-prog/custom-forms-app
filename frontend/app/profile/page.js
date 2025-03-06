@@ -17,6 +17,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
   const [salesforceConnected, setSalesforceConnected] = useState(false);
+  const [hasSalesforceAccount, setHasSalesforceAccount] = useState(false);
   const [accountData, setAccountData] = useState({
     companyName: "",
     industry: "",
@@ -29,36 +30,23 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    const checkSalesforceConnection = async () => {
+    if (!isAuthenticated) return;
+
+    const checkSalesforceStatus = async () => {
       try {
-        const token = localStorage.getItem("accessToken"); // Get JWT
-        if (!token) {
-          console.error("No access token found.");
-          setSalesforceConnected(false);
-          return;
-        }
-
-        const response = await fetch(
+        const { data } = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/status`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Send JWT
-            },
-          }
+          { withCredentials: true }
         );
-
-        const data = await response.json();
         setSalesforceConnected(data.connected);
+        setHasSalesforceAccount(data.hasAccount);
       } catch (error) {
-        console.error("Error checking Salesforce status:", error);
+        console.error("Salesforce status check failed:", error);
       }
     };
 
-    checkSalesforceConnection();
-  }, []);
+    checkSalesforceStatus();
+  }, [isAuthenticated]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,20 +58,16 @@ const ProfilePage = () => {
   };
 
   const handleCreateSalesforceAccount = async () => {
-    setLoading(true);
     try {
-      const response = await axios.post(
+      const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/create-account`,
         accountData,
         { withCredentials: true }
       );
-
-      setStatusMessage(response.data.message);
+      alert(data.message);
+      setHasSalesforceAccount(true);
     } catch (error) {
-      console.error("Salesforce Account Creation Error:", error);
-      setStatusMessage("Error creating Salesforce account.");
-    } finally {
-      setLoading(false);
+      alert(`Error: ${error.response?.data.message || "Unknown error"}`);
     }
   };
 
@@ -266,82 +250,53 @@ const ProfilePage = () => {
 
           {!salesforceConnected ? (
             <button
-              onClick={() =>
-                (window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`)
-              }
+              onClick={handleConnectSalesforce}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Connect to Salesforce
             </button>
+          ) : hasSalesforceAccount ? (
+            <p className="text-green-500">✔ You are connected to Salesforce.</p>
           ) : (
-            <div className="p-6 bg-gray-100 shadow-md rounded-lg">
-              <h2 className="text-xl font-bold mb-4">
+            <div>
+              <h3 className="text-lg font-bold mb-2">
                 Create Salesforce Account
-              </h2>
-
+              </h3>
               <input
                 type="text"
-                name="companyName"
                 placeholder="Company Name"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
+                className="border p-2 w-full mb-2"
+                value={accountData.companyName}
+                onChange={(e) =>
+                  setAccountData({
+                    ...accountData,
+                    companyName: e.target.value,
+                  })
+                }
               />
               <input
                 type="text"
-                name="industry"
-                placeholder="Industry"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
-              />
-              <input
-                type="text"
-                name="website"
-                placeholder="Website"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
-              />
-              <input
-                type="text"
-                name="phone"
-                placeholder="Phone"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
-              />
-              <input
-                type="text"
-                name="firstName"
                 placeholder="First Name"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
+                className="border p-2 w-full mb-2"
+                value={accountData.firstName}
+                onChange={(e) =>
+                  setAccountData({ ...accountData, firstName: e.target.value })
+                }
               />
               <input
                 type="text"
-                name="lastName"
                 placeholder="Last Name"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
+                className="border p-2 w-full mb-2"
+                value={accountData.lastName}
+                onChange={(e) =>
+                  setAccountData({ ...accountData, lastName: e.target.value })
+                }
               />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
-              />
-              <input
-                type="text"
-                name="title"
-                placeholder="Title"
-                onChange={handleInputChange}
-                className="border p-2 w-full mb-3"
-              />
-
               <button
                 onClick={handleCreateSalesforceAccount}
-                disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
               >
-                {loading ? "Creating..." : "Create Salesforce Account"}
+                Create Account
               </button>
             </div>
           )}
