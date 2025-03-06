@@ -59,8 +59,26 @@ const ProfilePage = () => {
     setAccountData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleConnectSalesforce = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`;
+  const handleConnectSalesforce = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      alert("Authentication required");
+      return;
+    }
+
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`,
+        {
+          headers: { Authorization: `Bearer ${token}` }, // ✅ Send JWT
+        }
+      );
+
+      window.location.href = data.authUrl; // Redirect user to Salesforce login
+    } catch (error) {
+      console.error("Salesforce connection failed:", error);
+      alert("Failed to connect to Salesforce.");
+    }
   };
 
   const handleCreateSalesforceAccount = async () => {

@@ -15,7 +15,7 @@ const router = express.Router();
 /**
  * ✅ Step 1: Start OAuth Flow (Salesforce Login)
  */
-router.get("/connect", async (req, res) => {
+router.get("/connect", protect, async (req, res) => {
   try {
     const pkce = await generatePkce();
 
@@ -35,6 +35,8 @@ router.get("/connect", async (req, res) => {
 
     console.log("✅ [Salesforce] Session Before Redirect:", req.session);
 
+    const encryptedState = encrypt(req.user.id);
+
     // ✅ Construct Salesforce Auth URL
     const authUrl = `${
       process.env.SALESFORCE_INSTANCE_URL
@@ -42,12 +44,12 @@ router.get("/connect", async (req, res) => {
       process.env.SALESFORCE_CONSUMER_KEY
     }&redirect_uri=${
       process.env.SALESFORCE_REDIRECT_URI
-    }&state=securestate&code_challenge=${
+    }&state=${encodeURIComponent(encryptedState)}&code_challenge=${
       pkce.code_challenge
     }&code_challenge_method=S256`;
 
     console.log("✅ [Salesforce] Redirecting to:", authUrl);
-    res.redirect(authUrl);
+    res.json({ authUrl });
   } catch (error) {
     console.error("🚨 [PKCE Generation Error]:", error);
     return res.status(500).json({ message: "PKCE generation failed" });
@@ -64,6 +66,8 @@ router.get("/callback", async (req, res) => {
       .status(400)
       .json({ message: "Salesforce OAuth failed: No code received" });
   }
+
+  const userId = decrypt(decodeURIComponent(req.query.state));
 
   // ✅ Explicitly Fetch Session from Database (Ensures Persistence)
   await new Promise((resolve, reject) => {
@@ -107,7 +111,9 @@ router.get("/callback", async (req, res) => {
       where: { id: userId },
       data: {
         salesforceAccessToken: tokenResponse.access_token,
+        salesforceRefreshToken: tokenResponse.refresh_token,
         salesforceInstanceUrl: process.env.SALESFORCE_INSTANCE_URL,
+        salesforceConnectedAt: new Date(),
       },
     });
 
@@ -139,38 +145,28 @@ router.post("/create-account", protect, async (req, res) => {
 });
 
 router.get("/status", protect, async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { salesforceAccessToken: true, salesforceAccountId: true },
-    });
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { salesforceAccessToken: true, salesforceAccountId: true },
+  });
 
-    if (!user || !user.salesforceAccessToken) {
-      return res.json({ connected: false, hasAccount: false });
-    }
-
-    // 🔹 Validate if token is still valid (Make API Call)
-    try {
-      await axios.get(
-        `${process.env.SALESFORCE_INSTANCE_URL}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
-        { headers: { Authorization: `Bearer ${user.salesforceAccessToken}` } }
-      );
-    } catch (error) {
-      console.error(
-        "❌ [Salesforce] Invalid Access Token:",
-        error.response?.data || error
-      );
-      return res.json({ connected: false, hasAccount: false });
-    }
-
-    return res.json({
-      connected: true,
-      hasAccount: !!user.salesforceAccountId,
-    });
-  } catch (error) {
-    console.error("❌ [Salesforce] Status Check Error:", error);
-    res.status(500).json({ message: "Failed to check Salesforce status" });
+  if (!user || !user.salesforceAccessToken) {
+    return res.json({ connected: false, hasAccount: false });
   }
+
+  // Validate if the token is still valid
+  try {
+    await axios.get(
+      `${process.env.SALESFORCE_INSTANCE_URL}/services/data/v${process.env.SALESFORCE_API_VERSION}/sobjects/Account`,
+      {
+        headers: { Authorization: `Bearer ${user.salesforceAccessToken}` },
+      }
+    );
+  } catch (error) {
+    return res.json({ connected: false, hasAccount: false });
+  }
+
+  res.json({ connected: true, hasAccount: !!user.salesforceAccountId });
 });
 
 router.post("/disconnect", protect, async (req, res) => {
