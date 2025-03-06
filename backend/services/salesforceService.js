@@ -66,8 +66,12 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
   const accessToken = await refreshSalesforceToken(user.id);
   const instanceUrl = user.salesforceInstanceUrl;
 
-  if (!accessToken) {
-    throw new Error("No valid Salesforce access token.");
+  if (!user.salesforceAccessToken) {
+    throw new Error("No Salesforce access token found. Please reconnect.");
+  }
+
+  if (user.salesforceAccountId) {
+    throw new Error("Salesforce account already exists.");
   }
 
   try {
@@ -81,7 +85,7 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
         Phone: accountData.phone || "",
         Type: "Customer",
       },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      { headers: { Authorization: `Bearer ${user.salesforceAccessToken}` } }
     );
 
     console.log("✅ [Salesforce] Account Created:", account.id);
@@ -97,7 +101,7 @@ export const createSalesforceAccountAndContact = async (user, accountData) => {
         Title: accountData.title || "",
         AccountId: account.id, // Link Contact to Account
       },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      { headers: { Authorization: `Bearer ${user.salesforceAccessToken}` } }
     );
 
     console.log("✅ [Salesforce] Contact Created:", contact.id);

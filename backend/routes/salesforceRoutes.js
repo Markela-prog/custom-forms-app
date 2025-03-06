@@ -7,6 +7,7 @@ import {
   disconnectSalesforce,
 } from "../services/salesforceService.js";
 import { generatePkce } from "../utils/pkceUtils.js";
+import prisma from "../prisma/prismaClient.js";
 
 const router = express.Router();
 
