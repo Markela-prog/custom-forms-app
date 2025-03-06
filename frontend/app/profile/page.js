@@ -34,10 +34,16 @@ const ProfilePage = () => {
 
     const checkSalesforceStatus = async () => {
       try {
+        const token = localStorage.getItem("accessToken"); // ✅ Get JWT Token
+        if (!token) throw new Error("No access token available");
+
         const { data } = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/status`,
-          { withCredentials: true }
+          {
+            headers: { Authorization: `Bearer ${token}` }, // ✅ Include Token
+          }
         );
+
         setSalesforceConnected(data.connected);
         setHasSalesforceAccount(data.hasAccount);
       } catch (error) {
@@ -59,11 +65,17 @@ const ProfilePage = () => {
 
   const handleCreateSalesforceAccount = async () => {
     try {
+      const token = localStorage.getItem("accessToken"); // ✅ Get JWT Token
+      if (!token) throw new Error("No access token available");
+
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/create-account`,
         accountData,
-        { withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${token}` }, // ✅ Include Token
+        }
       );
+
       alert(data.message);
       setHasSalesforceAccount(true);
     } catch (error) {
@@ -72,28 +84,23 @@ const ProfilePage = () => {
   };
 
   const handleDisconnectSalesforce = async () => {
-    setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/salesforce/disconnect`,
+      const token = localStorage.getItem("accessToken"); // ✅ Get JWT Token
+      if (!token) throw new Error("No access token available");
+
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/disconnect`,
+        {},
         {
-          method: "POST",
-          credentials: "include",
+          headers: { Authorization: `Bearer ${token}` }, // ✅ Include Token
         }
       );
 
-      const result = await response.json();
-      if (response.ok) {
-        alert(result.message);
-        setSalesforceConnected(false);
-      } else {
-        alert(`Error: ${result.message}`);
-      }
+      alert(data.message);
+      setSalesforceConnected(false);
+      setHasSalesforceAccount(false);
     } catch (error) {
-      console.error("Salesforce Disconnect Error:", error);
-      alert("An error occurred while disconnecting from Salesforce.");
-    } finally {
-      setLoading(false);
+      alert(`Error: ${error.response?.data.message || "Unknown error"}`);
     }
   };
 
@@ -267,30 +274,24 @@ const ProfilePage = () => {
                 placeholder="Company Name"
                 className="border p-2 w-full mb-2"
                 value={accountData.companyName}
-                onChange={(e) =>
-                  setAccountData({
-                    ...accountData,
-                    companyName: e.target.value,
-                  })
-                }
+                name="companyName"
+                onChange={handleInputChange}
               />
               <input
                 type="text"
                 placeholder="First Name"
                 className="border p-2 w-full mb-2"
                 value={accountData.firstName}
-                onChange={(e) =>
-                  setAccountData({ ...accountData, firstName: e.target.value })
-                }
+                name="firstName"
+                onChange={handleInputChange}
               />
               <input
                 type="text"
                 placeholder="Last Name"
                 className="border p-2 w-full mb-2"
                 value={accountData.lastName}
-                onChange={(e) =>
-                  setAccountData({ ...accountData, lastName: e.target.value })
-                }
+                name="lastName"
+                onChange={handleInputChange}
               />
               <button
                 onClick={handleCreateSalesforceAccount}
@@ -299,6 +300,15 @@ const ProfilePage = () => {
                 Create Account
               </button>
             </div>
+          )}
+
+          {salesforceConnected && (
+            <button
+              onClick={handleDisconnectSalesforce}
+              className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 w-full"
+            >
+              Disconnect from Salesforce
+            </button>
           )}
         </div>
       </div>
