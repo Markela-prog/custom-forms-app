@@ -31,12 +31,25 @@ const ProfilePage = () => {
   useEffect(() => {
     const checkSalesforceConnection = async () => {
       try {
+        const token = localStorage.getItem("accessToken"); // Get JWT
+        if (!token) {
+          console.error("No access token found.");
+          setSalesforceConnected(false);
+          return;
+        }
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/status`,
           {
+            method: "GET",
             credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Send JWT
+            },
           }
         );
+
         const data = await response.json();
         setSalesforceConnected(data.connected);
       } catch (error) {
