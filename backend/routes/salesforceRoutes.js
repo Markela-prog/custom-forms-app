@@ -15,7 +15,7 @@ const router = express.Router();
 /**
  * ✅ Step 1: Start OAuth Flow (Salesforce Login)
  */
-router.get("/connect", protect, async (req, res) => {
+router.get("/connect", async (req, res) => {
   try {
     const pkce = await generatePkce();
 

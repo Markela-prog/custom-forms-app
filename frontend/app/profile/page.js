@@ -59,36 +59,8 @@ const ProfilePage = () => {
     setAccountData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleConnectSalesforce = async () => {
-    try {
-      const token = localStorage.getItem("accessToken"); // Get JWT token
-
-      if (!token) {
-        alert("Authentication required. Please log in.");
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include", // Ensures cookies are sent (if applicable)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate Salesforce connection");
-      }
-
-      const { authUrl } = await response.json(); // Expect backend to return the auth URL
-      window.location.href = authUrl; // Redirect to Salesforce login page
-    } catch (error) {
-      console.error("Error connecting to Salesforce:", error);
-      alert("Failed to connect to Salesforce.");
-    }
+  const handleConnectSalesforce = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/salesforce/connect`;
   };
 
   const handleCreateSalesforceAccount = async () => {
